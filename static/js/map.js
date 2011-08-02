@@ -85,7 +85,7 @@ $(document).ready(function(){
             // This condition should be present on the serverside 
             //      when returning the current objects
             // For now: do nothing
-            console.log(hm + ' Will start running at ' + helpers.m2hm(this.depM[0]));
+            console.log(hm + ' Will start at ' + helpers.m2hm(this.depM[0]));
             return;
         }
         if (nowM > this.arrM[(this.arrM.length - 1)]) {
@@ -93,13 +93,13 @@ $(document).ready(function(){
             // This condition should be present on the serverside 
             //      when returning the current objects
             // For now: do nothing
-            console.log(hm + ' Finished running at ' + helpers.m2hm(this.arrM[(this.arrM.length - 1)]));
+            console.log(hm + ' Finished at ' + helpers.m2hm(this.arrM[(this.arrM.length - 1)]));
             return;
         }
         for (var i=0; i<this.arrM.length; i++) {
             if (nowM < this.arrM[i]) {
                 if (nowM > this.depM[i]) {
-                    console.log(hm + ' Between ' + this.stations[i] + ' and ' + this.stations[i+1]);
+                    console.log(hm + '      ' + this.stations[i] + ' ---- ' + this.stations[i+1]);
                 } else {
                     // The vehicle is in a station
                     console.log(hm + ' Station ' + this.stations[i]);                    
