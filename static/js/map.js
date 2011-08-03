@@ -118,21 +118,34 @@ $(document).ready(function(){
     var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
     linesPool.draw();
     
-    var vehicleData = {
-        stations: [11,22,3,4,5],
-        departures: ['10:10','10:13','10:17','10:23'],
-        arrivals: ['10:12','10:17','10:20','10:25']
-    };
+    var vehicleData = [
+        {
+            stations: [11,22,3,4,5],
+            departures: ['10:10','10:13','10:17','10:23'],
+            arrivals: ['10:12','10:17','10:20','10:25']
+        },
+        {
+            stations: [5,4,3,22,11],
+            departures: ['10:14','10:20','10:24','10:27'],
+            arrivals: ['10:17','10:24','10:26','10:29']
+        }
+    ];
+
+    var vs = [];
+    for (var i in vehicleData) {
+        vs[i] = new Vehicle(vehicleData[i]);
+        console.log('============================');
+        console.log('Vehicle ' + i);
+        console.log(vs[i]);
+        vs[i].render('08:30');
+        vs[i].render('10:11');
+        vs[i].render('10:12');
+        vs[i].render('10:15');
+        vs[i].render('10:17');
+        vs[i].render('10:18');
+        vs[i].render('10:22');
+        vs[i].render('10:24');
+        vs[i].render('10:45');
+    }
     
-    var v1 = new Vehicle(vehicleData);
-    console.log(v1);
-    v1.render('08:30');
-    v1.render('10:11');
-    v1.render('10:12');
-    v1.render('10:15');
-    v1.render('10:17');
-    v1.render('10:18');
-    v1.render('10:22');
-    v1.render('10:24');
-    v1.render('10:45');
 });
