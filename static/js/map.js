@@ -47,45 +47,91 @@ $(document).ready(function(){
         }
     })();
     var helpers = (function(){
+        function pad2Dec(what) {
+            var strNotPadded = '0' + what;
+            return strNotPadded.substring(strNotPadded.length - 2);
+        }
+        return {
+            pad2Dec: pad2Dec
+        }
+    })();
+    var time_helpers = (function(){
         function hm2m(hm) {
             var hmParts = hm.split(':');
             return parseInt(hmParts[0], 10)*60 + parseInt(hmParts[1], 10);
         }
         function m2hm(m) {
-            function pad2Dec(what) {
-                var strNotPadded = '0' + what;
-                return strNotPadded.substring(strNotPadded.length - 2);
+            var hS = helpers.pad2Dec(Math.floor(m/60));
+            var mS = helpers.pad2Dec(m - (parseInt(hS, 10)*60));
+            return hS + ':' + mS;
+        }
+        function hms2s(hms) {
+            var hmsParts = hms.split(':');
+            return parseInt(hmsParts[0], 10)*3600 + parseInt(hmsParts[1], 10)*60 + parseInt(hmsParts[2], 10);
+        }
+        function s2hms(s) {
+            var h = s/3600;
+            var m = (h - Math.floor(h))*60;
+            var s = (m - Math.floor(m))*60;
+            var hms = helpers.pad2Dec(parseInt(Math.floor(h), 10)) + ':'
+                + helpers.pad2Dec(parseInt(Math.floor(m), 10)) + ':'
+                + helpers.pad2Dec(parseInt(Math.floor(s), 10));
+            return hms;
+        }
+        return {
+            hm2m: hm2m,
+            m2hm: m2hm,
+            hms2s: hms2s,
+            s2hms: s2hms
+        }
+    })();
+    var timer = (function(){
+        var delayM = 0;
+        
+        function init(hm) {
+            function getNowMinutes() {
+                var now = new Date();
+                var hours = now.getHours();
+                var minutes = now.getMinutes();
+                return hours*60 + minutes;
             }
             
-            var hS = pad2Dec(Math.floor(m/60));
-            var mS = pad2Dec(m - (parseInt(hS, 10)*60));
-            return hS + ':' + mS;
+            if (typeof(hm) !== 'undefined') {
+                delayM = getNowMinutes() - time_helpers.hm2m(hm);
+            }
+
+            var timeContainer = $('#day_time');
+            timeContainer.text(time_helpers.m2hm(getNowMinutes() - delayM));
+            
+            setInterval(function(){
+                console.log('Updating timer');
+                timeContainer.text(time_helpers.m2hm(getNowMinutes() - delayM));
+            }, 1000*60);
         }
         
         return {
-            hm2m: hm2m,
-            m2hm: m2hm
+            init: init
         }
     })();
-
+    
     function Vehicle(data) {
         this.stations = data.stations;
         this.depM = [];
         this.arrM = [];
         // TODO - optimize introduce passedSteps
         for (var i in data.departures) {
-            this.depM.push(helpers.hm2m(data.departures[i]));
-            this.arrM.push(helpers.hm2m(data.arrivals[i]));
+            this.depM.push(time_helpers.hm2m(data.departures[i]));
+            this.arrM.push(time_helpers.hm2m(data.arrivals[i]));
         }
     }
     Vehicle.prototype.render = function(hm) {
-        var nowM = helpers.hm2m(hm);
+        var nowM = time_helpers.hm2m(hm);
         if (nowM < this.depM[0]) {
             // The vehicle will run later; 
             // This condition should be present on the serverside 
             //      when returning the current objects
             // For now: do nothing
-            console.log(hm + ' Will start at ' + helpers.m2hm(this.depM[0]));
+            console.log(hm + ' Will start at ' + time_helpers.m2hm(this.depM[0]));
             return;
         }
         if (nowM > this.arrM[(this.arrM.length - 1)]) {
@@ -93,7 +139,7 @@ $(document).ready(function(){
             // This condition should be present on the serverside 
             //      when returning the current objects
             // For now: do nothing
-            console.log(hm + ' Finished at ' + helpers.m2hm(this.arrM[(this.arrM.length - 1)]));
+            console.log(hm + ' Finished at ' + time_helpers.m2hm(this.arrM[(this.arrM.length - 1)]));
             return;
         }
         for (var i=0; i<this.arrM.length; i++) {
@@ -117,6 +163,9 @@ $(document).ready(function(){
     }
     var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
     linesPool.draw();
+    
+    var nowHM = '10:15';
+    timer.init(nowHM);
     
     var vehicleData = [
         {
