@@ -65,24 +65,9 @@ $(document).ready(function(){
             var mS = helpers.pad2Dec(m - (parseInt(hS, 10)*60));
             return hS + ':' + mS;
         }
-        function hms2s(hms) {
-            var hmsParts = hms.split(':');
-            return parseInt(hmsParts[0], 10)*3600 + parseInt(hmsParts[1], 10)*60 + parseInt(hmsParts[2], 10);
-        }
-        function s2hms(s) {
-            var h = s/3600;
-            var m = (h - Math.floor(h))*60;
-            var s = (m - Math.floor(m))*60;
-            var hms = helpers.pad2Dec(parseInt(Math.floor(h), 10)) + ':'
-                + helpers.pad2Dec(parseInt(Math.floor(m), 10)) + ':'
-                + helpers.pad2Dec(parseInt(Math.floor(s), 10));
-            return hms;
-        }
         return {
             hm2m: hm2m,
-            m2hm: m2hm,
-            hms2s: hms2s,
-            s2hms: s2hms
+            m2hm: m2hm
         }
     })();
     var timer = (function(){
