@@ -1,36 +1,52 @@
 $(document).ready(function(){
     var linesPool = (function() {
         var linesData = {
-            '11_22': [
-                '47.416739,8.5501539',
-                '47.411599,8.5438883'
-            ],
-            '22_3': [
-                '47.411599,8.5438883',
-                '47.409101,8.5386526',
-                '47.398790,8.5324299',
-                '47.393009,8.5293400'
-            ],
-            '3_4': [
-                '47.393009,8.5293400',
-                '47.387837,8.5261213',
-                '47.384583,8.5206282',
-                '47.381735,8.5225165',
-                '47.381253,8.5270587',
-                '47.378057,8.5402338'
-            ],
-            '4_5': [
-                '47.378057,8.5402338',
-                '47.375064,8.5437957'
-            ]
+            '11_22': {
+                p: [
+                    '47.416739,8.5501539',
+                    '47.411599,8.5438883'
+                ],
+                l: 742
+            },
+            '22_3': {
+                p: [
+                    '47.411599,8.5438883',
+                    '47.409101,8.5386526',
+                    '47.398790,8.5324299',
+                    '47.393009,8.5293400'
+                ],
+                l: 2407
+            },
+            '3_4': {
+                p: [
+                    '47.393009,8.5293400',
+                    '47.387837,8.5261213',
+                    '47.384583,8.5206282',
+                    '47.381735,8.5225165',
+                    '47.381253,8.5270587',
+                    '47.378057,8.5402338'
+                ],
+                l: 2924
+            },
+            '4_5': {
+                p: [
+                    '47.378057,8.5402338',
+                    '47.375064,8.5437957'
+                ],
+                l: 428
+            }
         };
+        
+        function latlngFromString(s) {
+            var parts = s.split(',');
+            return new google.maps.LatLng(parseFloat(parts[0]), parseFloat(parts[1]));
+        }
         
         function draw() {
             $.each(linesData, function(k1, lineData) {
                 var lineCoords = [];
-                $.each(lineData, function(k2, p) {
-                    var pParts = p.split(',');
-                    lineCoords.push(new google.maps.LatLng(parseFloat(pParts[0]), parseFloat(pParts[1])));
+                $.each(lineData.p, function(k2, p) {
+                    lineCoords.push(latlngFromString(p));
                 });
                 var lineMap = new google.maps.Polyline({
                   path: lineCoords,
@@ -41,9 +57,45 @@ $(document).ready(function(){
                 });
             });
         }
+        function getPosition(id, perc) {
+            if (typeof linesData[id] === 'undefined') {
+                var idParts = id.split('_');
+                var newID = idParts[1] + '_' + idParts[0];
+                if (typeof linesData[newID] === 'undefined') {
+                    return null;
+                }
+                var vxs = linesData[newID].p.slice().reverse();
+                var lineL = linesData[newID].l;
+            } else {
+                var vxs = linesData[id].p;
+                var lineL = linesData[id].l;
+            }
+            
+            // We do not use google.maps.Polyline because most probably the lines 
+            //      will be plotted via FusionTables.
+            var dC = 0;
+            var dAC = lineL*perc;
+            
+            for (var i=1; i<vxs.length; i++) {
+                var d12 = google.maps.geometry.spherical.computeDistanceBetween(latlngFromString(vxs[i-1]), latlngFromString(vxs[i]));
+                if ((dC + d12) > dAC) {
+                    var p1Parts = vxs[i-1].split(',');
+                    var p2Parts = vxs[i].split(',');
+                    
+                    var dx = (parseFloat(p2Parts[1]) - parseFloat(p1Parts[1]))*(dAC - dC)/d12;
+                    var dy = (parseFloat(p2Parts[0]) - parseFloat(p1Parts[0]))*(dAC - dC)/d12;
+                    
+                    return new google.maps.LatLng(parseFloat(p1Parts[0]) + dy, parseFloat(p1Parts[1]) + dx);
+                }
+                dC += d12;
+            }
+            
+            return null;
+        }
         
         return {
-            draw: draw
+            draw: draw,
+            getPosition: getPosition
         }
     })();
     var helpers = (function(){
@@ -73,33 +125,46 @@ $(document).ready(function(){
     var timer = (function(){
         var delayM = 0;
         
+        function getNow() {
+            var now = new Date();
+            var hours = now.getHours();
+            var minutes = now.getMinutes();
+            var seconds = now.getSeconds();
+            
+            var m = hours*60 + minutes + seconds/60;
+            
+            return m;
+        }
+        
+        function getNowMinutes() {
+            return getNow() - delayM;
+        }
+        
         function init(hm) {
-            function getNowMinutes() {
-                var now = new Date();
-                var hours = now.getHours();
-                var minutes = now.getMinutes();
-                return hours*60 + minutes;
+            if (typeof(hm) !== 'undefined') {
+                delayM = Math.floor(getNow()) - time_helpers.hm2m(hm);
             }
             
-            if (typeof(hm) !== 'undefined') {
-                delayM = getNowMinutes() - time_helpers.hm2m(hm);
-            }
-
             var timeContainer = $('#day_time');
-            timeContainer.text(time_helpers.m2hm(getNowMinutes() - delayM));
+            function paintHM() {
+                timeContainer.text(time_helpers.m2hm(Math.floor(getNowMinutes())));
+            }
+            
+            paintHM();
             
             setInterval(function(){
-                console.log('Updating timer');
-                timeContainer.text(time_helpers.m2hm(getNowMinutes() - delayM));
+                paintHM();
             }, 1000*60);
         }
         
         return {
-            init: init
+            init: init,
+            getMinutesDec: getNowMinutes
         }
     })();
     
     function Vehicle(data) {
+        this.id = data.id;
         this.stations = data.stations;
         this.depM = [];
         this.arrM = [];
@@ -109,35 +174,82 @@ $(document).ready(function(){
             this.arrM.push(time_helpers.hm2m(data.arrivals[i]));
         }
     }
-    Vehicle.prototype.render = function(hm) {
-        var nowM = time_helpers.hm2m(hm);
-        if (nowM < this.depM[0]) {
-            // The vehicle will run later; 
-            // This condition should be present on the serverside 
-            //      when returning the current objects
-            // For now: do nothing
-            console.log(hm + ' Will start at ' + time_helpers.m2hm(this.depM[0]));
-            return;
-        }
-        if (nowM > this.arrM[(this.arrM.length - 1)]) {
-            // The vehicle ran earlier; 
-            // This condition should be present on the serverside 
-            //      when returning the current objects
-            // For now: do nothing
-            console.log(hm + ' Finished at ' + time_helpers.m2hm(this.arrM[(this.arrM.length - 1)]));
-            return;
-        }
-        for (var i=0; i<this.arrM.length; i++) {
-            if (nowM < this.arrM[i]) {
-                if (nowM > this.depM[i]) {
-                    console.log(hm + '      ' + this.stations[i] + ' ---- ' + this.stations[i+1]);
-                } else {
-                    // The vehicle is in a station
-                    console.log(hm + ' Station ' + this.stations[i]);                    
+    Vehicle.prototype.render = function() {
+        function getState(m) {
+            var hms = time_helpers.m2hm(Math.floor(m)) + ':' + (m - Math.floor(m)).toFixed(2);
+
+            if (m < that.depM[0]) {
+                // The vehicle will run later; 
+                // This condition should be present on the serverside 
+                //      when returning the current objects
+                // For now: do nothing
+                return {
+                    state: 'out',
+                    message: that.id + '> ' + hms + ' Will start at ' + time_helpers.m2hm(that.depM[0])
                 }
-                break;
+            }
+            if (m > that.arrM[(that.arrM.length - 1)]) {
+                // The vehicle ran earlier; 
+                // This condition should be present on the serverside 
+                //      when returning the current objects
+                // For now: do nothing
+                return {
+                    state: 'out',
+                    message: that.id + '> ' + hms + ' Finished at ' + time_helpers.m2hm(that.arrM[(that.arrM.length - 1)])
+                }
+            }
+            for (var i=0; i<that.arrM.length; i++) {
+                if (m < that.arrM[i]) {
+                    if (m > that.depM[i]) {
+                        return {
+                            state: 'motion',
+                            stations: that.stations[i] + '_' + that.stations[i+1],
+                            percent: (m - that.depM[i])/(that.arrM[i] - that.depM[i]),
+                            message: that.id + '> ' + hms + '      ' + that.stations[i] + ' ---- ' + that.stations[i+1]
+                        }
+                    } else {
+                        return {
+                            state: 'station',
+                            station: that.stations[i],
+                            message: that.id + '> ' + hms + ' Station ' + that.stations[i]
+                        }
+                    }
+                    break;
+                }
+            }
+            
+            return {
+                state: 'unknown'
             }
         }
+        
+        var marker = new google.maps.Marker({position: new google.maps.LatLng(0, 0), map: map});
+        
+        var that = this;
+        this.animation = setInterval(function(){
+            var hm = timer.getMinutesDec();
+            var p = getState(hm);
+            switch (p.state) {
+                case 'out':
+                    clearInterval(that.animation);
+                    marker.setMap(null);
+                    break;
+                case 'station':
+                    console.log(p.message);
+                    break;
+                case 'motion':
+                    var pos = linesPool.getPosition(p.stations, p.percent);
+                    if (pos === null) {
+                        clearInterval(that.animation);
+                        console.log(p.stations + ' missing ?');
+                    }
+                    marker.setPosition(pos);
+                    break;
+                default:
+                    clearInterval(that.animation);
+                    break;
+            }
+        }, 500);
     };
     
     var start = new google.maps.LatLng(47.378057, 8.5402338);
@@ -154,11 +266,13 @@ $(document).ready(function(){
     
     var vehicleData = [
         {
+            id: 'B1',
             stations: [11,22,3,4,5],
             departures: ['10:10','10:13','10:17','10:23'],
             arrivals: ['10:12','10:17','10:20','10:25']
         },
         {
+            id: 'A2',
             stations: [5,4,3,22,11],
             departures: ['10:14','10:20','10:24','10:27'],
             arrivals: ['10:17','10:24','10:26','10:29']
@@ -168,18 +282,7 @@ $(document).ready(function(){
     var vs = [];
     for (var i in vehicleData) {
         vs[i] = new Vehicle(vehicleData[i]);
-        console.log('============================');
-        console.log('Vehicle ' + i);
-        console.log(vs[i]);
-        vs[i].render('08:30');
-        vs[i].render('10:11');
-        vs[i].render('10:12');
-        vs[i].render('10:15');
-        vs[i].render('10:17');
-        vs[i].render('10:18');
-        vs[i].render('10:22');
-        vs[i].render('10:24');
-        vs[i].render('10:45');
+        vs[i].render();
     }
     
 });
