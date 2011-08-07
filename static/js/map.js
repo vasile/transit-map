@@ -98,27 +98,23 @@ $(document).ready(function(){
             getPosition: getPosition
         }
     })();
-    var helpers = (function(){
-        function pad2Dec(what) {
-            return (what < 10 ? '0' + what : what);
-        }
-        return {
-            pad2Dec: pad2Dec
-        }
-    })();
     var time_helpers = (function(){
         function hms2s(hms) {
             var parts = hms.split(':');
             return parseInt(parts[0], 10)*3600 + parseInt(parts[1], 10)*60 + parseInt(parts[2], 10);
         }
         function s2hms(dayS) {
+            function pad2Dec(what) {
+                return (what < 10 ? '0' + what : what);
+            }
+            
             // From http://stackoverflow.com/questions/1322732/convert-seconds-to-hh-mm-ss-with-javascript
             var hours = Math.floor(dayS / 3600);
             dayS %= 3600;
             var minutes = Math.floor(dayS / 60);
             var seconds = dayS % 60;
             
-            return helpers.pad2Dec(hours) + ':' + helpers.pad2Dec(minutes) + ':' + helpers.pad2Dec(seconds);
+            return pad2Dec(hours) + ':' + pad2Dec(minutes) + ':' + pad2Dec(seconds);
         }
         return {
             hms2s: hms2s,
