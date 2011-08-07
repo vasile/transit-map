@@ -1,2 +1,1 @@
 - migrate timer and timetables to use seconds instead of "decimal" minutes
-- Vehicle: use setTimeout instead of setInterval 

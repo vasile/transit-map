@@ -175,81 +175,56 @@ $(document).ready(function(){
         }
     }
     Vehicle.prototype.render = function() {
-        function getState(m) {
-            var hms = time_helpers.m2hm(Math.floor(m)) + ':' + (m - Math.floor(m)).toFixed(2);
-
-            if (m < that.depM[0]) {
-                // The vehicle will run later; 
-                // This condition should be present on the serverside 
-                //      when returning the current objects
-                // For now: do nothing
-                return {
-                    state: 'out',
-                    message: that.id + '> ' + hms + ' Will start at ' + time_helpers.m2hm(that.depM[0])
-                }
-            }
-            if (m > that.arrM[(that.arrM.length - 1)]) {
-                // The vehicle ran earlier; 
-                // This condition should be present on the serverside 
-                //      when returning the current objects
-                // For now: do nothing
-                return {
-                    state: 'out',
-                    message: that.id + '> ' + hms + ' Finished at ' + time_helpers.m2hm(that.arrM[(that.arrM.length - 1)])
-                }
-            }
+        var marker = new google.maps.Marker({position: new google.maps.LatLng(0, 0), map: map});
+        
+        function animate() {
+            var hm = timer.getMinutesDec();
+            // Time to create a new helper_timer for hms ?
+            var hms = time_helpers.m2hm(Math.floor(hm)) + ':' + (hm - Math.floor(hm)).toFixed(2);
+            
+            var info = {
+                state: null
+            };
             for (var i=0; i<that.arrM.length; i++) {
-                if (m < that.arrM[i]) {
-                    if (m > that.depM[i]) {
-                        return {
+                if (hm < that.arrM[i]) {
+                    if (hm > that.depM[i]) {
+                        info = {
                             state: 'motion',
                             stations: that.stations[i] + '_' + that.stations[i+1],
-                            percent: (m - that.depM[i])/(that.arrM[i] - that.depM[i]),
+                            percent: (hm - that.depM[i])/(that.arrM[i] - that.depM[i]),
                             message: that.id + '> ' + hms + '      ' + that.stations[i] + ' ---- ' + that.stations[i+1]
-                        }
+                        };
                     } else {
-                        return {
+                        info = {
                             state: 'station',
                             station: that.stations[i],
                             message: that.id + '> ' + hms + ' Station ' + that.stations[i]
-                        }
+                        };
                     }
                     break;
                 }
             }
             
-            return {
-                state: 'unknown'
+            switch (info.state) {
+                case 'station':
+                    console.log(info);
+                    break;
+                case 'motion':
+                    var pos = linesPool.getPosition(info.stations, info.percent);
+                    if (pos === null) {
+                        console.log('Couldnt get the position of ' + that.id + ' between stations: ' + info.stations);
+                    }
+                    marker.setPosition(pos);
+                    setTimeout(animate, 500);
+                    break;
+                default:
+                    marker.setMap(null);
+                    break;
             }
         }
         
-        var marker = new google.maps.Marker({position: new google.maps.LatLng(0, 0), map: map});
-        
         var that = this;
-        this.animation = setInterval(function(){
-            var hm = timer.getMinutesDec();
-            var p = getState(hm);
-            switch (p.state) {
-                case 'out':
-                    clearInterval(that.animation);
-                    marker.setMap(null);
-                    break;
-                case 'station':
-                    console.log(p.message);
-                    break;
-                case 'motion':
-                    var pos = linesPool.getPosition(p.stations, p.percent);
-                    if (pos === null) {
-                        clearInterval(that.animation);
-                        console.log(p.stations + ' missing ?');
-                    }
-                    marker.setPosition(pos);
-                    break;
-                default:
-                    clearInterval(that.animation);
-                    break;
-            }
-        }, 500);
+        animate();
     };
     
     var start = new google.maps.LatLng(47.378057, 8.5402338);
