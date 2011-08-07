@@ -198,6 +198,7 @@ $(document).ready(function(){
                         info = {
                             state: 'station',
                             station: that.stations[i],
+                            timeLeft: that.depM[i] - hm,
                             message: that.id + '> ' + hms + ' Station ' + that.stations[i]
                         };
                     }
@@ -207,7 +208,7 @@ $(document).ready(function(){
             
             switch (info.state) {
                 case 'station':
-                    console.log(info);
+                    setTimeout(animate, info.timeLeft*60*1000);
                     break;
                 case 'motion':
                     var pos = linesPool.getPosition(info.stations, info.percent);
@@ -236,7 +237,7 @@ $(document).ready(function(){
     var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
     linesPool.draw();
     
-    var nowHM = '10:15';
+    var nowHM = '10:16';
     timer.init(nowHM);
     
     var vehicleData = [
