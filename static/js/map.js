@@ -233,7 +233,7 @@ $(document).ready(function(){
     var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
     linesPool.draw();
     
-    var nowHMS = '10:17:05';
+    var nowHMS = '10:16:55';
     timer.init(nowHMS);
     
     var vehicleData = [
