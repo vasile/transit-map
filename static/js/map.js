@@ -37,11 +37,13 @@ $(document).ready(function(){
             }
         };
         
+        // TODO - get rid of this, start to use separate fields for the coordinates
         function latlngFromString(s) {
             var parts = s.split(',');
             return new google.maps.LatLng(parseFloat(parts[0]), parseFloat(parts[1]));
         }
         
+        // TODO - move to FT
         function draw() {
             $.each(linesData, function(k1, lineData) {
                 var lineCoords = [];
@@ -71,8 +73,6 @@ $(document).ready(function(){
                 var lineL = linesData[id].l;
             }
             
-            // We do not use google.maps.Polyline because most probably the lines 
-            //      will be plotted via FusionTables.
             var dC = 0;
             var dAC = lineL*perc;
             
