@@ -100,66 +100,66 @@ $(document).ready(function(){
     })();
     var helpers = (function(){
         function pad2Dec(what) {
-            var strNotPadded = '0' + what;
-            return strNotPadded.substring(strNotPadded.length - 2);
+            return (what < 10 ? '0' + what : what);
         }
         return {
             pad2Dec: pad2Dec
         }
     })();
     var time_helpers = (function(){
-        function hm2m(hm) {
-            var hmParts = hm.split(':');
-            return parseInt(hmParts[0], 10)*60 + parseInt(hmParts[1], 10);
+        function hms2s(hms) {
+            var parts = hms.split(':');
+            return parseInt(parts[0], 10)*3600 + parseInt(parts[1], 10)*60 + parseInt(parts[2], 10);
         }
-        function m2hm(m) {
-            var hS = helpers.pad2Dec(Math.floor(m/60));
-            var mS = helpers.pad2Dec(m - (parseInt(hS, 10)*60));
-            return hS + ':' + mS;
+        function s2hms(dayS) {
+            // From http://stackoverflow.com/questions/1322732/convert-seconds-to-hh-mm-ss-with-javascript
+            var hours = Math.floor(dayS / 3600);
+            dayS %= 3600;
+            var minutes = Math.floor(dayS / 60);
+            var seconds = dayS % 60;
+            
+            return helpers.pad2Dec(hours) + ':' + helpers.pad2Dec(minutes) + ':' + helpers.pad2Dec(seconds);
         }
         return {
-            hm2m: hm2m,
-            m2hm: m2hm
+            hms2s: hms2s,
+            s2hms: s2hms
         }
     })();
     var timer = (function(){
-        var delayM = 0;
+        var delay = 0;
         
         function getNow() {
             var now = new Date();
+
             var hours = now.getHours();
             var minutes = now.getMinutes();
             var seconds = now.getSeconds();
             
-            var m = hours*60 + minutes + seconds/60;
-            
-            return m;
+            return hours*3600 + minutes*60 + seconds;
         }
         
-        function getNowMinutes() {
-            return getNow() - delayM;
+        function getDaySeconds() {
+            return getNow() - delay;
         }
         
-        function init(hm) {
-            if (typeof(hm) !== 'undefined') {
-                delayM = Math.floor(getNow()) - time_helpers.hm2m(hm);
+        function init(hms) {
+            if (typeof(hms) !== 'undefined') {
+                delay = getNow() - time_helpers.hms2s(hms);
             }
             
             var timeContainer = $('#day_time');
             function paintHM() {
-                timeContainer.text(time_helpers.m2hm(Math.floor(getNowMinutes())));
+                timeContainer.text(time_helpers.s2hms(getDaySeconds()));
             }
-            
-            paintHM();
             
             setInterval(function(){
                 paintHM();
-            }, 1000*60);
+            }, 1000);
         }
         
         return {
             init: init,
-            getMinutesDec: getNowMinutes
+            getTime: getDaySeconds
         }
     })();
     
@@ -170,36 +170,34 @@ $(document).ready(function(){
         this.arrM = [];
         // TODO - optimize introduce passedSteps
         for (var i in data.departures) {
-            this.depM.push(time_helpers.hm2m(data.departures[i]));
-            this.arrM.push(time_helpers.hm2m(data.arrivals[i]));
+            this.depM.push(time_helpers.hms2s(data.departures[i]));
+            this.arrM.push(time_helpers.hms2s(data.arrivals[i]));
         }
     }
     Vehicle.prototype.render = function() {
         var marker = new google.maps.Marker({position: new google.maps.LatLng(0, 0), map: map});
         
         function animate() {
-            var hm = timer.getMinutesDec();
-            // Time to create a new helper_timer for hms ?
-            var hms = time_helpers.m2hm(Math.floor(hm)) + ':' + (hm - Math.floor(hm)).toFixed(2);
+            var hms = timer.getTime();
             
             var info = {
                 state: null
             };
             for (var i=0; i<that.arrM.length; i++) {
-                if (hm < that.arrM[i]) {
-                    if (hm > that.depM[i]) {
+                if (hms < that.arrM[i]) {
+                    if (hms > that.depM[i]) {
                         info = {
                             state: 'motion',
                             stations: that.stations[i] + '_' + that.stations[i+1],
-                            percent: (hm - that.depM[i])/(that.arrM[i] - that.depM[i]),
-                            message: that.id + '> ' + hms + '      ' + that.stations[i] + ' ---- ' + that.stations[i+1]
+                            percent: (hms - that.depM[i])/(that.arrM[i] - that.depM[i]),
+                            message: that.id + '> ' + time_helpers.s2hms(hms) + ' From ' + that.stations[i] + ' --TO-- ' + that.stations[i+1]
                         };
                     } else {
                         info = {
                             state: 'station',
                             station: that.stations[i],
-                            timeLeft: that.depM[i] - hm,
-                            message: that.id + '> ' + hms + ' Station ' + that.stations[i]
+                            timeLeft: that.depM[i] - hms,
+                            message: that.id + '> ' + time_helpers.s2hms(hms) + ' In station ' + that.stations[i] + ' until ' + time_helpers.s2hms(that.depM[i])
                         };
                     }
                     break;
@@ -208,12 +206,14 @@ $(document).ready(function(){
             
             switch (info.state) {
                 case 'station':
-                    setTimeout(animate, info.timeLeft*60*1000);
+                    // TODO - if is not yet on the map, add it. Use station coordinates
+                    setTimeout(animate, info.timeLeft*1000);
                     break;
                 case 'motion':
                     var pos = linesPool.getPosition(info.stations, info.percent);
                     if (pos === null) {
                         console.log('Couldnt get the position of ' + that.id + ' between stations: ' + info.stations);
+                        break;
                     }
                     marker.setPosition(pos);
                     setTimeout(animate, 500);
@@ -237,21 +237,21 @@ $(document).ready(function(){
     var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
     linesPool.draw();
     
-    var nowHM = '10:16';
-    timer.init(nowHM);
+    var nowHMS = '10:17:05';
+    timer.init(nowHMS);
     
     var vehicleData = [
         {
             id: 'B1',
             stations: [11,22,3,4,5],
-            departures: ['10:10','10:13','10:17','10:23'],
-            arrivals: ['10:12','10:17','10:20','10:25']
+            departures: ['10:10:00','10:13:00','10:17:15','10:23:00'],
+            arrivals: ['10:12:00','10:17:00','10:20:00','10:25:00']
         },
         {
             id: 'A2',
             stations: [5,4,3,22,11],
-            departures: ['10:14','10:20','10:24','10:27'],
-            arrivals: ['10:17','10:24','10:26','10:29']
+            departures: ['10:14:00','10:20:00','10:24:30','10:27:00'],
+            arrivals: ['10:17:00','10:24:00','10:26:00','10:29:00']
         }
     ];
 

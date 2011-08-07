@@ -1,1 +1,2 @@
-- migrate timer and timetables to use seconds instead of "decimal" minutes
+- take out line rendition, start to use FT
+- if is not yet on the map, add it. Use station coordinates
