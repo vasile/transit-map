@@ -43,22 +43,6 @@ $(document).ready(function(){
             return new google.maps.LatLng(parseFloat(parts[0]), parseFloat(parts[1]));
         }
         
-        // TODO - move to FT
-        function draw() {
-            $.each(linesData, function(k1, lineData) {
-                var lineCoords = [];
-                $.each(lineData.p, function(k2, p) {
-                    lineCoords.push(latlngFromString(p));
-                });
-                var lineMap = new google.maps.Polyline({
-                  path: lineCoords,
-                  strokeColor: '#FF0000',
-                  strokeOpacity: 1.0,
-                  strokeWeight: 2,
-                  map: map
-                });
-            });
-        }
         function getPosition(id, perc) {
             if (typeof linesData[id] === 'undefined') {
                 var idParts = id.split('_');
@@ -94,7 +78,6 @@ $(document).ready(function(){
         }
         
         return {
-            draw: draw,
             getPosition: getPosition
         }
     })();
@@ -231,7 +214,22 @@ $(document).ready(function(){
       mapTypeId: google.maps.MapTypeId.ROADMAP
     }
     var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-    linesPool.draw();
+
+    var layer = null;
+    layer = new google.maps.FusionTablesLayer({
+      query: {
+        select: 'geometry',
+        from: '1497331'
+      },
+      map: map
+    });
+    layer = new google.maps.FusionTablesLayer({
+      query: {
+        select: 'geometry',
+        from: '1497361'
+      },
+      map: map
+    });
     
     var nowHMS = '10:16:55';
     timer.init(nowHMS);
