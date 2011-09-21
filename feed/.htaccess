@@ -1,0 +1,2 @@
+RewriteEngine On
+RewriteRule vehicles/([0-9]{2}:[0-9]{2}) app/routes/vehicles.php?hm=$1 [L]
