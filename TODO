@@ -1,3 +1,8 @@
+- load initial trains - sequence (multiple ajax requests) - keep track of vehicles in SESSION
+--- maybe use the same approach for loading the routes
+- restrict access to feed/tmp/sbb_export.db
+
+
 - get rid of latlngFromString -> use coordinates, is faster
 --- OR use encoded polylines
 - if is not yet on the map, add it. Use station coordinates

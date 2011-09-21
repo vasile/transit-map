@@ -1,42 +1,5 @@
 $(document).ready(function(){
     var linesPool = (function() {
-        var linesData = {
-            '11_22': {
-                p: [
-                    '47.416739,8.5501539',
-                    '47.411599,8.5438883'
-                ],
-                l: 742
-            },
-            '22_3': {
-                p: [
-                    '47.411599,8.5438883',
-                    '47.409101,8.5386526',
-                    '47.398790,8.5324299',
-                    '47.393009,8.5293400'
-                ],
-                l: 2407
-            },
-            '3_4': {
-                p: [
-                    '47.393009,8.5293400',
-                    '47.387837,8.5261213',
-                    '47.384583,8.5206282',
-                    '47.381735,8.5225165',
-                    '47.381253,8.5270587',
-                    '47.378057,8.5402338'
-                ],
-                l: 2924
-            },
-            '4_5': {
-                p: [
-                    '47.378057,8.5402338',
-                    '47.375064,8.5437957'
-                ],
-                l: 428
-            }
-        };
-        
         // TODO - get rid of this, start to use separate fields for the coordinates
         function latlngFromString(s) {
             var parts = s.split(',');
@@ -136,22 +99,23 @@ $(document).ready(function(){
             }, 1000);
         }
         
+        function getHM() {
+          var hms = time_helpers.s2hms(getDaySeconds());
+          return hms.substring(0, 5);
+        }
+        
         return {
             init: init,
-            getTime: getDaySeconds
+            getTime: getDaySeconds,
+            getHM: getHM
         }
     })();
     
     function Vehicle(data) {
         this.id = data.id;
         this.stations = data.stations;
-        this.depM = [];
-        this.arrM = [];
-        // TODO - optimize introduce passedSteps
-        for (var i in data.departures) {
-            this.depM.push(time_helpers.hms2s(data.departures[i]));
-            this.arrM.push(time_helpers.hms2s(data.arrivals[i]));
-        }
+        this.depS = data.departures;
+        this.arrS = data.arrivals;
     }
     Vehicle.prototype.render = function() {
         var marker = new google.maps.Marker({position: new google.maps.LatLng(0, 0), map: map});
@@ -162,21 +126,21 @@ $(document).ready(function(){
             var info = {
                 state: null
             };
-            for (var i=0; i<that.arrM.length; i++) {
-                if (hms < that.arrM[i]) {
-                    if (hms > that.depM[i]) {
+            for (var i=0; i<that.arrS.length; i++) {
+                if (hms < that.arrS[i]) {
+                    if (hms > that.depS[i]) {
                         info = {
                             state: 'motion',
                             stations: that.stations[i] + '_' + that.stations[i+1],
-                            percent: (hms - that.depM[i])/(that.arrM[i] - that.depM[i]),
+                            percent: (hms - that.depS[i])/(that.arrS[i] - that.depS[i]),
                             message: that.id + '> ' + time_helpers.s2hms(hms) + ' From ' + that.stations[i] + ' --TO-- ' + that.stations[i+1]
                         };
                     } else {
                         info = {
                             state: 'station',
                             station: that.stations[i],
-                            timeLeft: that.depM[i] - hms,
-                            message: that.id + '> ' + time_helpers.s2hms(hms) + ' In station ' + that.stations[i] + ' until ' + time_helpers.s2hms(that.depM[i])
+                            timeLeft: that.depS[i] - hms,
+                            message: that.id + '> ' + time_helpers.s2hms(hms) + ' In station ' + that.stations[i] + ' until ' + time_helpers.s2hms(that.depS[i])
                         };
                     }
                     break;
@@ -234,25 +198,19 @@ $(document).ready(function(){
     var nowHMS = '10:16:55';
     timer.init(nowHMS);
     
-    var vehicleData = [
-        {
-            id: 'B1',
-            stations: [11,22,3,4,5],
-            departures: ['10:10:00','10:13:00','10:17:15','10:23:00'],
-            arrivals: ['10:12:00','10:17:00','10:20:00','10:25:00']
-        },
-        {
-            id: 'A2',
-            stations: [5,4,3,22,11],
-            departures: ['10:14:00','10:20:00','10:24:30','10:27:00'],
-            arrivals: ['10:17:00','10:24:00','10:26:00','10:29:00']
-        }
-    ];
-
-    var vs = [];
-    for (var i in vehicleData) {
-        vs[i] = new Vehicle(vehicleData[i]);
-        vs[i].render();
-    }
-    
+    $.ajax({
+      url: '/feed/vehicles/' + timer.getHM(),
+      dataType: 'json',
+      success: function(vehicles) {
+        $.each(vehicles, function(index, vehicle) { 
+          var v = new Vehicle({
+            id: vehicle['id'],
+            stations: vehicle.sts,
+            departures: vehicle.deps,
+            arrivals: vehicle.arrs
+          });
+          v.render();
+        });
+      }
+    });
 });
