@@ -39,14 +39,19 @@ class Vehicles {
                 'sts'   => array(),
                 'deps'  => array(),
                 'arrs'  => array(),
+                'edges' => array(),
             );
             
             // TODO - memcache ME
-            $sql = 'SELECT * FROM timetable WHERE vehicle_id = "' . $vehicle['id'] . '" ORDER BY timetable.id';
+            $sql = 'SELECT station_id, time_departure_sec, time_arrival_sec, previous_edges FROM timetable WHERE vehicle_id = "' . $vehicle['id'] . '" ORDER BY timetable.id';
             $stops = self::$DB->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             
             foreach ($stops as $k => $stop) {
+                if (($k > 0) && (strlen($stop['previous_edges']) === 0)) {
+                    continue;
+                }
                 array_push($vehicleData['sts'], (int) $stop['station_id']);
+                array_push($vehicleData['edges'], $stop['previous_edges']);
                 if ($k < (count($stops) - 1)) {
                     array_push($vehicleData['deps'], (int) $stop['time_departure_sec']);
                 }
@@ -61,8 +66,13 @@ class Vehicles {
     }
     
     public static function json_dump($rows) {
-        // TODO - handle GZIP output 
+        if (substr_count($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip')) {
+            ob_start("ob_gzhandler");
+        }  else {
+            ob_start();
+        }
+
         header('Content-Type: text/javascript; charset=utf8');
-        echo  json_encode($rows);
+        echo json_encode($rows);
     }
 }
