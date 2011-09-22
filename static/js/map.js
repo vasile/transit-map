@@ -1,38 +1,22 @@
 $(document).ready(function(){
     var linesPool = (function() {
-        // TODO - get rid of this, start to use separate fields for the coordinates
-        function latlngFromString(s) {
-            var parts = s.split(',');
-            return new google.maps.LatLng(parseFloat(parts[0]), parseFloat(parts[1]));
-        }
-        
-        function getPosition(id, perc) {
-            if (typeof linesData[id] === 'undefined') {
-                var idParts = id.split('_');
-                var newID = idParts[1] + '_' + idParts[0];
-                if (typeof linesData[newID] === 'undefined') {
-                    return null;
-                }
-                var vxs = linesData[newID].p.slice().reverse();
-                var lineL = linesData[newID].l;
-            } else {
-                var vxs = linesData[id].p;
-                var lineL = linesData[id].l;
-            }
+        var routes = {};
+
+        function positionOnRouteAtPercentGet(ids, perc) {
+            var route = routes[ids[0] + '_' + ids[1]];
             
             var dC = 0;
-            var dAC = lineL*perc;
+            var dAC = route['length']*perc;
             
-            for (var i=1; i<vxs.length; i++) {
-                var d12 = google.maps.geometry.spherical.computeDistanceBetween(latlngFromString(vxs[i-1]), latlngFromString(vxs[i]));
+            for (var i=1; i<route['points'].length; i++) {
+                var pA = route['points'][i-1];
+                var pB = route['points'][i]
+                var d12 = google.maps.geometry.spherical.computeDistanceBetween(pA, pB);
                 if ((dC + d12) > dAC) {
-                    var p1Parts = vxs[i-1].split(',');
-                    var p2Parts = vxs[i].split(',');
+                    var dx = (pB.lng() - pA.lng())*(dAC - dC)/d12;
+                    var dy = (pB.lat() - pA.lat())*(dAC - dC)/d12;
                     
-                    var dx = (parseFloat(p2Parts[1]) - parseFloat(p1Parts[1]))*(dAC - dC)/d12;
-                    var dy = (parseFloat(p2Parts[0]) - parseFloat(p1Parts[0]))*(dAC - dC)/d12;
-                    
-                    return new google.maps.LatLng(parseFloat(p1Parts[0]) + dy, parseFloat(p1Parts[1]) + dx);
+                    return new google.maps.LatLng(pA.lat() + dy, pA.lng() + dx);
                 }
                 dC += d12;
             }
@@ -40,8 +24,47 @@ $(document).ready(function(){
             return null;
         }
         
+        // Extract me into routesPool
+        function routeExists(a, b) {
+          if (typeof routes[a + '_' + b] !== 'undefined') {
+              return true;
+          }
+          if (typeof routes[b + '_' + a] !== 'undefined') {
+              return true;
+          }
+          
+          return false;
+        }
+        
+        function routeAdd(a, b, edges) {
+            var routeLength = 0;
+            var routePoints = [];
+            $.each(edges, function(k, edgeID) {
+                var edge = simcity_topology_edges[Math.abs(edgeID)];
+                routeLength += edge['l'];
+                
+                var points = google.maps.geometry.encoding.decodePath(edge['p']);
+                if (edgeID < 0) {
+                    points.reverse();
+                }
+                // TODO - use some MVCArray magic to remove the last element of edges when concatenating ?
+                routePoints = routePoints.concat(points);
+            });
+            
+            routes[a + '_' + b] = {
+                'points': routePoints,
+                'length': routeLength
+            };
+            routes[b + '_' + a] = {
+                'points': routePoints.slice().reverse(),
+                'length': routeLength
+            };
+        }
+        
         return {
-            getPosition: getPosition
+            positionGet: positionOnRouteAtPercentGet,
+            routeExists: routeExists,
+            routeAdd: routeAdd
         }
     })();
     var time_helpers = (function(){
@@ -116,6 +139,16 @@ $(document).ready(function(){
         this.stations = data.stations;
         this.depS = data.departures;
         this.arrS = data.arrivals;
+        
+        $.each(data.edges, function(index, edge) {
+            if (index === 0) { return; }
+            
+            if (linesPool.routeExists(data.stations[index-1], data.stations[index])) {
+                return;
+            }
+            
+            linesPool.routeAdd(data.stations[index-1], data.stations[index], data.edges[index].split(','));
+        });
     }
     Vehicle.prototype.render = function() {
         var marker = new google.maps.Marker({position: new google.maps.LatLng(0, 0), map: map});
@@ -131,7 +164,7 @@ $(document).ready(function(){
                     if (hms > that.depS[i]) {
                         info = {
                             state: 'motion',
-                            stations: that.stations[i] + '_' + that.stations[i+1],
+                            stations: [that.stations[i], that.stations[i+1]],
                             percent: (hms - that.depS[i])/(that.arrS[i] - that.depS[i]),
                             message: that.id + '> ' + time_helpers.s2hms(hms) + ' From ' + that.stations[i] + ' --TO-- ' + that.stations[i+1]
                         };
@@ -153,7 +186,7 @@ $(document).ready(function(){
                     setTimeout(animate, info.timeLeft*1000);
                     break;
                 case 'motion':
-                    var pos = linesPool.getPosition(info.stations, info.percent);
+                    var pos = linesPool.positionGet(info.stations, info.percent);
                     if (pos === null) {
                         console.log('Couldnt get the position of ' + that.id + ' between stations: ' + info.stations);
                         break;
@@ -170,6 +203,9 @@ $(document).ready(function(){
         var that = this;
         animate();
     };
+    
+    
+    // END HELPERS
     
     var start = new google.maps.LatLng(47.378057, 8.5402338);
     var myOptions = {
@@ -207,7 +243,8 @@ $(document).ready(function(){
             id: vehicle['id'],
             stations: vehicle.sts,
             departures: vehicle.deps,
-            arrivals: vehicle.arrs
+            arrivals: vehicle.arrs,
+            edges: vehicle.edges
           });
           v.render();
         });
