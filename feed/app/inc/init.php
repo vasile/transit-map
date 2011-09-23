@@ -26,9 +26,8 @@ class Vehicles {
         $time_sec_1d = $time_sec + 3600 * 24;
         
         // TODO - memcache ME
-        // TODO - store the vehicles fetched already in a $_SESSION
         Vehicles::init_db();
-        $sql = "SELECT id, name FROM vehicle WHERE (time_a_sec < " . $time_sec . " AND time_B_sec > " . $time_sec . ") OR (multiple_days = 1 AND time_a_sec < " . $time_sec_1d . " AND time_B_sec > " . $time_sec_1d . ")";
+        $sql = "SELECT id, name, type FROM vehicle WHERE (time_a_sec < " . $time_sec . " AND time_B_sec > " . $time_sec . ") OR (multiple_days = 1 AND time_a_sec < " . $time_sec_1d . " AND time_B_sec > " . $time_sec_1d . ")";
         $vehicles = self::$DB->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         
         $vehiclesData = array();
@@ -36,6 +35,7 @@ class Vehicles {
             $vehicleData = array(
                 'id'    => $vehicle['id'],
                 'name'  => $vehicle['name'],
+                'type'  => $vehicle['type'],
                 'sts'   => array(),
                 'deps'  => array(),
                 'arrs'  => array(),
@@ -66,6 +66,7 @@ class Vehicles {
     }
     
     public static function json_dump($rows) {
+        // TODO - more cache headers ?
         if (substr_count($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip')) {
             ob_start("ob_gzhandler");
         }  else {
