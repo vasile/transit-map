@@ -1,5 +1,7 @@
+- check the times around midnight
+
 - load initial trains - sequence (multiple ajax requests) - keep track of vehicles in SESSION
---- maybe use the same approach for loading the routes
+OR just cache wisely
 - restrict access to feed/tmp/sbb_export.db
 
 
