@@ -1,4 +1,32 @@
 $(document).ready(function(){
+    var imagesPool = (function(){
+        var icons = {};
+        function iconExists(type) {
+            return typeof icons[type] !== 'undefined';
+        }
+        
+        function iconGet(type) {
+            if (typeof icons[type] !== 'undefined') {
+                return icons[type];
+            }
+
+            var icon = new google.maps.MarkerImage(
+                'static/images/vehicle-types/' + type + '.png',
+                 new google.maps.Size(20, 20),
+                 new google.maps.Point(0, 0),
+                 new google.maps.Point(10, 10)
+            );
+            icons[type] = icon;
+
+            return icon;
+        }
+        
+        return {
+            iconGet: iconGet
+        }
+    })();
+    
+    
     var linesPool = (function() {
         var routes = {};
 
@@ -10,13 +38,10 @@ $(document).ready(function(){
             
             for (var i=1; i<route['points'].length; i++) {
                 var pA = route['points'][i-1];
-                var pB = route['points'][i]
+                var pB = route['points'][i];
                 var d12 = google.maps.geometry.spherical.computeDistanceBetween(pA, pB);
                 if ((dC + d12) > dAC) {
-                    var dx = (pB.lng() - pA.lng())*(dAC - dC)/d12;
-                    var dy = (pB.lat() - pA.lat())*(dAC - dC)/d12;
-                    
-                    return new google.maps.LatLng(pA.lat() + dy, pA.lng() + dx);
+                    return google.maps.geometry.spherical.interpolate(pA, pB, (dAC - dC)/d12);
                 }
                 dC += d12;
             }
@@ -24,7 +49,6 @@ $(document).ready(function(){
             return null;
         }
         
-        // Extract me into routesPool
         function routeExists(a, b) {
           if (typeof routes[a + '_' + b] !== 'undefined') {
               return true;
@@ -37,19 +61,19 @@ $(document).ready(function(){
         }
         
         function routeAdd(a, b, edges) {
-            var routeLength = 0;
             var routePoints = [];
             $.each(edges, function(k, edgeID) {
                 var edge = simcity_topology_edges[Math.abs(edgeID)];
-                routeLength += edge['l'];
                 
-                var points = google.maps.geometry.encoding.decodePath(edge['p']);
+                var points = google.maps.geometry.encoding.decodePath(edge);
                 if (edgeID < 0) {
                     points.reverse();
                 }
                 // TODO - use some MVCArray magic to remove the last element of edges when concatenating ?
                 routePoints = routePoints.concat(points);
             });
+            
+            routeLength = google.maps.geometry.spherical.computeLength(routePoints).toFixed(3);
             
             routes[a + '_' + b] = {
                 'points': routePoints,
@@ -134,25 +158,30 @@ $(document).ready(function(){
         }
     })();
     
-    function Vehicle(data) {
-        this.id = data.id;
-        this.stations = data.stations;
-        this.depS = data.departures;
-        this.arrS = data.arrivals;
+    function Vehicle(params) {
+        this.id             = params['id'];
+        this.stations       = params['sts'];
+        this.depS           = params['deps'];
+        this.arrS           = params['arrs'];
         
-        $.each(data.edges, function(index, edge) {
+        $.each(params.edges, function(index, edge) {
             if (index === 0) { return; }
             
-            if (linesPool.routeExists(data.stations[index-1], data.stations[index])) {
+            if (linesPool.routeExists(params['sts'][index-1], params['sts'][index])) {
                 return;
             }
             
-            linesPool.routeAdd(data.stations[index-1], data.stations[index], data.edges[index].split(','));
+            linesPool.routeAdd(params['sts'][index-1], params['sts'][index], params['edges'][index].split(','));
+        });
+        
+        this.marker = new google.maps.Marker({
+            position: new google.maps.LatLng(0, 0),
+            icon: imagesPool.iconGet(params['type']),
+            map: map,
+            title: params['name'] + ' (' + this.id + ')'
         });
     }
     Vehicle.prototype.render = function() {
-        var marker = new google.maps.Marker({position: new google.maps.LatLng(0, 0), map: map});
-        
         function animate() {
             var hms = timer.getTime();
             
@@ -180,9 +209,10 @@ $(document).ready(function(){
                 }
             }
             
+            // TODO - move me above - is waste of code 
             switch (info.state) {
                 case 'station':
-                    // TODO - if is not yet on the map, add it. Use station coordinates
+                    // TODO - if is not yet on the map, add it (first vertex of the route)
                     setTimeout(animate, info.timeLeft*1000);
                     break;
                 case 'motion':
@@ -191,11 +221,20 @@ $(document).ready(function(){
                         console.log('Couldnt get the position of ' + that.id + ' between stations: ' + info.stations);
                         break;
                     }
-                    marker.setPosition(pos);
+                    
+                    if (map.getBounds().contains(pos)) {
+                        if (that.marker.getMap() === null) {
+                            that.marker.setMap(map);
+                        }
+                        that.marker.setPosition(pos);
+                    } else {
+                        that.marker.setMap(null);
+                    }
+
                     setTimeout(animate, 500);
                     break;
                 default:
-                    marker.setMap(null);
+                    that.marker.setMap(null);
                     break;
             }
         }
@@ -228,24 +267,19 @@ $(document).ready(function(){
         select: 'geometry',
         from: '1497361'
       },
-      map: map
+      map: null
     });
     
     var nowHMS = '10:16:55';
     timer.init(nowHMS);
     
+    // TODO: Connect again in x minutes
     $.ajax({
       url: 'feed/vehicles/' + timer.getHM(),
       dataType: 'json',
       success: function(vehicles) {
-        $.each(vehicles, function(index, vehicle) { 
-          var v = new Vehicle({
-            id: vehicle['id'],
-            stations: vehicle.sts,
-            departures: vehicle.deps,
-            arrivals: vehicle.arrs,
-            edges: vehicle.edges
-          });
+        $.each(vehicles, function(index, vehicleData) { 
+          var v = new Vehicle(vehicleData);
           v.render();
         });
       }
