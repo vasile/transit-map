@@ -235,7 +235,7 @@ $(document).ready(function(){
     timer.init(nowHMS);
     
     $.ajax({
-      url: '/feed/vehicles/' + timer.getHM(),
+      url: 'feed/vehicles/' + timer.getHM(),
       dataType: 'json',
       success: function(vehicles) {
         $.each(vehicles, function(index, vehicle) { 
