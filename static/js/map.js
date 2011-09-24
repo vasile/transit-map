@@ -246,11 +246,50 @@ $(document).ready(function(){
     
     // END HELPERS
     
+    var mapStyles = [
+      {
+        featureType: "poi.business",
+        stylers: [
+          { visibility: "off" }
+        ]
+      },{
+        featureType: "road",
+        elementType: "labels",
+        stylers: [
+          { visibility: "off" }
+        ]
+      },{
+        featureType: "road",
+        elementType: "labels",
+        stylers: [
+          { visibility: "off" }
+        ]
+      },{
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [
+          { visibility: "simplified" },
+          { lightness: 70 }
+        ]
+      },{
+        featureType: "transit.line",
+        stylers: [
+          { visibility: "off" }
+        ]
+      },{
+        featureType: "transit.station.bus",
+        stylers: [
+          { visibility: "off" }
+        ]
+      }
+    ];
+    
     var start = new google.maps.LatLng(47.378057, 8.5402338);
     var myOptions = {
       zoom: 15,
       center: start,
-      mapTypeId: google.maps.MapTypeId.ROADMAP
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      styles: mapStyles
     }
     var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
@@ -267,7 +306,14 @@ $(document).ready(function(){
         select: 'geometry',
         from: '1497361'
       },
-      map: null
+      map: map
+    });
+    layer = new google.maps.FusionTablesLayer({
+      query: {
+        select: 'geometry',
+        from: '812706'
+      },
+      map: map
     });
     
     var nowHMS = '10:16:55';
