@@ -201,7 +201,7 @@ $(document).ready(function(){
 
             var start = new google.maps.LatLng(47.378057, 8.5402338);
             var myOptions = {
-              zoom: 15,
+              zoom: 13,
               center: start,
               mapTypeId: google.maps.MapTypeId.ROADMAP,
               styles: mapStyles
