@@ -14,11 +14,9 @@ body {
 }
 
 #panel {
-    position: absolute;
-    right: 40px;
-    top: 40px;
-    width: 70px;
+    margin: 30px 0px 30px 0px;
     background-color: #FFFF00;
     border: 1px solid #000000;
     padding: 5px;
+    z-index: 1;
 }

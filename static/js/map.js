@@ -246,6 +246,11 @@ $(document).ready(function(){
                     }
                 }
             });
+            
+            var map_control = document.createElement('DIV');
+            map_control.index = 1;
+            map_control.appendChild($('#panel')[0]);
+            map.controls[google.maps.ControlPosition.TOP_LEFT].push(map_control);
         }
         
         return {
