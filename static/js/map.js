@@ -362,8 +362,7 @@ $(document).ready(function(){
     
     // END HELPERS
     
-    var nowHMS = '10:16:55';
-    timer.init(nowHMS);
+    timer.init();
     map_helpers.init();    
     vehicle_helpers.get();
     setInterval(vehicle_helpers.get, 5*60*1000);
