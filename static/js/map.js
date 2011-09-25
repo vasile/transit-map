@@ -329,15 +329,23 @@ $(document).ready(function(){
         };
 
         return {
-            add: function(data) {
-                if (vehicles.indexOf(data['id']) !== -1) {
-                    console.log("Vehicle %s is already added", data['id']);
-                    return;
-                }
+            get: function() {
+                $.ajax({
+                  url: 'feed/vehicles/' + timer.getHM(),
+                  dataType: 'json',
+                  success: function(vehicles) {
+                    $.each(vehicles, function(index, data) {
+                        if (vehicles.indexOf(data['id']) !== -1) {
+                            console.log("Vehicle %s is already added", data['id']);
+                            return;
+                        }
 
-                var v = new Vehicle(data);
-                v.render();
-                vehicles.push(data['id']);
+                        var v = new Vehicle(data);
+                        v.render();
+                        vehicles.push(data['id']);
+                    });
+                  }
+                });
             }
         }
     })();
@@ -346,15 +354,6 @@ $(document).ready(function(){
     
     var nowHMS = '10:16:55';
     timer.init(nowHMS);
-    map_helpers.init();
-    
-    $.ajax({
-      url: 'feed/vehicles/' + timer.getHM(),
-      dataType: 'json',
-      success: function(vehicles) {
-        $.each(vehicles, function(index, vehicleData) { 
-            vehicle_helpers.add(vehicleData);
-        });
-      }
-    });
+    map_helpers.init();    
+    vehicle_helpers.get();
 });
