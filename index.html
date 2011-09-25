@@ -1,13 +1,11 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!DOCTYPE HTML>
 <html>
     <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
         <link href="static/css/style.css" rel="stylesheet" type="text/css" />
         <title>Swisstrains v2</title>
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
-        <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?v=3.6&amp;sensor=false&amp;libraries=geometry"></script>
-        <script type="text/javascript" src="static/js/edges_encoded.js"></script>
+        <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?v=3.6&amp;sensor=false"></script>
         <script>
             $(document).ready(function(){
                 var mapStyles = [
@@ -79,6 +77,17 @@
                   map: map
                 });
             });
+        </script>
+        <script type="text/javascript">
+          var _gaq = _gaq || [];
+          _gaq.push(['_setAccount', 'UA-1022230-2']);
+          _gaq.push(['_setDomainName', '.vasile.ch']);
+          _gaq.push(['_trackPageview']);
+          (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+          })();
         </script>
     </head>
     <body>
