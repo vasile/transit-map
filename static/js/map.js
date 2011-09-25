@@ -159,91 +159,6 @@ $(document).ready(function(){
         }
     })();
     
-    function Vehicle(params) {
-        this.id             = params['id'];
-        this.stations       = params['sts'];
-        this.depS           = params['deps'];
-        this.arrS           = params['arrs'];
-        
-        $.each(params.edges, function(index, edge) {
-            if (index === 0) { return; }
-            
-            if (linesPool.routeExists(params['sts'][index-1], params['sts'][index])) {
-                return;
-            }
-            
-            linesPool.routeAdd(params['sts'][index-1], params['sts'][index], params['edges'][index].split(','));
-        });
-        
-        this.marker = new google.maps.Marker({
-            position: new google.maps.LatLng(0, 0),
-            icon: imagesPool.iconGet(params['type']),
-            map: map,
-            title: params['name'] + ' (' + this.id + ')'
-        });
-    }
-    Vehicle.prototype.render = function() {
-        function animate() {
-            var hms = timer.getTime();
-            
-            var info = {
-                state: null
-            };
-            for (var i=0; i<that.arrS.length; i++) {
-                if (hms < that.arrS[i]) {
-                    if (hms > that.depS[i]) {
-                        info = {
-                            state: 'motion',
-                            stations: [that.stations[i], that.stations[i+1]],
-                            percent: (hms - that.depS[i])/(that.arrS[i] - that.depS[i]),
-                            message: that.id + '> ' + time_helpers.s2hms(hms) + ' From ' + that.stations[i] + ' --TO-- ' + that.stations[i+1]
-                        };
-                    } else {
-                        info = {
-                            state: 'station',
-                            station: that.stations[i],
-                            timeLeft: that.depS[i] - hms,
-                            message: that.id + '> ' + time_helpers.s2hms(hms) + ' In station ' + that.stations[i] + ' until ' + time_helpers.s2hms(that.depS[i])
-                        };
-                    }
-                    break;
-                }
-            }
-            
-            // TODO - move me above - is waste of code 
-            switch (info.state) {
-                case 'station':
-                    // TODO - if is not yet on the map, add it (first vertex of the route)
-                    setTimeout(animate, info.timeLeft*1000);
-                    break;
-                case 'motion':
-                    var pos = linesPool.positionGet(info.stations, info.percent);
-                    if (pos === null) {
-                        console.log('Couldnt get the position of ' + that.id + ' between stations: ' + info.stations);
-                        break;
-                    }
-                    
-                    if (map.getBounds().contains(pos)) {
-                        if (that.marker.getMap() === null) {
-                            that.marker.setMap(map);
-                        }
-                        that.marker.setPosition(pos);
-                    } else {
-                        that.marker.setMap(null);
-                    }
-
-                    setTimeout(animate, 500);
-                    break;
-                default:
-                    that.marker.setMap(null);
-                    break;
-            }
-        }
-        
-        var that = this;
-        animate();
-    };
-    
     var map_helpers = (function(){
         function init() {
             var mapStyles = [
@@ -321,21 +236,121 @@ $(document).ready(function(){
             init: init
         }
     })();
+    
+    var vehicle_helpers = (function(){
+        var vehicles = [];
+
+        function Vehicle(params) {
+            this.id             = params['id'];
+            this.stations       = params['sts'];
+            this.depS           = params['deps'];
+            this.arrS           = params['arrs'];
+
+            $.each(params.edges, function(index, edge) {
+                if (index === 0) { return; }
+
+                if (linesPool.routeExists(params['sts'][index-1], params['sts'][index])) {
+                    return;
+                }
+
+                linesPool.routeAdd(params['sts'][index-1], params['sts'][index], params['edges'][index].split(','));
+            });
+
+            this.marker = new google.maps.Marker({
+                position: new google.maps.LatLng(0, 0),
+                icon: imagesPool.iconGet(params['type']),
+                map: map,
+                title: params['name'] + ' (' + this.id + ')'
+            });
+        }
+        Vehicle.prototype.render = function() {
+            function animate() {
+                var hms = timer.getTime();
+
+                var info = {
+                    state: null
+                };
+                for (var i=0; i<that.arrS.length; i++) {
+                    if (hms < that.arrS[i]) {
+                        if (hms > that.depS[i]) {
+                            info = {
+                                state: 'motion',
+                                stations: [that.stations[i], that.stations[i+1]],
+                                percent: (hms - that.depS[i])/(that.arrS[i] - that.depS[i]),
+                                message: that.id + '> ' + time_helpers.s2hms(hms) + ' From ' + that.stations[i] + ' --TO-- ' + that.stations[i+1]
+                            };
+                        } else {
+                            info = {
+                                state: 'station',
+                                station: that.stations[i],
+                                timeLeft: that.depS[i] - hms,
+                                message: that.id + '> ' + time_helpers.s2hms(hms) + ' In station ' + that.stations[i] + ' until ' + time_helpers.s2hms(that.depS[i])
+                            };
+                        }
+                        break;
+                    }
+                }
+
+                // TODO - move me above - is waste of code 
+                switch (info.state) {
+                    case 'station':
+                        // TODO - if is not yet on the map, add it (first vertex of the route)
+                        setTimeout(animate, info.timeLeft*1000);
+                        break;
+                    case 'motion':
+                        var pos = linesPool.positionGet(info.stations, info.percent);
+                        if (pos === null) {
+                            console.log('Couldnt get the position of ' + that.id + ' between stations: ' + info.stations);
+                            break;
+                        }
+
+                        if (map.getBounds().contains(pos)) {
+                            if (that.marker.getMap() === null) {
+                                that.marker.setMap(map);
+                            }
+                            that.marker.setPosition(pos);
+                        } else {
+                            that.marker.setMap(null);
+                        }
+
+                        setTimeout(animate, 500);
+                        break;
+                    default:
+                        that.marker.setMap(null);
+                        break;
+                }
+            }
+
+            var that = this;
+            animate();
+        };
+
+        return {
+            add: function(data) {
+                if (vehicles.indexOf(data['id']) !== -1) {
+                    console.log("Vehicle %s is already added", data['id']);
+                    return;
+                }
+
+                var v = new Vehicle(data);
+                v.render();
+                vehicles.push(data['id']);
+            }
+        }
+    })();
+    
     // END HELPERS
     
     var nowHMS = '10:16:55';
     timer.init(nowHMS);
-    
     map_helpers.init();
     
-    // TODO: Connect again in x minutes
     $.ajax({
       url: 'feed/vehicles/' + timer.getHM(),
       dataType: 'json',
       success: function(vehicles) {
         $.each(vehicles, function(index, vehicleData) { 
-          var v = new Vehicle(vehicleData);
-          v.render();
+            vehicle_helpers.add(vehicleData);
         });
       }
     });
