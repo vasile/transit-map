@@ -214,6 +214,7 @@ $(document).ready(function(){
                 select: 'geometry',
                 from: '1497331'
               },
+              clickable: false,
               map: map
             });
             layer = new google.maps.FusionTablesLayer({
@@ -221,6 +222,7 @@ $(document).ready(function(){
                 select: 'geometry',
                 from: '1497361'
               },
+              clickable: false,
               map: map
             });
             layer = new google.maps.FusionTablesLayer({
@@ -228,6 +230,7 @@ $(document).ready(function(){
                 select: 'geometry',
                 from: '812706'
               },
+              clickable: false,
               map: map
             });
         }
