@@ -207,7 +207,7 @@ $(document).ready(function(){
               styles: mapStyles
             }
             map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-
+            
             var layer = null;
             layer = new google.maps.FusionTablesLayer({
               query: {
@@ -217,7 +217,7 @@ $(document).ready(function(){
               clickable: false,
               map: map
             });
-            layer = new google.maps.FusionTablesLayer({
+            var stations_layer = new google.maps.FusionTablesLayer({
               query: {
                 select: 'geometry',
                 from: '1497361'
@@ -232,6 +232,19 @@ $(document).ready(function(){
               },
               clickable: false,
               map: map
+            });
+            
+            google.maps.event.addListener(map, 'idle', function() {
+                var zoom = map.getZoom();
+                if (zoom < 12) {
+                    if (stations_layer.getMap() !== null) {
+                        stations_layer.setMap(null);
+                    }
+                } else {
+                    if (stations_layer.getMap() === null) {
+                        stations_layer.setMap(map);
+                    }
+                }
             });
         }
         
