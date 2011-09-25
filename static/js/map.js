@@ -254,7 +254,7 @@ $(document).ready(function(){
     })();
     
     var vehicle_helpers = (function(){
-        var vehicles = [];
+        var vehicleIDs = [];
 
         function Vehicle(params) {
             this.id             = params['id'];
@@ -348,14 +348,11 @@ $(document).ready(function(){
                   dataType: 'json',
                   success: function(vehicles) {
                     $.each(vehicles, function(index, data) {
-                        if (vehicles.indexOf(data['id']) !== -1) {
-                            console.log("Vehicle %s is already added", data['id']);
-                            return;
-                        }
+                        if (vehicleIDs.indexOf(data['id']) !== -1) { return; }
 
                         var v = new Vehicle(data);
                         v.render();
-                        vehicles.push(data['id']);
+                        vehicleIDs.push(data['id']);
                     });
                   }
                 });
@@ -369,4 +366,5 @@ $(document).ready(function(){
     timer.init(nowHMS);
     map_helpers.init();    
     vehicle_helpers.get();
+    setInterval(vehicle_helpers.get, 5*60*1000);
 });
