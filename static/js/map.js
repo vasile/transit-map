@@ -149,7 +149,7 @@ $(document).ready(function(){
         
         function getHM() {
           var hms = time_helpers.s2hms(getDaySeconds());
-          return hms.substring(0, 5);
+          return hms.substring(0, 2) + hms.substring(3, 5);
         }
         
         return {
@@ -344,17 +344,17 @@ $(document).ready(function(){
         return {
             get: function() {
                 $.ajax({
-                  url: 'feed/vehicles/' + timer.getHM(),
-                  dataType: 'json',
-                  success: function(vehicles) {
-                    $.each(vehicles, function(index, data) {
-                        if (vehicleIDs.indexOf(data['id']) !== -1) { return; }
+                    url: 'feed/vehicles/' + timer.getHM(),
+                    dataType: 'json',
+                    success: function(vehicles) {
+                        $.each(vehicles, function(index, data) {
+                            if (vehicleIDs.indexOf(data['id']) !== -1) { return; }
 
-                        var v = new Vehicle(data);
-                        v.render();
-                        vehicleIDs.push(data['id']);
-                    });
-                  }
+                            var v = new Vehicle(data);
+                            v.render();
+                            vehicleIDs.push(data['id']);
+                        });
+                    }
                 });
             }
         }
