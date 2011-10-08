@@ -210,12 +210,26 @@ $(document).ready(function(){
             
             var layer = null;
             layer = new google.maps.FusionTablesLayer({
-              query: {
-                select: 'geometry',
-                from: '1497331'
-              },
-              clickable: false,
-              map: map
+                query: {
+                    select: 'geometry',
+                    from: '1497331'
+                },
+                clickable: false,
+                map: map,
+                styles: [
+                    {
+                        polylineOptions: {
+                            strokeColor: "#FF0000",
+                            strokeWeight: 2
+                        }
+                    },{
+                        where: "type = 'tunnel'",
+                        polylineOptions: {
+                            strokeColor: "#FAAFBE",
+                            strokeWeight: 1.5
+                        }
+                    }
+                ]
             });
             var stations_layer = new google.maps.FusionTablesLayer({
               query: {
