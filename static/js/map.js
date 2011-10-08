@@ -404,7 +404,6 @@ $(document).ready(function(){
                 } // end arrivals loop
                 
                 if (vehicle_found === false) {
-                    console.log('Vehicle ' + that.id + ' expired ?');
                     that.marker.setMap(null);
                 }
             }
@@ -435,7 +434,7 @@ $(document).ready(function(){
     // END HELPERS
     
     timer.init();
-    map_helpers.init();    
+    map_helpers.init();
     vehicle_helpers.get();
     setInterval(vehicle_helpers.get, 5*60*1000);
 });
