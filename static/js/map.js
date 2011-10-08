@@ -230,6 +230,7 @@ $(document).ready(function(){
             }
             map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
             
+            // TODO - extract layers manager in a separate helper for easy customizations
             var layer = null;
             layer = new google.maps.FusionTablesLayer({
                 query: {
