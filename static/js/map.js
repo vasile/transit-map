@@ -261,10 +261,45 @@ $(document).ready(function(){
                 }
             });
             
+            // START HANDLE LOCATION
+            // TODO - find out why we need to put this before map_control part below
+            var location_el = $('#user_location');
+            location_el.attr('value-default', location_el.attr('value'));
+
+            var geocoder = new google.maps.Geocoder();
+            function geocoding_handle(params) {
+                geocoder.geocode(params, function(results, status) {
+                    if (status == google.maps.GeocoderStatus.OK) {
+                        location_el.val(results[0].formatted_address.replace(/, Switzerland/, ''));
+                        map.setCenter(results[0].geometry.location);
+                        map.setZoom(15);
+                    }
+                });
+            }
+            
+            $('#geolocation_click').click(function(){
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function (position) {
+                        geocoding_handle({'latLng': new google.maps.LatLng(position.coords.latitude, position.coords.longitude)});
+                    });
+                }
+            });
+            location_el.focus(function(){
+                if ($(this).val() === $(this).attr('value-default')) {
+                    $(this).val('');
+                }
+            });
+            location_el.keypress(function(e) {
+                if(e.which == 13) {
+                    geocoding_handle({'address': $(this).val()});
+                }
+            });
+            // END
+            
             var map_control = document.createElement('DIV');
             map_control.index = 1;
             map_control.appendChild($('#panel')[0]);
-            map.controls[google.maps.ControlPosition.TOP_LEFT].push(map_control);
+            map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(map_control);
         }
         
         return {
