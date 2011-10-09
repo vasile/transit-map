@@ -1,5 +1,5 @@
 var simulation_manager = (function(){
-    var map;
+    var map = null;
     var is_mobile = (navigator.userAgent.indexOf('iPhone') !== -1) || (navigator.userAgent.indexOf('Android') != -1);
     
     var listeners = {
@@ -273,8 +273,6 @@ $(document).ready(function(){
                 overviewMapControl: true
             }
             map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-            simulation_manager.setMap(map);
-            simulation_manager.notify('map_init');
             
             map.setOptions({
                 mapTypeControl: true,
@@ -325,6 +323,13 @@ $(document).ready(function(){
             });
             
             google.maps.event.addListener(map, 'idle', function() {
+                if (simulation_manager.getMap() === null) {
+                    // TODO - FIXME later ?
+                    // Kind of a hack, getBounds is ready only after a while since loading, so we hook in the 'idle' event
+                    simulation_manager.setMap(map);
+                    simulation_manager.notify('map_init');
+                }
+                
                 var zoom = map.getZoom();
                 if (zoom < 12) {
                     if (stations_layer.getMap() !== null) {
@@ -485,9 +490,12 @@ $(document).ready(function(){
     })();
     
     // END HELPERS
+
+    simulation_manager.subscribe('map_init', function(){
+        vehicle_helpers.get();
+        setInterval(vehicle_helpers.get, 5*60*1000);
+    });
     
     timer.init();
     map_helpers.init();
-    vehicle_helpers.get();
-    setInterval(vehicle_helpers.get, 5*60*1000);
 });
