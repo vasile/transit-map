@@ -1,12 +1,11 @@
 $(document).ready(function(){
     var map;
     
+    // Vehicle icons manager. 
+    // Roles:
+    // - keep a reference for each vehicle type (IC, ICE, etc..)
     var imagesPool = (function(){
         var icons = {};
-        function iconExists(type) {
-            return typeof icons[type] !== 'undefined';
-        }
-        
         function iconGet(type) {
             if (typeof icons[type] !== 'undefined') {
                 return icons[type];
@@ -28,9 +27,16 @@ $(document).ready(function(){
         }
     })();
     
+    // Routes manager.
+    // Roles:
+    // - keep a reference for the routes between stations
+    //      i.e. (Zürich HB-Bern, Zürich HB-Olten, Olten-Bern)
+    //      Note: one route can contain one or more edges (the low-level entity in the simulation graph)
+    // - interpolate position at given percent along a route
     var linesPool = (function() {
         var routes = {};
-
+        
+        // TODO - that can be a nice feature request for google.maps.geometry lib
         function positionOnRouteAtPercentGet(ids, perc) {
             var route = routes[ids[0] + '_' + ids[1]];
             
@@ -92,6 +98,11 @@ $(document).ready(function(){
             routeAdd: routeAdd
         }
     })();
+    
+    // Time helpers
+    // Roles:
+    // - convert seconds that passed from midnight into nicely formatted hh:mm:ss
+    // and viceversa
     var time_helpers = (function(){
         function hms2s(hms) {
             var parts = hms.split(':');
@@ -115,6 +126,11 @@ $(document).ready(function(){
             s2hms: s2hms
         }
     })();
+
+    // Time manager
+    // Roles:
+    // - manages the current number of seconds that passed since midnight
+    // - 'init' can be used with given hh:mm:ss in order to simulate different timestamps
     var timer = (function(){
         var delay = 0;
         
@@ -159,6 +175,12 @@ $(document).ready(function(){
         }
     })();
     
+    // Map manager
+    // Roles:
+    // - initialize the map canvas with available layers (tracks, stations)
+    // - styles the maps
+    // - add map controls
+    // - handle location lookups
     var map_helpers = (function(){
         function init() {
             var mapStyles = [
@@ -208,6 +230,7 @@ $(document).ready(function(){
             }
             map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
             
+            // TODO - extract layers manager in a separate helper for easy customizations
             var layer = null;
             layer = new google.maps.FusionTablesLayer({
                 query: {
@@ -307,6 +330,10 @@ $(document).ready(function(){
         }
     })();
     
+    // Vehicle helpers
+    // Roles:
+    // - check backend for new vehicles
+    // - manages vehicle objects(class Vehicle) and animates them (see Vehicle.render method)
     var vehicle_helpers = (function(){
         var vehicleIDs = [];
 
@@ -336,58 +363,48 @@ $(document).ready(function(){
         Vehicle.prototype.render = function() {
             function animate() {
                 var hms = timer.getTime();
-
-                var info = {
-                    state: null
-                };
+                var vehicle_found = false;
                 for (var i=0; i<that.arrS.length; i++) {
                     if (hms < that.arrS[i]) {
                         if (hms > that.depS[i]) {
-                            info = {
-                                state: 'motion',
-                                stations: [that.stations[i], that.stations[i+1]],
-                                percent: (hms - that.depS[i])/(that.arrS[i] - that.depS[i]),
-                                message: that.id + '> ' + time_helpers.s2hms(hms) + ' From ' + that.stations[i] + ' --TO-- ' + that.stations[i+1]
-                            };
+                            // Vehicle is in motion between two stations
+                            vehicle_found = true;
+                            
+                            var station_a = that.stations[i];
+                            var station_b = that.stations[i+1];
+                            var route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
+
+                            var pos = linesPool.positionGet([station_a, station_b], route_percent);
+                            if (pos === null) {
+                                console.log('Couldn\'t get the position of ' + that.id + ' between stations: ' + [station_a, station_b]);
+                                that.marker.setMap(null);
+                                break;
+                            } else {
+                                if (map.getBounds().contains(pos)) {
+                                    if (that.marker.getMap() === null) {
+                                        that.marker.setMap(map);
+                                    }
+                                    that.marker.setPosition(pos);
+                                } else {
+                                    that.marker.setMap(null);
+                                }                                
+                            }
+
+                            setTimeout(animate, 500);
                         } else {
-                            info = {
-                                state: 'station',
-                                station: that.stations[i],
-                                timeLeft: that.depS[i] - hms,
-                                message: that.id + '> ' + time_helpers.s2hms(hms) + ' In station ' + that.stations[i] + ' until ' + time_helpers.s2hms(that.depS[i])
-                            };
+                            // Vehicle is in a station
+                            vehicle_found = true;
+                            
+                            // TODO - if is not yet on the map, add it (first vertex of the route)
+                            var seconds_left = that.depS[i] - hms;
+                            setTimeout(animate, seconds_left*1000);
                         }
                         break;
                     }
-                }
-
-                // TODO - move me above - is waste of code 
-                switch (info.state) {
-                    case 'station':
-                        // TODO - if is not yet on the map, add it (first vertex of the route)
-                        setTimeout(animate, info.timeLeft*1000);
-                        break;
-                    case 'motion':
-                        var pos = linesPool.positionGet(info.stations, info.percent);
-                        if (pos === null) {
-                            console.log('Couldnt get the position of ' + that.id + ' between stations: ' + info.stations);
-                            break;
-                        }
-
-                        if (map.getBounds().contains(pos)) {
-                            if (that.marker.getMap() === null) {
-                                that.marker.setMap(map);
-                            }
-                            that.marker.setPosition(pos);
-                        } else {
-                            that.marker.setMap(null);
-                        }
-
-                        setTimeout(animate, 500);
-                        break;
-                    default:
-                        that.marker.setMap(null);
-                        break;
+                } // end arrivals loop
+                
+                if (vehicle_found === false) {
+                    that.marker.setMap(null);
                 }
             }
 
@@ -417,7 +434,7 @@ $(document).ready(function(){
     // END HELPERS
     
     timer.init();
-    map_helpers.init();    
+    map_helpers.init();
     vehicle_helpers.get();
     setInterval(vehicle_helpers.get, 5*60*1000);
 });
