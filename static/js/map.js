@@ -37,6 +37,67 @@ var simulation_manager = (function(){
     }
 })();
 
+(function(){
+    function map_layers_add(){
+        var map = simulation_manager.getMap();
+        
+        var layer = null;
+        layer = new google.maps.FusionTablesLayer({
+            query: {
+                select: 'geometry',
+                from: '1497331'
+            },
+            clickable: false,
+            map: map,
+            styles: [
+                {
+                    polylineOptions: {
+                        strokeColor: "#FF0000",
+                        strokeWeight: 2
+                    }
+                },{
+                    where: "type = 'tunnel'",
+                    polylineOptions: {
+                        strokeColor: "#FAAFBE",
+                        strokeWeight: 1.5
+                    }
+                }
+            ]
+        });
+        var stations_layer = new google.maps.FusionTablesLayer({
+          query: {
+            select: 'geometry',
+            from: '1497361'
+          },
+          clickable: false,
+          map: map
+        });
+        layer = new google.maps.FusionTablesLayer({
+          query: {
+            select: 'geometry',
+            from: '812706'
+          },
+          clickable: false,
+          map: map
+        });
+        
+        google.maps.event.addListener(map, 'idle', function() {
+            var zoom = map.getZoom();
+            if (zoom < 12) {
+                if (stations_layer.getMap() !== null) {
+                    stations_layer.setMap(null);
+                }
+            } else {
+                if (stations_layer.getMap() === null) {
+                    stations_layer.setMap(map);
+                }
+            }
+        });
+    }
+    
+    simulation_manager.subscribe('map_init', map_layers_add);
+})();
+
 $(document).ready(function(){
     var map;
     
@@ -281,64 +342,12 @@ $(document).ready(function(){
                 }
             });
             
-            // TODO - extract layers manager in a separate helper for easy customizations
-            var layer = null;
-            layer = new google.maps.FusionTablesLayer({
-                query: {
-                    select: 'geometry',
-                    from: '1497331'
-                },
-                clickable: false,
-                map: map,
-                styles: [
-                    {
-                        polylineOptions: {
-                            strokeColor: "#FF0000",
-                            strokeWeight: 2
-                        }
-                    },{
-                        where: "type = 'tunnel'",
-                        polylineOptions: {
-                            strokeColor: "#FAAFBE",
-                            strokeWeight: 1.5
-                        }
-                    }
-                ]
-            });
-            var stations_layer = new google.maps.FusionTablesLayer({
-              query: {
-                select: 'geometry',
-                from: '1497361'
-              },
-              clickable: false,
-              map: map
-            });
-            layer = new google.maps.FusionTablesLayer({
-              query: {
-                select: 'geometry',
-                from: '812706'
-              },
-              clickable: false,
-              map: map
-            });
-            
             google.maps.event.addListener(map, 'idle', function() {
                 if (simulation_manager.getMap() === null) {
                     // TODO - FIXME later ?
                     // Kind of a hack, getBounds is ready only after a while since loading, so we hook in the 'idle' event
                     simulation_manager.setMap(map);
                     simulation_manager.notify('map_init');
-                }
-                
-                var zoom = map.getZoom();
-                if (zoom < 12) {
-                    if (stations_layer.getMap() !== null) {
-                        stations_layer.setMap(null);
-                    }
-                } else {
-                    if (stations_layer.getMap() === null) {
-                        stations_layer.setMap(map);
-                    }
                 }
             });
             
