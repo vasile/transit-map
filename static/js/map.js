@@ -473,7 +473,8 @@ $(document).ready(function(){
         return {
             get: function() {
                 $.ajax({
-                    url: 'feed/vehicles/' + timer.getHM(),
+                    // Replace this with your vehicles API URL
+                    url: 'api/vehicles/' + timer.getHM() + '.json',
                     dataType: 'json',
                     success: function(vehicles) {
                         $.each(vehicles, function(index, data) {
@@ -496,6 +497,6 @@ $(document).ready(function(){
         setInterval(vehicle_helpers.get, 5*60*1000);
     });
     
-    timer.init();
+    timer.init('09:00:00');
     map_helpers.init();
 });
