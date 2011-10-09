@@ -1,3 +1,42 @@
+var simulation_manager = (function(){
+    var map;
+    var is_mobile = (navigator.userAgent.indexOf('iPhone') !== -1) || (navigator.userAgent.indexOf('Android') != -1);
+    
+    var listeners = {
+        map_init: []
+    };
+    
+    function notify(type) {
+        $.each(listeners[type], function(i, fn){
+            fn();
+        });
+    }
+    
+    function subscribe(type, fn) {
+        listeners[type].push(fn);
+    }
+    
+    function setMap(o) {
+        map = o;
+    }
+    
+    function getMap() {
+        return map;
+    }
+    
+    function isMobile() {
+        return is_mobile;
+    }
+    
+    return {
+        subscribe: subscribe,
+        notify: notify,
+        setMap: setMap,
+        getMap: getMap,
+        isMobile: isMobile
+    }
+})();
+
 $(document).ready(function(){
     var map;
     
@@ -223,12 +262,26 @@ $(document).ready(function(){
 
             var start = new google.maps.LatLng(47.378057, 8.5402338);
             var myOptions = {
-              zoom: 13,
-              center: start,
-              mapTypeId: google.maps.MapTypeId.ROADMAP,
-              styles: mapStyles
+                zoom: 13,
+                center: start,
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                styles: mapStyles,
+                disableDefaultUI: true,
+                zoomControl: true,
+                scaleControl: true,
+                streetViewControl: true,
+                overviewMapControl: true
             }
             map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+            simulation_manager.setMap(map);
+            simulation_manager.notify('map_init');
+            
+            map.setOptions({
+                mapTypeControl: true,
+                mapTypeControlOptions: {
+                    position: google.maps.ControlPosition.TOP_LEFT
+                }
+            });
             
             // TODO - extract layers manager in a separate helper for easy customizations
             var layer = null;
@@ -322,7 +375,7 @@ $(document).ready(function(){
             var map_control = document.createElement('DIV');
             map_control.index = 1;
             map_control.appendChild($('#panel')[0]);
-            map.controls[google.maps.ControlPosition.BOTTOM_LEFT].push(map_control);
+            map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(map_control);
         }
         
         return {
