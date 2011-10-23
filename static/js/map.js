@@ -157,14 +157,7 @@ $(document).ready(function(){
         }
         
         function routeExists(a, b) {
-          if (typeof routes[a + '_' + b] !== 'undefined') {
-              return true;
-          }
-          if (typeof routes[b + '_' + a] !== 'undefined') {
-              return true;
-          }
-          
-          return false;
+          return typeof routes[a + '_' + b] !== 'undefined';
         }
         
         function routeAdd(a, b, edges) {
@@ -184,10 +177,6 @@ $(document).ready(function(){
             
             routes[a + '_' + b] = {
                 'points': routePoints,
-                'length': routeLength
-            };
-            routes[b + '_' + a] = {
-                'points': routePoints.slice().reverse(),
                 'length': routeLength
             };
         }
