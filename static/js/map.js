@@ -412,7 +412,7 @@ $(document).ready(function(){
             this.marker = new google.maps.Marker({
                 position: new google.maps.LatLng(0, 0),
                 icon: imagesPool.iconGet(params['type']),
-                map: map,
+                map: null,
                 title: params['name'] + ' (' + this.id + ')'
             });
         }
@@ -422,12 +422,13 @@ $(document).ready(function(){
                 var vehicle_found = false;
                 for (var i=0; i<that.arrS.length; i++) {
                     if (hms < that.arrS[i]) {
+                        var station_a = that.stations[i];
+                        var station_b = that.stations[i+1];
+                        
                         if (hms > that.depS[i]) {
                             // Vehicle is in motion between two stations
                             vehicle_found = true;
                             
-                            var station_a = that.stations[i];
-                            var station_b = that.stations[i+1];
                             var route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
 
                             var pos = linesPool.positionGet([station_a, station_b], route_percent);
@@ -450,8 +451,13 @@ $(document).ready(function(){
                         } else {
                             // Vehicle is in a station
                             vehicle_found = true;
-                            
-                            // TODO - if is not yet on the map, add it (first vertex of the route)
+
+                            if (that.marker.getMap() === null) {
+                                var pos = linesPool.positionGet([station_a, station_b], 0);
+                                that.marker.setPosition(pos);
+                                that.marker.setMap(map);
+                            }
+
                             var seconds_left = that.depS[i] - hms;
                             setTimeout(animate, seconds_left*1000);
                         }
