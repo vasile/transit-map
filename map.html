@@ -7,6 +7,7 @@
         <title>Swisstrains v2</title>
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
         <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?v=3.6&amp;sensor=false&amp;libraries=geometry"></script>
+        <script type="text/javascript" src="static/js/infobox_packed.js"></script>
         <script type="text/javascript" src="static/js/edges_encoded.js"></script>
         <script type="text/javascript" src="static/js/map.js"></script>
         <script type="text/javascript">
@@ -28,6 +29,16 @@
                 <input type="button" id="geolocation_click" />
                 <input type="text" id="user_location" value="Enter location" / >
                 <span id="day_time"></span>
+            </div>
+        </div>
+        <div id="vehicle_popup_container" class="hidden">
+            <div id="vehicle_popup">
+                <p>
+                    <strong class="name"></strong><br/>
+                    <span class="fromto"></span><br/>
+                    <span class="status"></span><br/>
+                    Speed: <span class="speed"></span>
+                </p>
             </div>
         </div>
     </body>

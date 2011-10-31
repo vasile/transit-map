@@ -1,3 +1,4 @@
+/* START MAIN */
 html, body {
     height: 100%;
     margin: 0;
@@ -12,6 +13,12 @@ body {
 #map_canvas {
     height: 100%;
 }
+
+.hidden {
+    display: none;
+}
+
+/* END */
 
 #panel {
     background-color: #FFFF00;
@@ -28,6 +35,13 @@ body {
     border: none;
 }
 
-.hidden {
-    display: none;
+#vehicle_popup {
+    width: 200px;
+    border: 1px solid black; 
+    background: #FFFFFF; 
+    padding: 2px 0px 0px 10px;
+}
+
+#vehicle_popup p {
+    font-size: 10px;
 }
