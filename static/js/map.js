@@ -260,6 +260,10 @@ $(document).ready(function(){
                 return (what < 10 ? '0' + what : what);
             }
             
+            if (dayS >= 3600*24) {
+                dayS -= 3600*24;
+            }
+            
             // From http://stackoverflow.com/questions/1322732/convert-seconds-to-hh-mm-ss-with-javascript
             var hours = Math.floor(dayS / 3600);
             dayS %= 3600;
