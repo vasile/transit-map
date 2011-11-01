@@ -165,7 +165,7 @@ $(document).ready(function(){
             path: [],
             strokeColor: "#FDD017",
             strokeOpacity: 0.8,
-            strokeWeight: 3,
+            strokeWeight: 5,
             map: null
         });
         
