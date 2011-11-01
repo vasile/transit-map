@@ -577,7 +577,7 @@ $(document).ready(function(){
         return {
             get: function() {
                 $.ajax({
-                    url: 'feed/vehicles/' + timer.getHM(),
+                    url: 'feed/vehicles/sbb/' + timer.getHM(),
                     dataType: 'json',
                     success: function(vehicles) {
                         $.each(vehicles, function(index, data) {
@@ -601,7 +601,7 @@ $(document).ready(function(){
     });
     
     $.ajax({
-        url: 'feed/stations/list',
+        url: 'feed/stations/sbb/list',
         dataType: 'json',
         success: function(stations_data) {
             $.each(stations_data, function(index, station) {
