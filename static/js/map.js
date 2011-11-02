@@ -467,14 +467,14 @@ $(document).ready(function(){
             this.depS           = params['deps'];
             this.arrS           = params['arrs'];
 
-            $.each(params.edges, function(index, edge) {
+            $.each(params.edges, function(index, edges) {
                 if (index === 0) { return; }
 
                 if (linesPool.routeExists(params['sts'][index-1], params['sts'][index])) {
                     return;
                 }
 
-                linesPool.routeAdd(params['sts'][index-1], params['sts'][index], params['edges'][index].split(','));
+                linesPool.routeAdd(params['sts'][index-1], params['sts'][index], edges.split(','));
             });
 
             var marker = new google.maps.Marker({
