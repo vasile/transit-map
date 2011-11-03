@@ -468,7 +468,8 @@ $(document).ready(function(){
             this.stations       = params['sts'];
             this.depS           = params['deps'];
             this.arrS           = params['arrs'];
-
+            this.multiple_days  = params['arrs'][params['arrs'].length - 1] > 24 * 3600;
+            
             $.each(params.edges, function(index, edges) {
                 if (index === 0) { return; }
 
@@ -517,6 +518,10 @@ $(document).ready(function(){
         Vehicle.prototype.render = function() {
             function animate() {
                 var hms = timer.getTime();
+                if (that.multiple_days && (hms < that.depS[0])) {
+                    hms += 24 * 3600;
+                }
+                
                 var vehicle_found = false;
                 for (var i=0; i<that.arrS.length; i++) {
                     if (hms < that.arrS[i]) {
