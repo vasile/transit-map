@@ -234,6 +234,8 @@ $(document).ready(function(){
         
         function routeHighlightRemove() {
             route_highlight_polyline.setMap(null);
+            vehicle_ib.set('vehicle_id', null);
+            route_highlight_active = null;
         }
         
         return {
