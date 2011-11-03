@@ -160,13 +160,13 @@ $(document).ready(function(){
     // - interpolate position at given percent along a route
     var linesPool = (function() {
         var routes = {};
-        var route_highlight_active = null;
-        var route_highlight_polyline = new google.maps.Polyline({
+        var route_highlight = new google.maps.Polyline({
             path: [],
             strokeColor: "#FDD017",
             strokeOpacity: 0.8,
             strokeWeight: 5,
-            map: null
+            map: null,
+            ids: null
         });
         
         // TODO - that can be a nice feature request for google.maps.geometry lib
@@ -219,8 +219,8 @@ $(document).ready(function(){
         }
         
         function routeHighlight(station_ids) {
-            if (route_highlight_active === station_ids.join(',')) { return; }
-            route_highlight_active = station_ids.join(',');
+            if (route_highlight.get('ids') === station_ids.join(',')) { return; }
+            route_highlight.set('ids', station_ids.join(','));
             
             var points = [];
             $.each(station_ids, function(index, id){
@@ -228,14 +228,15 @@ $(document).ready(function(){
                 points = points.concat(routes[station_ids[index-1] + '_' + id].points);
             });
             
-            route_highlight_polyline.setPath(points);
-            route_highlight_polyline.setMap(map);
+            route_highlight.setPath(points);
+            route_highlight.setMap(map);
         }
         
         function routeHighlightRemove() {
-            route_highlight_polyline.setMap(null);
+            route_highlight.setMap(null);
+            route_highlight.set('ids', null);
+            
             vehicle_ib.set('vehicle_id', null);
-            route_highlight_active = null;
         }
         
         return {
