@@ -506,7 +506,6 @@ $(document).ready(function(){
                 $('.name', popup_div).text(vehicleName);
                 $('.fromto', popup_div).text(vehicleFromTo);
                 $('.status', popup_div).text(marker.get('status'));
-                $('.speed', popup_div).text(marker.get('speed') + ' km/h');
                 
                 vehicle_ib.setContent($('#vehicle_popup_container').html());
                 vehicle_ib.open(map, marker);
@@ -533,10 +532,10 @@ $(document).ready(function(){
                             // Vehicle is in motion between two stations
                             vehicle_found = true;
                             if (that.marker.get('speed') === 0) {
-                                that.marker.set('status', 'Next stop: ' + stationsPool.get(station_b) + '(' + time_helpers.s2hm(that.arrS[i]) + ')');
-
                                 var speed = linesPool.lengthGet(station_a, station_b) * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
                                 that.marker.set('speed', parseInt(speed, 10));
+                                
+                                that.marker.set('status', 'heading to ' + stationsPool.get(station_b) + '(' + time_helpers.s2hm(that.arrS[i]) + ') with ' + that.marker.get('speed') + ' km/h');
                             }
                             
                             var route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
@@ -561,7 +560,7 @@ $(document).ready(function(){
                         } else {
                             // Vehicle is in a station
                             vehicle_found = true;
-                            that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + time_helpers.s2hm(that.depS[i]));
+                            that.marker.set('status', 'departing ' + stationsPool.get(station_a) + ' at ' + time_helpers.s2hm(that.depS[i]));
                             that.marker.set('speed', 0);
 
                             if (that.marker.getMap() === null) {

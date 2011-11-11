@@ -17,7 +17,6 @@ body {
 .hidden {
     display: none;
 }
-
 /* END */
 
 #panel {
@@ -35,6 +34,7 @@ body {
     border: none;
 }
 
+/* START vehicle popup */
 #vehicle_popup {
     width: 200px;
     border: 1px solid black; 
@@ -45,3 +45,8 @@ body {
 #vehicle_popup p {
     font-size: 10px;
 }
+
+#vehicle_popup p .name {
+    font-size: 12px;
+}
+/* END */
