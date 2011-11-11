@@ -100,7 +100,32 @@ var simulation_manager = (function(){
 
 $(document).ready(function(){
     var map;
+    var vehicle_ib = new InfoBox({
+        disableAutoPan: true,
+        pixelOffset: new google.maps.Size(10, 10),
+        vehicle_id: 0
+    });
+    google.maps.event.addListener(vehicle_ib, 'closeclick', function(){
+        linesPool.routeHighlightRemove();
+    });
     
+    var stationsPool = (function(){
+        var stations = {};
+        
+        function get(id) {
+            return typeof stations[id] === 'undefined' ? '' : stations[id];
+        }
+        
+        function add(id, name) {
+            stations[id] = name;
+        }
+        
+        return {
+            get: get,
+            add: add
+        }
+    })();
+
     // Vehicle icons manager. 
     // Roles:
     // - keep a reference for each vehicle type (IC, ICE, etc..)
@@ -135,10 +160,18 @@ $(document).ready(function(){
     // - interpolate position at given percent along a route
     var linesPool = (function() {
         var routes = {};
+        var route_highlight = new google.maps.Polyline({
+            path: [],
+            strokeColor: "#FDD017",
+            strokeOpacity: 0.8,
+            strokeWeight: 5,
+            map: null,
+            ids: null
+        });
         
         // TODO - that can be a nice feature request for google.maps.geometry lib
-        function positionOnRouteAtPercentGet(ids, perc) {
-            var route = routes[ids[0] + '_' + ids[1]];
+        function positionOnRouteAtPercentGet(a, b, perc) {
+            var route = routes[a + '_' + b];
             
             var dC = 0;
             var dAC = route['length']*perc;
@@ -157,14 +190,7 @@ $(document).ready(function(){
         }
         
         function routeExists(a, b) {
-          if (typeof routes[a + '_' + b] !== 'undefined') {
-              return true;
-          }
-          if (typeof routes[b + '_' + a] !== 'undefined') {
-              return true;
-          }
-          
-          return false;
+          return typeof routes[a + '_' + b] !== 'undefined';
         }
         
         function routeAdd(a, b, edges) {
@@ -186,16 +212,40 @@ $(document).ready(function(){
                 'points': routePoints,
                 'length': routeLength
             };
-            routes[b + '_' + a] = {
-                'points': routePoints.slice().reverse(),
-                'length': routeLength
-            };
+        }
+        
+        function lengthGet(a, b) {
+            return routes[a + '_' + b].length;
+        }
+        
+        function routeHighlight(station_ids) {
+            if (route_highlight.get('ids') === station_ids.join(',')) { return; }
+            route_highlight.set('ids', station_ids.join(','));
+            
+            var points = [];
+            $.each(station_ids, function(index, id){
+                if (index === 0) { return; }
+                points = points.concat(routes[station_ids[index-1] + '_' + id].points);
+            });
+            
+            route_highlight.setPath(points);
+            route_highlight.setMap(map);
+        }
+        
+        function routeHighlightRemove() {
+            route_highlight.setMap(null);
+            route_highlight.set('ids', null);
+            
+            vehicle_ib.set('vehicle_id', null);
         }
         
         return {
             positionGet: positionOnRouteAtPercentGet,
             routeExists: routeExists,
-            routeAdd: routeAdd
+            routeAdd: routeAdd,
+            lengthGet: lengthGet,
+            routeHighlight: routeHighlight,
+            routeHighlightRemove: routeHighlightRemove
         }
     })();
     
@@ -213,6 +263,10 @@ $(document).ready(function(){
                 return (what < 10 ? '0' + what : what);
             }
             
+            if (dayS >= 3600*24) {
+                dayS -= 3600*24;
+            }
+            
             // From http://stackoverflow.com/questions/1322732/convert-seconds-to-hh-mm-ss-with-javascript
             var hours = Math.floor(dayS / 3600);
             dayS %= 3600;
@@ -221,9 +275,15 @@ $(document).ready(function(){
             
             return pad2Dec(hours) + ':' + pad2Dec(minutes) + ':' + pad2Dec(seconds);
         }
+        function s2hm(dayS) {
+            var hms = s2hms(dayS);
+            return hms.substr(0, 5);
+        }
+        
         return {
             hms2s: hms2s,
-            s2hms: s2hms
+            s2hms: s2hms,
+            s2hm: s2hm
         }
     })();
 
@@ -409,39 +469,78 @@ $(document).ready(function(){
             this.stations       = params['sts'];
             this.depS           = params['deps'];
             this.arrS           = params['arrs'];
-
-            $.each(params.edges, function(index, edge) {
+            this.multiple_days  = params['arrs'][params['arrs'].length - 1] > 24 * 3600;
+            
+            $.each(params.edges, function(index, edges) {
                 if (index === 0) { return; }
 
                 if (linesPool.routeExists(params['sts'][index-1], params['sts'][index])) {
                     return;
                 }
 
-                linesPool.routeAdd(params['sts'][index-1], params['sts'][index], params['edges'][index].split(','));
+                linesPool.routeAdd(params['sts'][index-1], params['sts'][index], edges.split(','));
             });
 
-            this.marker = new google.maps.Marker({
+            var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(0, 0),
                 icon: imagesPool.iconGet(params['type']),
-                map: map,
-                title: params['name'] + ' (' + this.id + ')'
+                map: null,
+                speed: 0,
+                status: 'not on map',
             });
+            
+            var vehicleName = params['name'] + ' (' + this.id + ')';
+            var vehicleFromTo = stationsPool.get(this.stations[0]);
+            vehicleFromTo += '(' + time_helpers.s2hm(this.depS[0]) + ')';
+            vehicleFromTo += ' - ';
+            vehicleFromTo += stationsPool.get(this.stations[this.stations.length-1]);
+            vehicleFromTo += '(' + time_helpers.s2hm(this.arrS[this.arrS.length-1]) + ')';
+            
+            google.maps.event.addListener(marker, 'mouseover', function() {
+                if (vehicle_ib.get('vehicle_id') === params['id']) { return; }
+                vehicle_ib.set('vehicle_id', params['id']);
+                
+                vehicle_ib.close();
+                
+                var popup_div = $('#vehicle_popup');
+                $('.name', popup_div).text(vehicleName);
+                $('.fromto', popup_div).text(vehicleFromTo);
+                $('.status', popup_div).text(marker.get('status'));
+                
+                vehicle_ib.setContent($('#vehicle_popup_container').html());
+                vehicle_ib.open(map, marker);
+                
+                linesPool.routeHighlight(params['sts']);
+            });
+            
+            this.marker = marker;
         }
         Vehicle.prototype.render = function() {
             function animate() {
                 var hms = timer.getTime();
+                if (that.multiple_days && (hms < that.depS[0])) {
+                    hms += 24 * 3600;
+                }
+                
                 var vehicle_found = false;
                 for (var i=0; i<that.arrS.length; i++) {
                     if (hms < that.arrS[i]) {
+                        var station_a = that.stations[i];
+                        var station_b = that.stations[i+1];
+                        
                         if (hms > that.depS[i]) {
                             // Vehicle is in motion between two stations
                             vehicle_found = true;
+                            if (that.marker.get('speed') === 0) {
+                                var speed = linesPool.lengthGet(station_a, station_b) * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
+                                that.marker.set('speed', parseInt(speed, 10));
+                                
+                                that.marker.set('status', 'heading to ' + stationsPool.get(station_b) + '(' + time_helpers.s2hm(that.arrS[i]) + ') with ' + that.marker.get('speed') + ' km/h');
+                            }
                             
-                            var station_a = that.stations[i];
-                            var station_b = that.stations[i+1];
                             var route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
 
-                            var pos = linesPool.positionGet([station_a, station_b], route_percent);
+                            var pos = linesPool.positionGet(station_a, station_b, route_percent);
                             if (pos === null) {
                                 console.log('Couldn\'t get the position of ' + that.id + ' between stations: ' + [station_a, station_b]);
                                 that.marker.setMap(null);
@@ -461,8 +560,15 @@ $(document).ready(function(){
                         } else {
                             // Vehicle is in a station
                             vehicle_found = true;
-                            
-                            // TODO - if is not yet on the map, add it (first vertex of the route)
+                            that.marker.set('status', 'departing ' + stationsPool.get(station_a) + ' at ' + time_helpers.s2hm(that.depS[i]));
+                            that.marker.set('speed', 0);
+
+                            if (that.marker.getMap() === null) {
+                                var pos = linesPool.positionGet(station_a, station_b, 0);
+                                that.marker.setPosition(pos);
+                                that.marker.setMap(map);
+                            }
+
                             var seconds_left = that.depS[i] - hms;
                             setTimeout(animate, seconds_left*1000);
                         }
@@ -504,6 +610,16 @@ $(document).ready(function(){
     simulation_manager.subscribe('map_init', function(){
         vehicle_helpers.get();
         setInterval(vehicle_helpers.get, 5*60*1000);
+    });
+    
+    $.ajax({
+        url: 'feed/stations/sbb/list',
+        dataType: 'json',
+        success: function(stations_data) {
+            $.each(stations_data, function(index, station) {
+                stationsPool.add(parseInt(station['id'], 10), station['name']);
+            });
+        }
     });
     
     timer.init('09:00:00');
