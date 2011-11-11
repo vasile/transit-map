@@ -613,7 +613,7 @@ $(document).ready(function(){
     });
     
     $.ajax({
-        url: 'feed/stations/sbb/list',
+        url: 'api/stations.json',
         dataType: 'json',
         success: function(stations_data) {
             $.each(stations_data, function(index, station) {
