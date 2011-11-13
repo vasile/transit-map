@@ -1,7 +1,7 @@
 ## About
 Vehicle simulator creates a Google Maps mashup with animated markers(vehicles) that are moving according with given timetables along polylines(vehicle tracks). 
 
-[Swisstrains v2](http://www.vasile.ch/hacks/swisstrains-v2/) is using this project and represents a simulation of the Swiss Federal Railways(SBB). 
+[Swisstrains v2](http://simcity.vasile.ch/sbb/) is using this project and represents a simulation of the Swiss Federal Railways(SBB). 
 
 ## Requirements
 
@@ -17,7 +17,7 @@ You should already see some action on the map !
 ## Customize the project with your area
 ### Vehicle tracks
 
-The network used for [Swisstrains v2](http://www.vasile.ch/hacks/swisstrains-v2/) consists of two type of entities: 
+The network used for [Swisstrains v2](http://simcity.vasile.ch/sbb/) consists of two type of entities: 
 
 * points(stations) - see [FT #1497361](http://www.google.com/fusiontables/DataSource?dsrcid=1497361)
 * polylines(tracks) - see [FT #1497331](http://www.google.com/fusiontables/DataSource?dsrcid=1497331)
@@ -41,7 +41,7 @@ For demo purposes, this project use the SBB timetables from '09:00', that are ca
 
 The important keys are
 
-* type: the vehicle type, used later for the vehicle icon, i.e. [images/vehicle-types/r.png](http://www.vasile.ch/hacks/swisstrains-v2/static/images/vehicle-types/r.png)
+* type: the vehicle type, used later for the vehicle icon, i.e. [images/vehicle-types/r.png](http://simcity.vasile.ch/sbb/static/images/vehicle-types/r.png)
 * sts: vehicle station IDs (see [FT #1497361](http://www.google.com/fusiontables/DataSource?dsrcid=1497361))
 * deps: vehicle departures computed in seconds from midnight. 
 For example 31680 = 08:48
