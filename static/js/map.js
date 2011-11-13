@@ -480,6 +480,8 @@ $(document).ready(function(){
 
                 linesPool.routeAdd(params['sts'][index-1], params['sts'][index], edges.split(','));
             });
+            
+            var vehicleName = params['name'] + ' (' + this.id + ')';
 
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(0, 0),
@@ -487,16 +489,16 @@ $(document).ready(function(){
                 map: null,
                 speed: 0,
                 status: 'not on map',
+                title: vehicleName
             });
-            
-            var vehicleName = params['name'] + ' (' + this.id + ')';
+
             var vehicleFromTo = stationsPool.get(this.stations[0]);
             vehicleFromTo += '(' + time_helpers.s2hm(this.depS[0]) + ')';
             vehicleFromTo += ' - ';
             vehicleFromTo += stationsPool.get(this.stations[this.stations.length-1]);
             vehicleFromTo += '(' + time_helpers.s2hm(this.arrS[this.arrS.length-1]) + ')';
             
-            google.maps.event.addListener(marker, 'mouseover', function() {
+            google.maps.event.addListener(marker, 'click', function() {
                 if (vehicle_ib.get('vehicle_id') === params['id']) { return; }
                 vehicle_ib.set('vehicle_id', params['id']);
                 
