@@ -1,7 +1,9 @@
 ## About
 Vehicle simulator creates a Google Maps mashup with animated markers(vehicles) that are moving according with given timetables along polylines(vehicle tracks). 
 
-[Swisstrains v2](http://simcity.vasile.ch/sbb/) and [cfr.webgis.ro](http://cfr.webgis.ro) are using this project and represents a simulation of the Swiss Federal Railways(SBB). 
+Projects that are using this script
+- Swiss Railways(SBB) network simulator - http://simcity.vasile.ch/sbb/ (soon available on http://www.swisstrains.ch)
+- Romanian Railways(CFR) network simulator - http://cfr.webgis.ro/
 
 ## Requirements
 
