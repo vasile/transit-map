@@ -109,6 +109,11 @@ $(document).ready(function(){
         linesPool.routeHighlightRemove();
     });
     
+    var track_vehicle_id = null;
+    if ((vehicle_id_found = window.location.href.match(/vehicle_id=([^&]*)/)) !== null) {
+        track_vehicle_id = decodeURIComponent(vehicle_id_found[1]).replace(/[^A-Z0-9]/i, '');
+    }
+    
     var stationsPool = (function(){
         var stations = {};
         
@@ -482,15 +487,22 @@ $(document).ready(function(){
             });
             
             var vehicleName = params['name'] + ' (' + this.id + ')';
-
+            
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(0, 0),
                 icon: imagesPool.iconGet(params['type']),
                 map: null,
                 speed: 0,
                 status: 'not on map',
-                title: vehicleName
+                title: vehicleName,
+                follow: 'no'
             });
+            
+            if (track_vehicle_id !== null) {
+                if (track_vehicle_id === params['name'].replace(/[^0-9A-Z]/i, '')) {
+                    marker.set('follow', 'yes_init');
+                }
+            }
             
             var vehicleFromTo = stationsPool.get(this.stations[0]);
             vehicleFromTo += '(' + time_helpers.s2hm(this.depS[0]) + ')';
@@ -573,6 +585,20 @@ $(document).ready(function(){
 
                             var seconds_left = that.depS[i] - hms;
                             setTimeout(animate, seconds_left*1000);
+                        }
+                        
+                        if (that.marker.get('follow') === 'yes_init') {
+                            if (that.marker.getMap() === null) {
+                                that.marker.setPosition(pos);
+                            }
+                            
+                            map.panTo(pos);
+                            map.setZoom(18);
+                            map.setMapTypeId('satellite');
+
+                            map.bindTo('center', that.marker, 'position');
+                            
+                            that.marker.set('follow', 'yes');
                         }
                         break;
                     }
