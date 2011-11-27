@@ -570,7 +570,7 @@ $(document).ready(function(){
                                 }                                
                             }
 
-                            setTimeout(animate, 500);
+                            setTimeout(animate, 1000);
                         } else {
                             // Vehicle is in a station
                             vehicle_found = true;
