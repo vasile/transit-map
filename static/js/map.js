@@ -118,7 +118,7 @@ $(document).ready(function(){
         var stations = {};
         
         function get(id) {
-            return typeof stations[id] === 'undefined' ? '' : stations[id];
+            return (typeof stations[id]) === 'undefined' ? '' : stations[id];
         }
         
         function add(id, name) {
@@ -281,6 +281,8 @@ $(document).ready(function(){
             return pad2Dec(hours) + ':' + pad2Dec(minutes) + ':' + pad2Dec(seconds);
         }
         function s2hm(dayS) {
+            // TODO - Round seconds to minutes, can be done nicer ?
+            dayS = (dayS/60).toFixed(0)*60;
             var hms = s2hms(dayS);
             return hms.substr(0, 5);
         }
@@ -416,8 +418,7 @@ $(document).ready(function(){
                 }
             });
             
-            // START HANDLE LOCATION
-            // TODO - find out why we need to put this before map_control part below
+            // SIMULATION PANEL
             var location_el = $('#user_location');
             location_el.attr('value-default', location_el.attr('value'));
 
@@ -449,12 +450,11 @@ $(document).ready(function(){
                     geocoding_handle({'address': $(this).val()});
                 }
             });
-            // END
             
-            var map_control = document.createElement('DIV');
-            map_control.index = 1;
-            map_control.appendChild($('#panel')[0]);
-            map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(map_control);
+            $('input.panel_close').click(function(){
+                $(this).closest('div[data-type="panel"]').addClass('hidden');
+            });
+            // END
         }
         
         return {
@@ -476,7 +476,17 @@ $(document).ready(function(){
             this.arrS           = params['arrs'];
             this.multiple_days  = params['arrs'][params['arrs'].length - 1] > 24 * 3600;
             
+            var html_rows = [];
             $.each(params.edges, function(index, edges) {
+                var html_row = '<tr><td>' + (index + 1) + '</td>';
+                // TODO - might be a race condition, to return 'undefined' if the stations AJAX call is not complete
+                html_row += '<td>' + stationsPool.get([params['sts'][index]]) + '</td>';
+                var hm_arr = (typeof params['arrs'][index - 1] === 'undefined') ? '' : time_helpers.s2hm(params['arrs'][index - 1]);
+                html_row += '<td>' + hm_arr + '</td>';
+                var hm_dep = (typeof params['deps'][index] === 'undefined') ? '' : time_helpers.s2hm(params['deps'][index]);
+                html_row += '<td>' + hm_dep + '</td></tr>';
+                html_rows.push(html_row);
+                
                 if (index === 0) { return; }
 
                 if (linesPool.routeExists(params['sts'][index-1], params['sts'][index])) {
@@ -485,6 +495,7 @@ $(document).ready(function(){
 
                 linesPool.routeAdd(params['sts'][index-1], params['sts'][index], edges.split(','));
             });
+            var timetables_rows = html_rows.join('');
             
             var vehicleName = params['name'] + ' (' + this.id + ')';
             
@@ -516,6 +527,8 @@ $(document).ready(function(){
                 
                 vehicle_ib.close();
                 
+                // TODO - we might do same approach as timetables_rows ?
+                //      - compute only once the HTML content
                 var popup_div = $('#vehicle_popup');
                 $('.name', popup_div).text(vehicleName);
                 $('.fromto', popup_div).text(vehicleFromTo);
@@ -525,6 +538,9 @@ $(document).ready(function(){
                 vehicle_ib.open(map, marker);
                 
                 linesPool.routeHighlight(params['sts']);
+                
+                $('#vehicle_info').removeClass('hidden');
+                $('#vehicle_timetable > tbody').html(timetables_rows);
             });
             
             this.marker = marker;
@@ -621,7 +637,7 @@ $(document).ready(function(){
                     success: function(vehicles) {
                         $.each(vehicles, function(index, data) {
                             if (vehicleIDs.indexOf(data['id']) !== -1) { return; }
-
+                            
                             var v = new Vehicle(data);
                             v.render();
                             vehicleIDs.push(data['id']);
