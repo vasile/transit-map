@@ -100,32 +100,6 @@ var simulation_manager = (function(){
 
 $(document).ready(function(){
     var map;
-    var vehicle_ib = new InfoBox({
-        disableAutoPan: true,
-        pixelOffset: new google.maps.Size(10, 10),
-        vehicle_id: 0
-    });
-    google.maps.event.addListener(vehicle_ib, 'closeclick', function(){
-        linesPool.routeHighlightRemove();
-        vehicle_ib.set('vehicle_id', null);
-    });
-    
-    var track_vehicle_id = null;
-    if ((vehicle_id_found = window.location.href.match(/vehicle_id=([^&]*)/)) !== null) {
-        track_vehicle_id = decodeURIComponent(vehicle_id_found[1]).replace(/[^A-Z0-9]/i, '');
-    }
-    
-    $('#follow_trigger').click(function(){
-        if ($(this).hasClass('toggled')) {
-            $(this).removeClass('toggled');
-        } else {
-            $(this).addClass('toggled');
-        }
-        
-        var value_new = $(this).attr('data-value-toggle');
-        $(this).attr('data-value-toggle', $(this).val());
-        $(this).val(value_new);
-    });
     
     var stationsPool = (function(){
         var stations = {};
@@ -478,6 +452,34 @@ $(document).ready(function(){
     // - check backend for new vehicles
     // - manages vehicle objects(class Vehicle) and animates them (see Vehicle.render method)
     var vehicle_helpers = (function(){
+        var vehicle_ib = new InfoBox({
+            disableAutoPan: true,
+            pixelOffset: new google.maps.Size(10, 10),
+            vehicle_id: 0
+        });
+        google.maps.event.addListener(vehicle_ib, 'closeclick', function(){
+            linesPool.routeHighlightRemove();
+            vehicle_ib.set('vehicle_id', null);
+        });
+
+        var track_vehicle_id = null;
+        if ((vehicle_id_found = window.location.href.match(/vehicle_id=([^&]*)/)) !== null) {
+            track_vehicle_id = decodeURIComponent(vehicle_id_found[1]).replace(/[^A-Z0-9]/i, '');
+        }
+
+        $('#follow_trigger').click(function(){
+            if ($(this).hasClass('toggled')) {
+                $(this).removeClass('toggled');
+            } else {
+                $(this).addClass('toggled');
+            }
+
+            var value_new = $(this).attr('data-value-toggle');
+            $(this).attr('data-value-toggle', $(this).val());
+            $(this).val(value_new);
+        });
+        
+        
         var vehicleIDs = [];
 
         function Vehicle(params) {
