@@ -37,7 +37,7 @@ body {
 }
 
 #panel > div.section {
-    background-color: #E8DECA;
+    background-color: #F2F2F2;
     border: 1px solid #CACACA;
 }
 
@@ -58,7 +58,9 @@ body {
 #user_location {
     width: 245px;
 }
+/* END */
 
+/* VEHICLE PANEL */
 input.panel_close {
     background: transparent url(../images/window_close) no-repeat top;
     width: 15px;
@@ -71,8 +73,25 @@ input.panel_close {
     top: 0px;
 }
 
+#vehicle_info div {
+    margin-bottom: 6px;
+}
+
+#vehicle_timetable {
+    width: 275px;
+}
+
 #vehicle_timetable td.station {
     width: 150px;
+}
+
+#vehicle_timetable thead td {
+    background-color: #DDD;
+}
+
+#vehicle_timetable tbody td {
+    border-top: 1px solid #DDD;
+    background-color: #FFFFFF;
 }
 
 #panel b {

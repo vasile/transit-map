@@ -478,9 +478,9 @@ $(document).ready(function(){
             
             var html_rows = [];
             $.each(params.edges, function(index, edges) {
-                var html_row = '<tr><td>' + (index + 1) + '</td>';
+                var html_row = '<tr><td>' + (index + 1) + '.</td>';
                 // TODO - might be a race condition, to return 'undefined' if the stations AJAX call is not complete
-                html_row += '<td>' + stationsPool.get([params['sts'][index]]) + '</td>';
+                html_row += '<td><a href="#station_id=' + params['sts'][index] + '">' + stationsPool.get([params['sts'][index]]) + '</a></td>';
                 var hm_arr = (typeof params['arrs'][index - 1] === 'undefined') ? '' : time_helpers.s2hm(params['arrs'][index - 1]);
                 html_row += '<td>' + hm_arr + '</td>';
                 var hm_dep = (typeof params['deps'][index] === 'undefined') ? '' : time_helpers.s2hm(params['deps'][index]);
