@@ -115,6 +115,18 @@ $(document).ready(function(){
         track_vehicle_id = decodeURIComponent(vehicle_id_found[1]).replace(/[^A-Z0-9]/i, '');
     }
     
+    $('#follow_trigger').click(function(){
+        if ($(this).hasClass('toggled')) {
+            $(this).removeClass('toggled');
+        } else {
+            $(this).addClass('toggled');
+        }
+        
+        var value_new = $(this).attr('data-value-toggle');
+        $(this).attr('data-value-toggle', $(this).val());
+        $(this).val(value_new);
+    });
+    
     var stationsPool = (function(){
         var stations = {};
         

@@ -102,6 +102,12 @@ input.panel_close {
 #panel b {
     font-weight: bold;
 }
+
+
+#follow_trigger.toggled {
+    background-color: #FF0000;
+    color: #FFFFFF;
+}
 /* END */
 
 /* START vehicle popup */
