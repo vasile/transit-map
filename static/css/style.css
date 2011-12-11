@@ -117,7 +117,7 @@ input.panel_close {
     font-size: 11px;
 }
 
-#vehicle_popup p .name {
+#vehicle_popup p .vehicle_name {
     font-weight: bold;
 }
 /* END */

@@ -523,7 +523,7 @@ $(document).ready(function(){
                 
                 // TODO - we need to update only once the status, the name and link can be updated only once, as timetables_rows
                 var popup_div = $('#vehicle_popup');
-                $('.name', popup_div).text(vehicleName);
+                $('.vehicle_name').text(vehicleName);
                 $('.status', popup_div).text(marker.get('status'));
                 
                 vehicle_ib.setContent($('#vehicle_popup_container').html());
