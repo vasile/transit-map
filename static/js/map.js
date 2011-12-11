@@ -107,6 +107,7 @@ $(document).ready(function(){
     });
     google.maps.event.addListener(vehicle_ib, 'closeclick', function(){
         linesPool.routeHighlightRemove();
+        vehicle_ib.set('vehicle_id', null);
     });
     
     var track_vehicle_id = null;
@@ -240,8 +241,6 @@ $(document).ready(function(){
         function routeHighlightRemove() {
             route_highlight.setMap(null);
             route_highlight.set('ids', null);
-            
-            vehicle_ib.set('vehicle_id', null);
         }
         
         return {
