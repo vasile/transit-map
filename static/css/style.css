@@ -115,9 +115,11 @@ input.panel_close {
 
 #vehicle_popup p {
     font-size: 11px;
+    line-height: 13px;
+    margin-top: 3px
 }
 
-#vehicle_popup p .vehicle_name {
+#vehicle_popup a.vehicle_name {
     font-weight: bold;
 }
 /* END */
