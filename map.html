@@ -4,7 +4,7 @@
         <title>Vehicle simulator</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-        
+
         <link href="static/css/reset.css" rel="stylesheet" type="text/css" />
         <link href="static/css/style.css" rel="stylesheet" type="text/css" />
 
@@ -20,24 +20,29 @@
         <div id="panel">
             <div>
                 <p>Vehicle simulator</p>
-                <div>Time: <span id="day_time"></span></div>
+                <div>Project information available on <a href="https://github.com/vasile/vehicle-simulator" target="_blank">Github</a>.</div>
             </div>
-            <div>
+            <div class="section">
+                <b>Time:</b> <span id="day_time"></span>
+                <br/>
                 <input type="button" id="geolocation_click" />
-                <input type="text" id="user_location" value="Enter location" / >
+                <input type="text" id="user_location" value="Type your location" / >
             </div>
-            <div id="vehicle_info" class="hidden" data-type="panel">
+            <div id="vehicle_info" class="hidden section" data-type="panel">
                 <div>
-                    Vehicle: <span class="name"></span> <input type="button" value="Follow" data-value-toggle="STOP" /> <input type="button" value="Route" data-value-toggle="HIDE" />
-                    <input type="button" class="panel_close">
+                    <b>Vehicle:</b> <span class="name"></span> <input type="button" class="panel_close" />
                 </div>
+                <div>
+                    <input type="button" value="Follow" data-value-toggle="STOP" /> <input type="button" value="Route" data-value-toggle="HIDE" /> <input type="button" value="SBB Link" />
+                </div>
+                
                 <table id="vehicle_timetable">
                     <thead>
                         <tr>
                             <td class="no">#</td>
                             <td class="station">Station</td>
-                            <td class="arr">Arrival</td>
-                            <td class="dep">Departure</td>
+                            <td class="arr">Arr.</td>
+                            <td class="dep">Dep.</td>
                         </tr>
                     </thead>
                     <tbody>
@@ -48,7 +53,7 @@
         <div id="vehicle_popup_container" class="hidden">
             <div id="vehicle_popup">
                 <p>
-                    <strong class="name"></strong><br/>
+                    <a class="name" href="#" target="_blank"></a><br/>
                     <span class="fromto"></span><br/><br/>
                     <strong>Status:</strong> <span class="status"></span></span>
                 </p>
