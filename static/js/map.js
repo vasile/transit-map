@@ -515,23 +515,15 @@ $(document).ready(function(){
                 }
             }
             
-            var vehicleFromTo = stationsPool.get(this.stations[0]);
-            vehicleFromTo += '(' + time_helpers.s2hm(this.depS[0]) + ')';
-            vehicleFromTo += ' - ';
-            vehicleFromTo += stationsPool.get(this.stations[this.stations.length-1]);
-            vehicleFromTo += '(' + time_helpers.s2hm(this.arrS[this.arrS.length-1]) + ')';
-            
             google.maps.event.addListener(marker, 'click', function() {
                 if (vehicle_ib.get('vehicle_id') === params['id']) { return; }
                 vehicle_ib.set('vehicle_id', params['id']);
                 
                 vehicle_ib.close();
                 
-                // TODO - we might do same approach as timetables_rows ?
-                //      - compute only once the HTML content
+                // TODO - we need to update only once the status, the name and link can be updated only once, as timetables_rows
                 var popup_div = $('#vehicle_popup');
                 $('.name', popup_div).text(vehicleName);
-                $('.fromto', popup_div).text(vehicleFromTo);
                 $('.status', popup_div).text(marker.get('status'));
                 
                 vehicle_ib.setContent($('#vehicle_popup_container').html());
@@ -539,8 +531,14 @@ $(document).ready(function(){
                 
                 linesPool.routeHighlight(params['sts']);
                 
-                $('#vehicle_info').removeClass('hidden');
                 $('#vehicle_timetable > tbody').html(timetables_rows);
+                $('#vehicle_timetable tbody tr td:nth-child(4)').each(function(){
+                    var dep = $(this).text().replace(/:/,'');
+                    if((dep !== "") && (dep < timer.getHM())) {
+                        $(this).parent().addClass('passed');
+                    }
+                });
+                $('#vehicle_info').removeClass('hidden');
             });
             
             this.marker = marker;
@@ -565,7 +563,7 @@ $(document).ready(function(){
                                 var speed = linesPool.lengthGet(station_a, station_b) * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
                                 that.marker.set('speed', parseInt(speed, 10));
                                 
-                                that.marker.set('status', 'heading to ' + stationsPool.get(station_b) + '(' + time_helpers.s2hm(that.arrS[i]) + ') with ' + that.marker.get('speed') + ' km/h');
+                                that.marker.set('status', 'Heading to ' + stationsPool.get(station_b) + '(' + time_helpers.s2hm(that.arrS[i]) + ') with ' + that.marker.get('speed') + ' km/h');
                             }
                             
                             var route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
@@ -590,7 +588,7 @@ $(document).ready(function(){
                         } else {
                             // Vehicle is in a station
                             vehicle_found = true;
-                            that.marker.set('status', 'departing ' + stationsPool.get(station_a) + ' at ' + time_helpers.s2hm(that.depS[i]));
+                            that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + time_helpers.s2hm(that.depS[i]));
                             that.marker.set('speed', 0);
 
                             if (that.marker.getMap() === null) {

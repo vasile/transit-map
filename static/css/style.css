@@ -94,6 +94,11 @@ input.panel_close {
     background-color: #FFFFFF;
 }
 
+#vehicle_timetable tbody tr.passed td, 
+#vehicle_timetable tbody tr.passed td a {
+    color: #CACACA;
+}
+
 #panel b {
     font-weight: bold;
 }
@@ -101,18 +106,18 @@ input.panel_close {
 
 /* START vehicle popup */
 #vehicle_popup {
-    width: 200px;
-    border: 1px solid black; 
-    background: #FFFFFF; 
-    padding: 2px 0px 0px 10px;
+    width: 180px;
+    padding: 5px 0px 5px 10px;
+    
+    background-color: #F2F2F2;
+    border: 1px solid #111111;
 }
 
 #vehicle_popup p {
-    font-size: 10px;
+    font-size: 11px;
 }
 
 #vehicle_popup p .name {
-    font-size: 12px;
     font-weight: bold;
 }
 /* END */
