@@ -1,6 +1,5 @@
 var simulation_manager = (function(){
     var map = null;
-    var is_mobile = (navigator.userAgent.indexOf('iPhone') !== -1) || (navigator.userAgent.indexOf('Android') != -1);
     
     var listeners = {
         map_init: []
@@ -24,16 +23,11 @@ var simulation_manager = (function(){
         return map;
     }
     
-    function isMobile() {
-        return is_mobile;
-    }
-    
     return {
         subscribe: subscribe,
         notify: notify,
         setMap: setMap,
-        getMap: getMap,
-        isMobile: isMobile
+        getMap: getMap
     }
 })();
 
