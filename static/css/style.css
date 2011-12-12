@@ -124,4 +124,8 @@ input.toggled {
     line-height: 13px;
     margin-top: 3px
 }
+
+#vehicle_popup span.vehicle_name {
+    font-weight: bold;
+}
 /* END */

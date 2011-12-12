@@ -455,7 +455,8 @@ $(document).ready(function(){
         var vehicle_ib = new InfoBox({
             disableAutoPan: true,
             pixelOffset: new google.maps.Size(10, 10),
-            vehicle_id: 0
+            vehicle_id: 0,
+            closeBoxURL: ''
         });
         
         var track_vehicle_id = null;
@@ -526,15 +527,12 @@ $(document).ready(function(){
             });
             var timetables_rows = html_rows.join('');
             
-            var vehicleName = params['name'] + ' (' + this.id + ')';
-            
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(0, 0),
                 icon: imagesPool.iconGet(params['type']),
                 map: null,
                 speed: 0,
-                status: 'not on map',
-                title: vehicleName
+                status: 'not on map'
             });
             this.marker = marker;
             
@@ -559,7 +557,7 @@ $(document).ready(function(){
                 vehicle_ib.close();
                 
                 var popup_div = $('#vehicle_popup');
-                $('.vehicle_name').text(vehicleName);
+                $('.vehicle_name').text(params['name']);
                 $('.status', popup_div).text(marker.get('status'));
                 
                 vehicle_ib.setContent($('#vehicle_popup_container').html());
