@@ -507,6 +507,18 @@ $(document).ready(function(){
             $(this).val(value_new);
         });
         
+        $('#vehicle_timetable tbody tr a').live('click', function(){
+            var station_location = stationsPool.location_get($(this).attr('data-station-id'));
+            if (station_location.lng() == 0) { return; }
+            
+            map.setCenter(station_location);
+            if (map.getZoom() < 16) {
+                map.setZoom(16);
+            }
+
+            return false;
+        });
+        
         var vehicleIDs = [];
 
         function Vehicle(params) {
@@ -519,7 +531,7 @@ $(document).ready(function(){
             var html_rows = [];
             $.each(params.edges, function(index, edges) {
                 var html_row = '<tr><td>' + (index + 1) + '.</td>';
-                html_row += '<td><a href="#station_id=' + params['sts'][index] + '">' + stationsPool.get([params['sts'][index]]) + '</a></td>';
+                html_row += '<td><a href="#station_id=' + params['sts'][index] + '" data-station-id="' + params['sts'][index] + '">' + stationsPool.get(params['sts'][index]) + '</a></td>';
                 var hm_arr = (typeof params['arrs'][index - 1] === 'undefined') ? '' : time_helpers.s2hm(params['arrs'][index - 1]);
                 html_row += '<td>' + hm_arr + '</td>';
                 var hm_dep = (typeof params['deps'][index] === 'undefined') ? '' : time_helpers.s2hm(params['deps'][index]);
@@ -702,7 +714,7 @@ $(document).ready(function(){
         dataType: 'json',
         success: function(stations_data) {
             $.each(stations_data, function(index, station) {
-                stationsPool.add(parseInt(station['id'], 10), station['name'], parseFloat(station['y']), parseFloat(station['x']));
+                stationsPool.add(parseInt(station['id'], 10), station['name'], parseFloat(station['x']), parseFloat(station['y']));
             });
         }
     });
