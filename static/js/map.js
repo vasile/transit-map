@@ -457,28 +457,45 @@ $(document).ready(function(){
             pixelOffset: new google.maps.Size(10, 10),
             vehicle_id: 0
         });
-        google.maps.event.addListener(vehicle_ib, 'closeclick', function(){
-            linesPool.routeHighlightRemove();
-            vehicle_ib.set('vehicle_id', null);
-        });
-
+        
         var track_vehicle_id = null;
-        if ((vehicle_id_found = window.location.href.match(/vehicle_id=([^&]*)/)) !== null) {
-            track_vehicle_id = decodeURIComponent(vehicle_id_found[1]).replace(/[^A-Z0-9]/i, '');
+        var track_vehicle_name = null;
+        if ((vehicle_name_found = window.location.href.match(/vehicle_name=([^&]*)/)) !== null) {
+            track_vehicle_name = decodeURIComponent(vehicle_name_found[1]).replace(/[^A-Z0-9]/i, '');
         }
+        
+        var vehicle_toggler = $('#follow_trigger');
+        function vehicle_follow_toggle(){
+            if (vehicle_toggler.hasClass('toggled')) {
+                vehicle_toggler.removeClass('toggled');
+                map.unbind('center');
+            } else {
+                track_vehicle_id = $('#vehicle_info').attr('data-vehicle-id');
+                vehicle_toggler.addClass('toggled');
+            }
 
-        $('#follow_trigger').click(function(){
+            var value_new = vehicle_toggler.attr('data-value-toggle');
+            vehicle_toggler.attr('data-value-toggle', vehicle_toggler.val());
+            vehicle_toggler.val(value_new);
+        }
+        vehicle_toggler.click(vehicle_follow_toggle);
+        
+        $('#route_show_trigger').click(function(){
             if ($(this).hasClass('toggled')) {
                 $(this).removeClass('toggled');
+                
+                linesPool.routeHighlightRemove();
             } else {
                 $(this).addClass('toggled');
+                
+                var station_ids = $('#vehicle_info').attr('data-station-ids').split(',');
+                linesPool.routeHighlight(station_ids);
             }
 
             var value_new = $(this).attr('data-value-toggle');
             $(this).attr('data-value-toggle', $(this).val());
             $(this).val(value_new);
         });
-        
         
         var vehicleIDs = [];
 
@@ -492,7 +509,6 @@ $(document).ready(function(){
             var html_rows = [];
             $.each(params.edges, function(index, edges) {
                 var html_row = '<tr><td>' + (index + 1) + '.</td>';
-                // TODO - might be a race condition, to return 'undefined' if the stations AJAX call is not complete
                 html_row += '<td><a href="#station_id=' + params['sts'][index] + '">' + stationsPool.get([params['sts'][index]]) + '</a></td>';
                 var hm_arr = (typeof params['arrs'][index - 1] === 'undefined') ? '' : time_helpers.s2hm(params['arrs'][index - 1]);
                 html_row += '<td>' + hm_arr + '</td>';
@@ -518,32 +534,11 @@ $(document).ready(function(){
                 map: null,
                 speed: 0,
                 status: 'not on map',
-                title: vehicleName,
-                follow: 'no'
+                title: vehicleName
             });
+            this.marker = marker;
             
-            if (track_vehicle_id !== null) {
-                if (track_vehicle_id === params['name'].replace(/[^0-9A-Z]/i, '')) {
-                    marker.set('follow', 'yes_init');
-                }
-            }
-            
-            google.maps.event.addListener(marker, 'click', function() {
-                if (vehicle_ib.get('vehicle_id') === params['id']) { return; }
-                vehicle_ib.set('vehicle_id', params['id']);
-                
-                vehicle_ib.close();
-                
-                // TODO - we need to update only once the status, the name and link can be updated only once, as timetables_rows
-                var popup_div = $('#vehicle_popup');
-                $('.vehicle_name').text(vehicleName);
-                $('.status', popup_div).text(marker.get('status'));
-                
-                vehicle_ib.setContent($('#vehicle_popup_container').html());
-                vehicle_ib.open(map, marker);
-                
-                linesPool.routeHighlight(params['sts']);
-                
+            function vehicle_clickHandler() {
                 $('#vehicle_timetable > tbody').html(timetables_rows);
                 $('#vehicle_timetable tbody tr td:nth-child(4)').each(function(){
                     var dep = $(this).text().replace(/:/,'');
@@ -552,9 +547,38 @@ $(document).ready(function(){
                     }
                 });
                 $('#vehicle_info').removeClass('hidden');
+                $('#vehicle_info').attr('data-vehicle-id', params['id']);
+                $('#vehicle_info').attr('data-station-ids', params['sts'].join(','));
+            };
+            google.maps.event.addListener(marker, 'click', vehicle_clickHandler);
+            
+            google.maps.event.addListener(marker, 'mouseover', function(){
+                if (vehicle_ib.get('vehicle_id') === params['id']) { return; }
+                vehicle_ib.set('vehicle_id', params['id']);
+                
+                vehicle_ib.close();
+                
+                var popup_div = $('#vehicle_popup');
+                $('.vehicle_name').text(vehicleName);
+                $('.status', popup_div).text(marker.get('status'));
+                
+                vehicle_ib.setContent($('#vehicle_popup_container').html());
+                vehicle_ib.open(map, marker);
+            });
+            google.maps.event.addListener(marker, 'mouseout', function(){
+                vehicle_ib.set('vehicle_id', null);
+                vehicle_ib.close();
             });
             
-            this.marker = marker;
+            if (track_vehicle_name !== null) {
+                if (track_vehicle_name === params['name'].replace(/[^0-9A-Z]/i, '')) {
+                    track_vehicle_name = null;
+                    track_vehicle_id = this.id;
+
+                    vehicle_clickHandler();
+                    vehicle_follow_toggle();
+                }
+            }
         }
         Vehicle.prototype.render = function() {
             function animate() {
@@ -614,7 +638,9 @@ $(document).ready(function(){
                             setTimeout(animate, seconds_left*1000);
                         }
                         
-                        if (that.marker.get('follow') === 'yes_init') {
+                        if (track_vehicle_id === that.id) {
+                            track_vehicle_id = null;
+                            
                             if (that.marker.getMap() === null) {
                                 that.marker.setPosition(pos);
                             }
@@ -624,8 +650,6 @@ $(document).ready(function(){
                             map.setMapTypeId('satellite');
 
                             map.bindTo('center', that.marker, 'position');
-                            
-                            that.marker.set('follow', 'yes');
                         }
                         break;
                     }

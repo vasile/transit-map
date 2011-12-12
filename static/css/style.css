@@ -104,7 +104,7 @@ input.panel_close {
 }
 
 
-#follow_trigger.toggled {
+input.toggled {
     background-color: #FF0000;
     color: #FFFFFF;
 }
@@ -123,9 +123,5 @@ input.panel_close {
     font-size: 11px;
     line-height: 13px;
     margin-top: 3px
-}
-
-#vehicle_popup a.vehicle_name {
-    font-weight: bold;
 }
 /* END */
