@@ -120,9 +120,8 @@ input.toggled {
 }
 
 #vehicle_popup p {
-    font-size: 11px;
-    line-height: 13px;
-    margin-top: 3px
+    font-size: 10px;
+    line-height: 12px;
 }
 
 #vehicle_popup span.vehicle_name {
