@@ -415,7 +415,7 @@ $(document).ready(function(){
             function geocoding_handle(params) {
                 geocoder.geocode(params, function(results, status) {
                     if (status === google.maps.GeocoderStatus.OK) {
-                        location_el.val(results[0].formatted_address.replace(/, Switzerland/, ''));
+                        location_el.val(results[0].formatted_address);
                         map.setCenter(results[0].geometry.location);
                         map.setZoom(15);
                     }
