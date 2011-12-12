@@ -105,16 +105,25 @@ $(document).ready(function(){
         var stations = {};
         
         function get(id) {
-            return (typeof stations[id]) === 'undefined' ? '' : stations[id];
+            return (typeof stations[id]) === 'undefined' ? '' : stations[id].get('name');
         }
         
-        function add(id, name) {
-            stations[id] = name;
+        function location_get(id) {
+            return (typeof stations[id]) === 'undefined' ? '' : stations[id].get('location');
+        }
+        
+        function add(id, name, x, y) {
+            var station = new google.maps.MVCObject();
+            station.set('name', name);
+            station.set('location', new google.maps.LatLng(parseFloat(y), parseFloat(x)));
+            
+            stations[id] = station;
         }
         
         return {
             get: get,
-            add: add
+            add: add,
+            location_get: location_get
         }
     })();
 
@@ -693,7 +702,7 @@ $(document).ready(function(){
         dataType: 'json',
         success: function(stations_data) {
             $.each(stations_data, function(index, station) {
-                stationsPool.add(parseInt(station['id'], 10), station['name']);
+                stationsPool.add(parseInt(station['id'], 10), station['name'], parseFloat(station['y']), parseFloat(station['x']));
             });
         }
     });
