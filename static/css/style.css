@@ -62,7 +62,7 @@ body {
 
 /* VEHICLE PANEL */
 input.panel_close {
-    background: transparent url(../images/window_close) no-repeat top;
+    background: transparent url(../images/window_close.gif) no-repeat top;
     width: 15px;
     height: 15px;
     border: none;
