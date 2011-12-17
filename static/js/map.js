@@ -654,10 +654,6 @@ $(document).ready(function(){
                         if (track_vehicle_id === that.id) {
                             track_vehicle_id = null;
                             
-                            if (that.marker.getMap() === null) {
-                                that.marker.setPosition(pos);
-                            }
-                            
                             map.panTo(pos);
                             map.setZoom(18);
                             map.setMapTypeId('satellite');
