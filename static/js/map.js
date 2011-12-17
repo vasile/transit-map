@@ -611,9 +611,9 @@ $(document).ready(function(){
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(0, 0),
                 icon: imagesPool.iconGet(params.type),
-                map: map,
+                map: null,
                 speed: 0,
-                status: 'init'
+                status: 'not on map'
             });
             this.marker = marker;
             
@@ -703,8 +703,17 @@ $(document).ready(function(){
                                 that.marker.setMap(null);
                                 break;
                             } else {
-                                if (map.getBounds().contains(pos) || vehicleFollower.isActive(that.id)) {
+                                if (vehicleFollower.isActive(that.id)) {
                                     that.marker.setPosition(pos);
+                                } else {
+                                    if (map.getBounds().contains(pos)) {
+                                        if (that.marker.getMap() === null) {
+                                            that.marker.setMap(map);
+                                        }
+                                        that.marker.setPosition(pos);
+                                    } else {
+                                        that.marker.setMap(null);
+                                    }
                                 }                                
                             }
 
