@@ -463,28 +463,79 @@ $(document).ready(function(){
             closeBoxURL: ''
         });
         
-        var track_vehicle_id = null;
-        var track_vehicle_name = null;
-        var vehicle_name_found = window.location.href.match(/vehicle_name=([^&]*)/);
-        if (vehicle_name_found !== null) {
-            track_vehicle_name = decodeURIComponent(vehicle_name_found[1]).replace(/[^A-Z0-9]/i, '');
-        }
-        
-        var vehicle_toggler = $('#follow_trigger');
-        function vehicle_follow_toggle(){
-            if (vehicle_toggler.hasClass('toggled')) {
-                vehicle_toggler.removeClass('toggled');
-                map.unbind('center');
-            } else {
-                track_vehicle_id = $('#vehicle_info').attr('data-vehicle-id');
-                vehicle_toggler.addClass('toggled');
+        var vehicleFollower = (function(){
+            var track_vehicle_name = null;
+            var vehicle_name_found = window.location.href.match(/vehicle_name=([^&]*)/);
+            if (vehicle_name_found !== null) {
+                track_vehicle_name = decodeURIComponent(vehicle_name_found[1]).replace(/[^A-Z0-9]/i, '');
             }
-
-            var value_new = vehicle_toggler.attr('data-value-toggle');
-            vehicle_toggler.attr('data-value-toggle', vehicle_toggler.val());
-            vehicle_toggler.val(value_new);
-        }
-        vehicle_toggler.click(vehicle_follow_toggle);
+            
+            function isWaiting(id) {
+                if ($('#vehicle_info').attr('data-vehicle-id') !== id) {
+                    return false;
+                }
+                
+                if ($('#vehicle_info').attr('data-vehicle-follow') !== 'yes-init') {
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            function matchByName(name) {
+                if (track_vehicle_name === null) {
+                    return false;
+                }
+                
+                if (track_vehicle_name !== name) {
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            function setActive() {
+                $('#vehicle_info').attr('data-vehicle-follow', 'yes');
+            }
+            
+            function isActive(id) {
+                if ($('#vehicle_info').attr('data-vehicle-id') !== id) {
+                    return false;
+                }
+                
+                if ($('#vehicle_info').attr('data-vehicle-follow') !== 'yes') {
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            var toggler = $('#follow_trigger');
+            function toggle(stop_following) {
+                var toggler_value = 'Follow';
+                if (stop_following) {
+                    toggler.removeClass('toggled');
+                    map.unbind('center');
+                } else {
+                    $('#vehicle_info').attr('data-vehicle-follow', 'yes-init');
+                    toggler.addClass('toggled');
+                    toggler_value = toggler.attr('data-value-toggle');
+                }
+                
+                toggler.val(toggler_value);
+            }
+            toggler.click(function(){
+                toggle(toggler.hasClass('toggled'));
+            });
+            
+            return {
+                isWaiting: isWaiting,
+                matchByName: matchByName,
+                setActive: setActive,
+                isActive: isActive,
+                toggle: toggle
+            };
+        })();
         
         $('#route_show_trigger').click(function(){
             if ($(this).hasClass('toggled')) {
@@ -554,6 +605,10 @@ $(document).ready(function(){
             this.marker = marker;
             
             function vehicle_clickHandler() {
+                if ($('#vehicle_info').attr('data-vehicle-id') === params.id) {
+                    return;
+                }
+                
                 $('#vehicle_timetable > tbody').html(timetables_rows);
                 $('#vehicle_timetable tbody tr td:nth-child(4)').each(function(){
                     var dep = $(this).text().replace(/:/,'');
@@ -561,11 +616,17 @@ $(document).ready(function(){
                         $(this).parent().addClass('passed');
                     }
                 });
-                $('#vehicle_info').removeClass('hidden');
+
                 $('#vehicle_info').attr('data-vehicle-id', params.id);
                 $('#vehicle_info').attr('data-station-ids', params.sts.join(','));
+                $('#vehicle_info').attr('data-vehicle-follow', 'no');
+                
+                $('#vehicle_info').removeClass('hidden');
             }
-            google.maps.event.addListener(marker, 'click', vehicle_clickHandler);
+            google.maps.event.addListener(marker, 'click', function(){
+                vehicle_clickHandler();
+                vehicleFollower.toggle(true);
+            });
             
             google.maps.event.addListener(marker, 'mouseover', function(){
                 if (vehicle_ib.get('vehicle_id') === params.id) { return; }
@@ -585,14 +646,9 @@ $(document).ready(function(){
                 vehicle_ib.close();
             });
             
-            if (track_vehicle_name !== null) {
-                if (track_vehicle_name === params.name.replace(/[^0-9A-Z]/i, '')) {
-                    track_vehicle_name = null;
-                    track_vehicle_id = this.id;
-
-                    vehicle_clickHandler();
-                    vehicle_follow_toggle();
-                }
+            if (vehicleFollower.matchByName(params.name)) {
+                vehicle_clickHandler();
+                vehicleFollower.toggle(false);
             }
         }
         Vehicle.prototype.render = function() {
@@ -629,7 +685,7 @@ $(document).ready(function(){
                                 that.marker.setMap(null);
                                 break;
                             } else {
-                                if (map.getBounds().contains(pos)) {
+                                if (map.getBounds().contains(pos) || vehicleFollower.isActive(that.id)) {
                                     that.marker.setPosition(pos);
                                 }                                
                             }
@@ -641,18 +697,15 @@ $(document).ready(function(){
                             that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + time_helpers.s2hm(that.depS[i]));
                             that.marker.set('speed', 0);
 
-                            if (that.marker.getMap() === null) {
-                                pos = linesPool.positionGet(station_a, station_b, 0);
-                                that.marker.setPosition(pos);
-                                that.marker.setMap(map);
-                            }
+                            pos = stationsPool.location_get(station_a);
+                            that.marker.setPosition(pos);
 
                             var seconds_left = that.depS[i] - hms;
                             setTimeout(animate, seconds_left*1000);
                         }
                         
-                        if (track_vehicle_id === that.id) {
-                            track_vehicle_id = null;
+                        if (vehicleFollower.isWaiting(that.id)) {
+                            vehicleFollower.setActive();
                             
                             map.panTo(pos);
                             map.setZoom(18);
