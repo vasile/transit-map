@@ -578,15 +578,19 @@ $(document).ready(function(){
         var vehicleIDs = [];
 
         function Vehicle(params) {
+            var has_multiple_days = params.arrs[params.arrs.length - 1] > 24 * 3600;
+            
             this.id             = params.id;
             this.stations       = params.sts;
             this.depS           = params.deps;
             this.arrS           = params.arrs;
-            this.multiple_days  = params.arrs[params.arrs.length - 1] > 24 * 3600;
+            this.multiple_days  = has_multiple_days;
             
             var html_rows = [];
             $.each(params.edges, function(index, edges) {
-                var html_row = '<tr><td>' + (index + 1) + '.</td>';
+                var s_dep = (typeof params.deps[index] === 'undefined') ? 24 * 3600 : params.deps[index];
+                
+                var html_row = '<tr data-dep-sec="' + s_dep + '"><td>' + (index + 1) + '.</td>';
                 html_row += '<td><a href="#station_id=' + params.sts[index] + '" data-station-id="' + params.sts[index] + '">' + stationsPool.get(params.sts[index]) + '</a></td>';
                 var hm_arr = (typeof params.arrs[index - 1] === 'undefined') ? '' : time_helpers.s2hm(params.arrs[index - 1]);
                 html_row += '<td>' + hm_arr + '</td>';
@@ -620,11 +624,15 @@ $(document).ready(function(){
                 
                 $('a.vehicle_name').text(params.name);
                 
+                var hms = timer.getTime();
+                if (has_multiple_days && (hms < params.deps[0])) {
+                    hms += 24 * 3600;
+                }
+                
                 $('#vehicle_timetable > tbody').html(timetables_rows);
-                $('#vehicle_timetable tbody tr td:nth-child(4)').each(function(){
-                    var dep = $(this).text().replace(/:/,'');
-                    if((dep !== "") && (dep < timer.getHM())) {
-                        $(this).parent().addClass('passed');
+                $('#vehicle_timetable tbody tr').each(function(){
+                    if ($(this).attr('data-dep-sec') < hms) {
+                        $(this).addClass('passed');
                     }
                 });
 
