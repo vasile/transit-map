@@ -547,9 +547,9 @@ $(document).ready(function(){
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(0, 0),
                 icon: imagesPool.iconGet(params.type),
-                map: null,
+                map: map,
                 speed: 0,
-                status: 'not on map'
+                status: 'init'
             });
             this.marker = marker;
             
@@ -630,12 +630,7 @@ $(document).ready(function(){
                                 break;
                             } else {
                                 if (map.getBounds().contains(pos)) {
-                                    if (that.marker.getMap() === null) {
-                                        that.marker.setMap(map);
-                                    }
                                     that.marker.setPosition(pos);
-                                } else {
-                                    that.marker.setMap(null);
                                 }                                
                             }
 
