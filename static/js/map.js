@@ -487,6 +487,7 @@ $(document).ready(function(){
                     return false;
                 }
                 
+                name = name.replace(/[^A-Z0-9]/i, '');
                 if (track_vehicle_name !== name) {
                     return false;
                 }
@@ -514,6 +515,7 @@ $(document).ready(function(){
             function toggle(stop_following) {
                 var toggler_value = 'Follow';
                 if (stop_following) {
+                    $('#vehicle_info').attr('data-vehicle-follow', 'no');
                     toggler.removeClass('toggled');
                     map.unbind('center');
                 } else {
@@ -609,6 +611,8 @@ $(document).ready(function(){
                     return;
                 }
                 
+                $('a.vehicle_name').text(params.name);
+                
                 $('#vehicle_timetable > tbody').html(timetables_rows);
                 $('#vehicle_timetable tbody tr td:nth-child(4)').each(function(){
                     var dep = $(this).text().replace(/:/,'');
@@ -619,11 +623,10 @@ $(document).ready(function(){
 
                 $('#vehicle_info').attr('data-vehicle-id', params.id);
                 $('#vehicle_info').attr('data-station-ids', params.sts.join(','));
-                $('#vehicle_info').attr('data-vehicle-follow', 'no');
                 
                 $('#vehicle_info').removeClass('hidden');
             }
-            google.maps.event.addListener(marker, 'click', function(){
+            google.maps.event.addListener(marker, 'click', function() {
                 vehicle_clickHandler();
                 vehicleFollower.toggle(true);
             });
@@ -635,7 +638,7 @@ $(document).ready(function(){
                 vehicle_ib.close();
                 
                 var popup_div = $('#vehicle_popup');
-                $('.vehicle_name').text(params.name);
+                $('span.vehicle_name').text(params.name);
                 $('.status', popup_div).text(marker.get('status'));
                 
                 vehicle_ib.setContent($('#vehicle_popup_container').html());
