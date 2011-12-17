@@ -76,18 +76,25 @@ var simulation_manager = (function(){
           map: map
         });
         
-        google.maps.event.addListener(map, 'idle', function() {
-            var zoom = map.getZoom();
-            if (zoom < 12) {
-                if (stations_layer.getMap() !== null) {
-                    stations_layer.setMap(null);
-                }
-            } else {
-                if (stations_layer.getMap() === null) {
-                    stations_layer.setMap(map);
+        function trigger_toggleLayerVisibility() {
+            function toggleLayerVisibility(layer, show) {
+                if (show) {
+                    if (layer.getMap() === null) {
+                        layer.setMap(map);
+                    }
+                } else {
+                    if (layer.getMap() !== null) {
+                        layer.setMap(null);
+                    }
                 }
             }
-        });
+            
+            var zoom = map.getZoom();
+            toggleLayerVisibility(stations_layer, zoom >= 12);            
+        }
+        
+        google.maps.event.addListener(map, 'idle', trigger_toggleLayerVisibility);
+        trigger_toggleLayerVisibility();
     }
     
     simulation_manager.subscribe('map_init', map_layers_add);
