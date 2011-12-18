@@ -6,8 +6,9 @@ html, body {
 }
 
 body {
-  font-family: Verdana,Tahoma,"BitStream vera Sans",Arial,Helvetica,sans-serif;
-  font-size: 14px;
+  font-family: verdana, sans-serif;
+  font-size: 13px;
+  line-height: 18px;
 }
 
 #map_canvas {
@@ -19,34 +20,111 @@ body {
 }
 /* END */
 
+/* SIMULATION PANEL */
 #panel {
-    background-color: #FFFF00;
-    border: 1px solid #000000;
+    position: absolute;
+    width: 300px;
     padding: 5px;
-    margin-left: 10px;
+    right: 70px;
+    top: 70px;
+    background-color: #FAFAFA;
+    border: 1px solid #717D7D;
+}
+
+#panel > div {
+    margin: 5px 5px 10px 5px;
+    padding: 5px;
+}
+
+#panel > div.section {
+    background-color: #F2F2F2;
+    border: 1px solid #CACACA;
+}
+
+#panel p {
+    font-size: 20px;
+    font-weight: bold;
+    font-family: Georgia, Helvetica
 }
 
 #geolocation_click {
-    background: transparent url(../images/crosshair.png) no-repeat top;
-    width: 15px;
-    height: 15px;
+    background: transparent url(../images/crosshair_2.png) no-repeat top;
+    width: 20px;
+    height: 20px;
     color: white;
     border: none;
 }
 
+#user_location {
+    width: 245px;
+}
+/* END */
+
+/* VEHICLE PANEL */
+input.panel_close {
+    background: transparent url(../images/window_close.gif) no-repeat top;
+    width: 15px;
+    height: 15px;
+    border: none;
+    
+    display: block;
+    float: right;
+    right: 0px;
+    top: 0px;
+}
+
+#vehicle_info div {
+    margin-bottom: 6px;
+}
+
+#vehicle_timetable {
+    width: 275px;
+}
+
+#vehicle_timetable td.station {
+    width: 150px;
+}
+
+#vehicle_timetable thead td {
+    background-color: #DDD;
+}
+
+#vehicle_timetable tbody td {
+    border-top: 1px solid #DDD;
+    background-color: #FFFFFF;
+}
+
+#vehicle_timetable tbody tr.passed td, 
+#vehicle_timetable tbody tr.passed td a {
+    color: #CACACA;
+}
+
+#panel b {
+    font-weight: bold;
+}
+
+
+input.toggled {
+    background-color: #FF0000;
+    color: #FFFFFF;
+}
+/* END */
+
 /* START vehicle popup */
 #vehicle_popup {
-    width: 200px;
-    border: 1px solid black; 
-    background: #FFFFFF; 
-    padding: 2px 0px 0px 10px;
+    width: 180px;
+    padding: 5px 0px 5px 10px;
+    
+    background-color: #F2F2F2;
+    border: 1px solid #111111;
 }
 
 #vehicle_popup p {
     font-size: 10px;
+    line-height: 12px;
 }
 
-#vehicle_popup p .name {
-    font-size: 12px;
+#vehicle_popup span.vehicle_name {
+    font-weight: bold;
 }
 /* END */
