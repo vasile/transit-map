@@ -1,5 +1,15 @@
 /*global $, google, simcity_topology_edges, InfoBox */
 var simulation_manager = (function(){
+    var params = {
+        center_start: new google.maps.LatLng(47.378, 8.540),
+        zoom_start: 13,
+        zoom_follow: 17,
+        zoom_station: 15,
+        ft_id_mask: '812706',
+        ft_id_lines: '1497331',
+        ft_id_stations: '1497361'
+    };
+    
     var map = null;
     
     var listeners = {
@@ -24,11 +34,16 @@ var simulation_manager = (function(){
         return map;
     }
     
+    function getParam(p) {
+        return params[p];
+    }
+    
     return {
         subscribe: subscribe,
         notify: notify,
         setMap: setMap,
-        getMap: getMap
+        getMap: getMap,
+        getParam: getParam
     };
 })();
 
@@ -40,7 +55,7 @@ var simulation_manager = (function(){
         layer = new google.maps.FusionTablesLayer({
             query: {
                 select: 'geometry',
-                from: '1497331'
+                from: simulation_manager.getParam('ft_id_lines')
             },
             clickable: false,
             map: map,
@@ -62,7 +77,7 @@ var simulation_manager = (function(){
         var stations_layer = new google.maps.FusionTablesLayer({
           query: {
             select: 'geometry',
-            from: '1497361'
+            from: simulation_manager.getParam('ft_id_stations')
           },
           clickable: false,
           map: map
@@ -70,7 +85,7 @@ var simulation_manager = (function(){
         layer = new google.maps.FusionTablesLayer({
           query: {
             select: 'geometry',
-            from: '812706'
+            from: simulation_manager.getParam('ft_id_mask')
           },
           clickable: false,
           map: map
@@ -384,10 +399,9 @@ $(document).ready(function(){
               }
             ];
 
-            var start = new google.maps.LatLng(47.378057, 8.5402338);
-            var myOptions = {
-                zoom: 13,
-                center: start,
+            map = new google.maps.Map(document.getElementById("map_canvas"), {
+                zoom: simulation_manager.getParam('zoom_start'),
+                center: simulation_manager.getParam('center_start'),
                 mapTypeId: google.maps.MapTypeId.ROADMAP,
                 styles: mapStyles,
                 disableDefaultUI: true,
@@ -395,8 +409,7 @@ $(document).ready(function(){
                 scaleControl: true,
                 streetViewControl: true,
                 overviewMapControl: true
-            };
-            map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+            });
             
             map.setOptions({
                 mapTypeControl: true,
@@ -568,8 +581,8 @@ $(document).ready(function(){
             if (parseInt(station_location.lng(), 10) === 0) { return; }
             
             map.setCenter(station_location);
-            if (map.getZoom() < 16) {
-                map.setZoom(16);
+            if (map.getZoom() < simulation_manager.getParam('zoom_station')) {
+                map.setZoom(simulation_manager.getParam('zoom_station'));
             }
 
             return false;
@@ -735,7 +748,7 @@ $(document).ready(function(){
                             vehicleFollower.setActive();
                             
                             map.panTo(pos);
-                            map.setZoom(18);
+                            map.setZoom(simulation_manager.getParam('zoom_follow'));
                             map.setMapTypeId('satellite');
 
                             map.bindTo('center', that.marker, 'position');
