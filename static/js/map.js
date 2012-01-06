@@ -526,18 +526,6 @@ $(document).ready(function(){
                 $('#vehicle_info').attr('data-vehicle-follow', 'yes');
             }
             
-            function isActive(id) {
-                if ($('#vehicle_info').attr('data-vehicle-id') !== id) {
-                    return false;
-                }
-                
-                if ($('#vehicle_info').attr('data-vehicle-follow') !== 'yes') {
-                    return false;
-                }
-                
-                return true;
-            }
-            
             var toggler = $('#follow_trigger');
             function toggle(stop_following) {
                 var toggler_value = 'Follow';
@@ -561,7 +549,6 @@ $(document).ready(function(){
                 isWaiting: isWaiting,
                 matchByName: matchByName,
                 setActive: setActive,
-                isActive: isActive,
                 toggle: toggle
             };
         })();
