@@ -1,4 +1,4 @@
-/*global $, google, simcity_topology_edges, InfoBox */
+/*global $, google, InfoBox */
 var simulation_manager = (function(){
     var params = {
         center_start: new google.maps.LatLng(47.378, 8.540),
@@ -7,7 +7,8 @@ var simulation_manager = (function(){
         zoom_station: 15,
         ft_id_mask: '812706',
         ft_id_lines: '1497331',
-        ft_id_stations: '1497361'
+        ft_id_stations: '1497361',
+        edges_path: 'static/js/edges_encoded-sbb.js'
     };
     
     var map = null;
@@ -177,6 +178,7 @@ $(document).ready(function(){
     //      Note: one route can contain one or more edges (the low-level entity in the simulation graph)
     // - interpolate position at given percent along a route
     var linesPool = (function() {
+        var network_lines = {};
         var routes = {};
         var route_highlight = new google.maps.Polyline({
             path: [],
@@ -214,7 +216,7 @@ $(document).ready(function(){
         function routeAdd(a, b, edges) {
             var routePoints = [];
             $.each(edges, function(k, edgeID) {
-                var edge = simcity_topology_edges[Math.abs(edgeID)];
+                var edge = network_lines[Math.abs(edgeID)];
                 
                 var points = google.maps.geometry.encoding.decodePath(edge);
                 if (edgeID < 0) {
@@ -255,13 +257,18 @@ $(document).ready(function(){
             route_highlight.set('ids', null);
         }
         
+        function loadEdges(edges) {
+            network_lines = edges;
+        }
+        
         return {
             positionGet: positionOnRouteAtPercentGet,
             routeExists: routeExists,
             routeAdd: routeAdd,
             lengthGet: lengthGet,
             routeHighlight: routeHighlight,
-            routeHighlightRemove: routeHighlightRemove
+            routeHighlightRemove: routeHighlightRemove,
+            loadEdges: loadEdges
         };
     })();
     
@@ -790,18 +797,27 @@ $(document).ready(function(){
     // END HELPERS
 
     simulation_manager.subscribe('map_init', function(){
-        // LOAD stations
+        // LOAD network lines 
         $.ajax({
-            url: 'feed/stations/sbb/list',
+            url: simulation_manager.getParam('edges_path'),
             dataType: 'json',
-            success: function(stations_data) {
-                $.each(stations_data, function(index, station) {
-                    stationsPool.add(parseInt(station.id, 10), station.name, parseFloat(station.x), parseFloat(station.y));
-                });
+            success: function(edges) {
+                linesPool.loadEdges(edges);
                 
-                // Stations loaded => LOAD vehicles
-                vehicle_helpers.load();
-                setInterval(vehicle_helpers.load, 5*60*1000);
+                // network lines loaded => LOAD stations
+                $.ajax({
+                    url: 'feed/stations/sbb/list',
+                    dataType: 'json',
+                    success: function(stations_data) {
+                        $.each(stations_data, function(index, station) {
+                            stationsPool.add(parseInt(station.id, 10), station.name, parseFloat(station.x), parseFloat(station.y));
+                        });
+
+                        // Stations loaded => LOAD vehicles
+                        vehicle_helpers.load();
+                        setInterval(vehicle_helpers.load, 5*60*1000);
+                    }
+                });
             }
         });
     });
