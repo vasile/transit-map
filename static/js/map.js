@@ -5,6 +5,7 @@ var simulation_manager = (function(){
         zoom_start: 13,
         zoom_follow: 17,
         zoom_station: 15,
+        zoom_mouseover_min: 12,
         ft_id_mask: '812706',
         ft_id_lines: '1497331',
         ft_id_stations: '1497361',
@@ -678,6 +679,10 @@ $(document).ready(function(){
             });
             
             google.maps.event.addListener(marker, 'mouseover', function(){
+                if (map.getZoom() < simulation_manager.getParam('zoom_mouseover_min')) {
+                    return;
+                }
+                
                 if (vehicle_ib.get('vehicle_id') === params.id) { return; }
                 vehicle_ib.set('vehicle_id', params.id);
                 
