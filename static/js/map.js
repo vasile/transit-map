@@ -256,7 +256,7 @@ $(document).ready(function(){
             route_highlight.set('ids', null);
         }
         
-        function loadEncodesEdges(edges) {
+        function loadEncodedEdges(edges) {
             $.each(edges, function(index, encoded_edge) {
                 network_lines[index] = google.maps.geometry.encoding.decodePath(encoded_edge);
             });
@@ -269,7 +269,7 @@ $(document).ready(function(){
             lengthGet: lengthGet,
             routeHighlight: routeHighlight,
             routeHighlightRemove: routeHighlightRemove,
-            loadEncodesEdges: loadEncodesEdges
+            loadEncodedEdges: loadEncodedEdges
         };
     })();
     
@@ -801,7 +801,7 @@ $(document).ready(function(){
             url: simulation_manager.getParam('edges_path'),
             dataType: 'json',
             success: function(edges) {
-                linesPool.loadEncodesEdges(edges);
+                linesPool.loadEncodedEdges(edges);
                 
                 // network lines loaded => LOAD stations
                 $.ajax({
