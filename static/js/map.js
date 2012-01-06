@@ -5,7 +5,7 @@ var simulation_manager = (function(){
         zoom_start: 13,
         zoom_follow: 17,
         zoom_station: 15,
-        zoom_mouseover_min: 12,
+        zoom_mouseover_min: 7,
         ft_id_mask: '812706',
         ft_id_lines: '1497331',
         ft_id_stations: '1497361',
