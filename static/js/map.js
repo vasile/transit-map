@@ -442,8 +442,18 @@ $(document).ready(function(){
                 }
             });
             
-            $('input.panel_close').click(function(){
-                $(this).closest('div[data-type="panel"]').addClass('hidden');
+            $('input.panel_collapse').click(function() {
+                var panel_content = $('input.panel_collapsible').closest('div[data-type="panel"]').children('div[data-type="panel-content"]');
+                
+                if ($(this).hasClass('panel_collapse')) {
+                    $(this).removeClass('panel_collapse');
+                    $(this).addClass('panel_expand');
+                    panel_content.addClass('hidden');
+                } else {
+                    $(this).removeClass('panel_expand');
+                    $(this).addClass('panel_collapse');
+                    panel_content.removeClass('hidden');
+                }
             });
             // END
         }
