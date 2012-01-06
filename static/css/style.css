@@ -64,6 +64,8 @@ body {
 
 /* Source of collapsible icons: http://www.shapes4free.com/vector-icons/expand-collapse-icons/ */
 input.panel_collapsible {
+    background: transparent url(../images/panel_expand.png) no-repeat top;
+    
     width: 12px;
     height: 12px;
     border: none;
@@ -74,11 +76,7 @@ input.panel_collapsible {
     top: 0px;    
 }
 
-input.panel_expand {
-    background: transparent url(../images/panel_expand.png) no-repeat top;
-}
-
-input.panel_collapse {
+input.expanded {
     background: transparent url(../images/panel_collapse.png) no-repeat top;
 }
 

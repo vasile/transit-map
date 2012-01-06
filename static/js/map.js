@@ -442,16 +442,14 @@ $(document).ready(function(){
                 }
             });
             
-            $('input.panel_collapse').click(function() {
-                var panel_content = $('input.panel_collapsible').closest('div[data-type="panel"]').children('div[data-type="panel-content"]');
+            $('input.panel_collapsible').click(function() {
+                var panel_content = $(this).closest('div[data-type="panel"]').children('div[data-type="panel-content"]');
                 
-                if ($(this).hasClass('panel_collapse')) {
-                    $(this).removeClass('panel_collapse');
-                    $(this).addClass('panel_expand');
+                if ($(this).hasClass('expanded')) {
+                    $(this).removeClass('expanded');
                     panel_content.addClass('hidden');
                 } else {
-                    $(this).removeClass('panel_expand');
-                    $(this).addClass('panel_collapse');
+                    $(this).addClass('expanded');
                     panel_content.removeClass('hidden');
                 }
             });
