@@ -703,7 +703,7 @@ $(document).ready(function(){
                         var station_a = that.stations[i];
                         var station_b = that.stations[i+1];
                         
-                        var pos = null;
+                        var vehicle_position = null;
                         
                         if (hms > that.depS[i]) {
                             // Vehicle is in motion between two stations
@@ -717,52 +717,41 @@ $(document).ready(function(){
                             
                             var route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
 
-                            pos = linesPool.positionGet(station_a, station_b, route_percent);
-                            if (pos === null) {
+                            vehicle_position = linesPool.positionGet(station_a, station_b, route_percent);
+                            if (vehicle_position === null) {
                                 console.log('Couldn\'t get the position of ' + that.id + ' between stations: ' + [station_a, station_b]);
                                 that.marker.setMap(null);
                                 break;
-                            } else {
-                                if (vehicleFollower.isActive(that.id)) {
-                                    if (that.marker.getMap() === null) {
-                                        that.marker.setMap(map);
-                                    }
-                                    that.marker.setPosition(pos);
-                                } else {
-                                    if (map.getBounds().contains(pos)) {
-                                        if (that.marker.getMap() === null) {
-                                            that.marker.setMap(map);
-                                        }
-                                        that.marker.setPosition(pos);
-                                    } else {
-                                        that.marker.setMap(null);
-                                    }
-                                }                                
                             }
-
-                            setTimeout(animate, 1000);
                         } else {
                             // Vehicle is in a station
                             vehicle_found = true;
                             that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + time_helpers.s2hm(that.depS[i]));
                             that.marker.set('speed', 0);
 
-                            pos = stationsPool.location_get(station_a);
-                            that.marker.setPosition(pos);
-
-                            var seconds_left = that.depS[i] - hms;
-                            setTimeout(animate, seconds_left*1000);
+                            vehicle_position = stationsPool.location_get(station_a);
+                        }
+                        
+                        if (map.getBounds().contains(vehicle_position)) {
+                            if (that.marker.getMap() === null) {
+                                that.marker.setMap(map);
+                            }
+                            that.marker.setPosition(vehicle_position);
+                        } else {
+                            that.marker.setMap(null);
                         }
                         
                         if (vehicleFollower.isWaiting(that.id)) {
                             vehicleFollower.setActive();
                             
-                            map.panTo(pos);
+                            map.panTo(vehicle_position);
                             map.setZoom(simulation_manager.getParam('zoom_follow'));
                             map.setMapTypeId('satellite');
-
+                            
                             map.bindTo('center', that.marker, 'position');
                         }
+                        
+                        setTimeout(animate, 1000);
                         break;
                     }
                 } // end arrivals loop
