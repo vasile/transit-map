@@ -663,7 +663,7 @@ var simulation_manager = (function(){
                     vehicle_ib.close();
 
                     var popup_div = $('#vehicle_popup');
-                    $('span.vehicle_name').text(params.name);
+                    $('span.vehicle_name', popup_div).text(params.name);
                     $('.status', popup_div).text(marker.get('status'));
 
                     vehicle_ib.setContent($('#vehicle_popup_container').html());
