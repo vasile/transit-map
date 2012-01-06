@@ -717,6 +717,9 @@ $(document).ready(function(){
                                 break;
                             } else {
                                 if (vehicleFollower.isActive(that.id)) {
+                                    if (that.marker.getMap() === null) {
+                                        that.marker.setMap(map);
+                                    }
                                     that.marker.setPosition(pos);
                                 } else {
                                     if (map.getBounds().contains(pos)) {
