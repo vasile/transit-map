@@ -216,11 +216,10 @@ $(document).ready(function(){
         function routeAdd(a, b, edges) {
             var routePoints = [];
             $.each(edges, function(k, edgeID) {
-                var edge = network_lines[Math.abs(edgeID)];
-                
-                var points = google.maps.geometry.encoding.decodePath(edge);
+                var points = network_lines[Math.abs(edgeID)];
                 if (edgeID < 0) {
-                    points.reverse();
+                    // slice() to the resue, otherwise reverse will alter network_lines
+                    points = points.slice().reverse();
                 }
                 // TODO - use some MVCArray magic to remove the last element of edges when concatenating ?
                 routePoints = routePoints.concat(points);
@@ -257,8 +256,10 @@ $(document).ready(function(){
             route_highlight.set('ids', null);
         }
         
-        function loadEdges(edges) {
-            network_lines = edges;
+        function loadEncodesEdges(edges) {
+            $.each(edges, function(index, encoded_edge) {
+                network_lines[index] = google.maps.geometry.encoding.decodePath(encoded_edge);
+            });
         }
         
         return {
@@ -268,7 +269,7 @@ $(document).ready(function(){
             lengthGet: lengthGet,
             routeHighlight: routeHighlight,
             routeHighlightRemove: routeHighlightRemove,
-            loadEdges: loadEdges
+            loadEncodesEdges: loadEncodesEdges
         };
     })();
     
@@ -800,7 +801,7 @@ $(document).ready(function(){
             url: simulation_manager.getParam('edges_path'),
             dataType: 'json',
             success: function(edges) {
-                linesPool.loadEdges(edges);
+                linesPool.loadEncodesEdges(edges);
                 
                 // network lines loaded => LOAD stations
                 $.ajax({
