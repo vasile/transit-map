@@ -526,6 +526,18 @@ $(document).ready(function(){
                 $('#vehicle_info').attr('data-vehicle-follow', 'yes');
             }
             
+            function isActive(id) {
+                if ($('#vehicle_info').attr('data-vehicle-id') !== id) {
+                    return false;
+                }
+                
+                if ($('#vehicle_info').attr('data-vehicle-follow') !== 'yes') {
+                    return false;
+                }
+                
+                return true;
+            }
+            
             var toggler = $('#follow_trigger');
             function toggle(stop_following) {
                 var toggler_value = 'Follow';
@@ -549,6 +561,7 @@ $(document).ready(function(){
                 isWaiting: isWaiting,
                 matchByName: matchByName,
                 setActive: setActive,
+                isActive: isActive,
                 toggle: toggle
             };
         })();
@@ -736,6 +749,15 @@ $(document).ready(function(){
                             map.setMapTypeId('satellite');
                             
                             map.bindTo('center', that.marker, 'position');
+                        }
+                        
+                        if (vehicleFollower.isActive(that.id)) {
+                            // On mobile devices it might be that the followed vehicle 
+                            //      to be out already of the map viewport.
+                            //      So we bring it back :)
+                            if (that.marker.getMap() === null) {
+                                map.panTo(vehicle_position);
+                            }
                         }
                         
                         setTimeout(animate, 1000);
