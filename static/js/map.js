@@ -769,7 +769,7 @@ $(document).ready(function(){
         };
 
         return {
-            get: function() {
+            load: function() {
                 $.ajax({
                     url: 'feed/vehicles/sbb/' + timer.getHM(),
                     dataType: 'json',
@@ -790,18 +790,20 @@ $(document).ready(function(){
     // END HELPERS
 
     simulation_manager.subscribe('map_init', function(){
-        vehicle_helpers.get();
-        setInterval(vehicle_helpers.get, 5*60*1000);
-    });
-    
-    $.ajax({
-        url: 'feed/stations/sbb/list',
-        dataType: 'json',
-        success: function(stations_data) {
-            $.each(stations_data, function(index, station) {
-                stationsPool.add(parseInt(station.id, 10), station.name, parseFloat(station.x), parseFloat(station.y));
-            });
-        }
+        // LOAD stations
+        $.ajax({
+            url: 'feed/stations/sbb/list',
+            dataType: 'json',
+            success: function(stations_data) {
+                $.each(stations_data, function(index, station) {
+                    stationsPool.add(parseInt(station.id, 10), station.name, parseFloat(station.x), parseFloat(station.y));
+                });
+                
+                // Stations loaded => LOAD vehicles
+                vehicle_helpers.load();
+                setInterval(vehicle_helpers.load, 5*60*1000);
+            }
+        });
     });
     
     timer.init();
