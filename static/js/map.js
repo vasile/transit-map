@@ -17,7 +17,7 @@ var simulation_manager = (function(){
             getParam: function(p) {
                 return params[p];
             }
-        }
+        };
     })();
     
     var map = null;
@@ -40,7 +40,7 @@ var simulation_manager = (function(){
         return {
             notify: notify,
             subscribe: subscribe
-        }
+        };
     })();
     
     var stationsPool = (function(){
@@ -298,7 +298,7 @@ var simulation_manager = (function(){
           }
         ];
         
-        var map_init = false;
+        var map_inited = false;
         map = new google.maps.Map(document.getElementById("map_canvas"), {
             zoom: config.getParam('zoom_start'),
             center: config.getParam('center_start'),
@@ -381,12 +381,12 @@ var simulation_manager = (function(){
         }
         
         google.maps.event.addListener(map, 'idle', function() {
-            if (map_init === false) {
+            if (map_inited === false) {
                 // TODO - FIXME later ?
                 // Kind of a hack, getBounds is ready only after a while since loading, so we hook in the 'idle' event
                 map_layers_add();
                 listener_helpers.notify('map_init');
-                map_init = true;
+                map_inited = true;
             }
         });
         
