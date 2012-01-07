@@ -61,16 +61,23 @@ body {
 /* END */
 
 /* VEHICLE PANEL */
-input.panel_close {
-    background: transparent url(../images/window_close.gif) no-repeat top;
-    width: 15px;
-    height: 15px;
+
+/* Source of collapsible icons: http://www.shapes4free.com/vector-icons/expand-collapse-icons/ */
+input.panel_collapsible {
+    background: transparent url(../images/panel_expand.png) no-repeat top;
+    
+    width: 12px;
+    height: 12px;
     border: none;
     
     display: block;
     float: right;
     right: 0px;
-    top: 0px;
+    top: 0px;    
+}
+
+input.expanded {
+    background: transparent url(../images/panel_collapse.png) no-repeat top;
 }
 
 #vehicle_info div {
