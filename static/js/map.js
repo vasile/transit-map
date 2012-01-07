@@ -632,7 +632,7 @@ var simulation_manager = (function(){
                         return;
                     }
 
-                    $('a.vehicle_name').text(params.name);
+                    $('.vehicle_name', $('#vehicle_info')).text(params.name);
 
                     var hms = timer.getTime();
                     if (has_multiple_days && (hms < params.deps[0])) {
