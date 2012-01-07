@@ -10,7 +10,11 @@ var simulation_manager = (function(){
             ft_id_mask: '812706',
             ft_id_lines: '1497331',
             ft_id_stations: '1497361',
-            edges_path: 'static/js/edges_encoded-sbb.js'
+            json_paths: {
+                edges: 'static/js/edges_encoded-sbb.js',
+                stations: 'feed/stations/sbb/list',
+                vehicles: 'feed/vehicles/sbb/'
+            }
         };
         
         return {
@@ -766,7 +770,7 @@ var simulation_manager = (function(){
             return {
                 load: function() {
                     $.ajax({
-                        url: 'feed/vehicles/sbb/' + timer.getHM(),
+                        url: config.getParam('json_paths').vehicles + timer.getHM(),
                         dataType: 'json',
                         success: function(vehicles) {
                             $.each(vehicles, function(index, data) {
@@ -784,14 +788,14 @@ var simulation_manager = (function(){
         
         // LOAD network lines 
         $.ajax({
-            url: config.getParam('edges_path'),
+            url: config.getParam('json_paths').edges,
             dataType: 'json',
             success: function(edges) {
                 linesPool.loadEncodedEdges(edges);
                 
                 // network lines loaded => LOAD stations
                 $.ajax({
-                    url: 'feed/stations/sbb/list',
+                    url: config.getParam('json_paths').stations,
                     dataType: 'json',
                     success: function(stations_data) {
                         $.each(stations_data, function(index, station) {
