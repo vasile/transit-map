@@ -428,7 +428,7 @@ var simulation_manager = (function(){
         });
         
         $('input.panel_collapsible').click(function() {
-            var panel_content = $(this).closest('div[data-type="panel"]').children('div[data-type="panel-content"]');
+            var panel_content = $(this).closest('div[data-type="panel"]').children('div.panel_content');
             
             if ($(this).hasClass('expanded')) {
                 $(this).removeClass('expanded');

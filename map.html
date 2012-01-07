@@ -18,8 +18,8 @@
         <div id="map_canvas"></div>
         <div id="panel">
             <div>
-                <p>Vehicle simulator</p>
-                <div>Project information available on <a href="https://github.com/vasile/vehicle-simulator" target="_blank">Github</a>.</div>
+                <h3>Vehicle simulator</h3>
+                <p>Project information available on <a href="https://github.com/vasile/vehicle-simulator" target="_blank">Github</a></p>
             </div>
             <div class="section">
                 <b>Time:</b> <span id="day_time"></span>
@@ -31,19 +31,19 @@
                 <div>
                     <b>Vehicle:</b> <span class="vehicle_name"></span> <input type="button" class="panel_collapsible expanded" />
                 </div>
-                <div data-type="panel-content">
+                <div class="panel_content">
                     <div>
                         <input id="follow_trigger" type="button" value="Follow" data-value-toggle="STOP" />
                         <input id="route_show_trigger" type="button" value="Draw route" data-value-toggle="HIDE route" />
                     </div>
                 
-                    <table id="vehicle_timetable">
+                    <table id="vehicle_timetable" class="panel_table">
                         <thead>
                             <tr>
-                                <td class="no">#</td>
+                                <td>#</td>
                                 <td class="station">Station</td>
-                                <td class="arr">Arr.</td>
-                                <td class="dep">Dep.</td>
+                                <td>Arr.</td>
+                                <td>Dep.</td>
                             </tr>
                         </thead>
                         <tbody>
