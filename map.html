@@ -12,7 +12,6 @@
         <script src="http://maps.googleapis.com/maps/api/js?v=3.7&amp;sensor=false&amp;libraries=geometry"></script>
         
         <script src="static/js/infobox_packed.js"></script>
-        <script src="static/js/edges_encoded-sbb.js"></script>
         <script src="static/js/map.js"></script>
     </head>
     <body>
@@ -20,7 +19,7 @@
         <div id="panel">
             <div>
                 <p>Vehicle simulator</p>
-                <div>Project information available on <a href="https://github.com/vasile/vehicle-simulator" target="_blank">Github</a>.</div>
+                <div>Project information available on <a href="https://github.com/vasile/vehicle-simulator" target="_blank">Github</a></div>
             </div>
             <div class="section">
                 <b>Time:</b> <span id="day_time"></span>
@@ -30,25 +29,27 @@
             </div>
             <div id="vehicle_info" class="hidden section" data-type="panel">
                 <div>
-                    <b>Vehicle:</b> <a class="vehicle_name" href="#" target="_blank"></a> <input type="button" class="panel_close" />
+                    <b>Vehicle:</b> <a class="vehicle_name" href="#" target="_blank"></a> <input type="button" class="panel_collapsible expanded" />
                 </div>
-                <div>
-                    <input id="follow_trigger" type="button" value="Follow" data-value-toggle="STOP" />
-                    <input id="route_show_trigger" type="button" value="Draw route" data-value-toggle="HIDE route" />
-                </div>
+                <div data-type="panel-content">
+                    <div>
+                        <input id="follow_trigger" type="button" value="Follow" data-value-toggle="STOP" />
+                        <input id="route_show_trigger" type="button" value="Draw route" data-value-toggle="HIDE route" />
+                    </div>
                 
-                <table id="vehicle_timetable">
-                    <thead>
-                        <tr>
-                            <td class="no">#</td>
-                            <td class="station">Station</td>
-                            <td class="arr">Arr.</td>
-                            <td class="dep">Dep.</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+                    <table id="vehicle_timetable">
+                        <thead>
+                            <tr>
+                                <td class="no">#</td>
+                                <td class="station">Station</td>
+                                <td class="arr">Arr.</td>
+                                <td class="dep">Dep.</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         <div id="vehicle_popup_container" class="hidden">
@@ -56,15 +57,6 @@
                 <span class="vehicle_name"></span>
                 <br />
                 <p class="status"></p>
-            </div>
-        </div>
-        <div id="vehicle_popup_container" class="hidden">
-            <div id="vehicle_popup">
-                <p>
-                    <strong class="name"></strong><br/>
-                    <span class="fromto"></span><br/><br/>
-                    <strong>Status:</strong> <span class="status"></span></span>
-                </p>
             </div>
         </div>
     </body>
