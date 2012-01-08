@@ -573,8 +573,7 @@ var simulation_manager = (function(){
         });
         
         function map_layers_add(){
-            var edges_layer = null;
-            edges_layer = new google.maps.FusionTablesLayer({
+            var edges_layer = new google.maps.FusionTablesLayer({
                 query: {
                     select: 'geometry',
                     from: config.getParam('ft_id_lines')
