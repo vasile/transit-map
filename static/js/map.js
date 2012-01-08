@@ -414,7 +414,12 @@ var simulation_manager = (function(){
                     var html_rows = [];
                     $.each(vehicles, function(index, vehicle) {
                         var html_row = '<tr><td>' + (index + 1) + '.</td>';
-                        html_row += '<td><a href="#vehicle_id=' + vehicle.id + '" data-vehicle-id="' + vehicle.id + '">' + vehicle.name + '</a></td>';
+                        if (typeof simulation_vehicles[vehicle.id] === 'undefined') {
+                            html_row += '<td>' + vehicle.name + '</td>';
+                        } else {
+                            html_row += '<td><a href="#vehicle_id=' + vehicle.id + '" data-vehicle-id="' + vehicle.id + '">' + vehicle.name + '</a></td>';
+                        }
+                        
                         html_row += '<td>' + stationsPool.get(vehicle.st_b) + '</td>';
                         html_row += '<td>' + time_helpers.s2hm(vehicle.dep) + '</td>';
                         html_rows.push(html_row);
