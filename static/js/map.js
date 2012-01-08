@@ -265,6 +265,254 @@ var simulation_manager = (function(){
         };
     })();
     
+    var simulation_panel = (function(){
+        var selected_vehicle = null;
+        
+        function Toggler(el_id) {
+            var el = $(el_id);
+            el.attr('data-value-original', el.val());
+            
+            var subscriber_types = {
+                'enable': [function(){
+                    el.addClass('toggled');
+                    el.val(el.attr('data-value-toggle'));
+                }],
+                'disable': [function(){
+                    el.removeClass('toggled');
+                    el.val(el.attr('data-value-original'));
+                }]
+            };
+            this.subscriber_types = subscriber_types;
+            
+            el.click(function(){
+                var subscribers = el.hasClass('toggled') ? subscriber_types.disable : subscriber_types.enable;
+                $.each(subscribers, function(index, fn){
+                    fn();
+                });
+            });
+        }
+        Toggler.prototype.subscribe = function(type, fn) {
+            this.subscriber_types[type].push(fn);
+        };
+        Toggler.prototype.trigger = function(type) {
+            $.each(this.subscriber_types[type], function(index, fn){
+                fn();
+            });
+        };
+        
+        var vehicle_follow = (function(){
+            var toggler;
+            function init() {
+                toggler = new Toggler('#follow_trigger');
+                toggler.subscribe('enable', function(){
+                    selected_vehicle.marker.set('follow', 'yes-init');
+                });
+                toggler.subscribe('disable', function(){
+                    map.unbind('center');
+                });
+            }
+            
+            function start(vehicle) {
+                selected_vehicle = vehicle;
+                toggler.trigger('enable');
+            }
+            
+            function stop() {
+                toggler.trigger('disable');
+            }
+            
+            return {
+                init: init,
+                start: start,
+                stop: stop
+            };
+        })();
+        
+        var vehicle_route = (function(){
+            var toggler;
+            
+            function init() {
+                toggler = new Toggler('#route_show_trigger');
+                toggler.subscribe('enable', function(){
+                    linesPool.routeHighlight(selected_vehicle.stations);
+                });
+                toggler.subscribe('disable', function(){
+                    linesPool.routeHighlightRemove();
+                });
+            }
+            
+            function hide() {
+                toggler.trigger('disable');
+            }
+            
+            return {
+                init: init,
+                hide: hide
+            };
+        })();
+        
+        function station_info_hide() {
+            $('#station_info').addClass('hidden');
+        }
+        
+        function vehicle_info_display(vehicle) {
+            if ((selected_vehicle !== null) && (selected_vehicle.id === vehicle.id)) {
+                return;
+            }
+            selected_vehicle = vehicle;
+            
+            vehicle_follow.stop();
+            station_info_hide();
+
+            $('.vehicle_name', $('#vehicle_info')).text(vehicle.name);
+            
+            var hms = timer.getTime();
+            if (vehicle.has_multiple_days && (hms < vehicle.depS[0])) {
+                hms += 24 * 3600;
+            }
+            
+            var html_rows = [];
+            $.each(vehicle.edges, function(index, edges) {
+                var s_dep = (typeof vehicle.depS[index] === 'undefined') ? 24 * 3600 : vehicle.depS[index];
+                var html_row = '<tr data-dep-sec="' + s_dep + '"><td>' + (index + 1) + '.</td>';
+
+                var stop_id = vehicle.stations[index];
+                html_row += '<td><a href="#station_id=' + stop_id + '" data-station-id="' + stop_id + '">' + stationsPool.get(stop_id) + '</a></td>';
+                var hm_arr = (typeof vehicle.arrS[index - 1] === 'undefined') ? '' : time_helpers.s2hm(vehicle.arrS[index - 1]);
+                html_row += '<td>' + hm_arr + '</td>';
+
+                var hm_dep = (typeof vehicle.depS[index] === 'undefined') ? '' : time_helpers.s2hm(vehicle.depS[index]);
+                html_row += '<td>' + hm_dep + '</td></tr>';
+
+                html_rows.push(html_row);
+            });
+            
+            $('#vehicle_timetable > tbody').html(html_rows.join(''));
+            $('#vehicle_timetable tbody tr').each(function(){
+                if ($(this).attr('data-dep-sec') < hms) {
+                    $(this).addClass('passed');
+                }
+            });
+            
+            $('#vehicle_info').removeClass('hidden');
+        }
+        
+        function vehicle_info_hide() {
+            vehicle_follow.stop();
+            vehicle_route.hide();
+            selected_vehicle = null;
+            $('#vehicle_info').addClass('hidden');
+        }
+        
+        function station_info_display(station_id) {
+            $.ajax({
+                url: config.getParam('json_paths').station_vehicles + '/' + station_id + '/' + timer.getHM(),
+                dataType: 'json',
+                success: function(vehicles) {
+                    vehicle_info_hide();
+
+                    var html_rows = [];
+                    $.each(vehicles, function(index, vehicle) {
+                        var html_row = '<tr><td>' + (index + 1) + '.</td>';
+                        html_row += '<td><a href="#vehicle_id=' + vehicle.id + '" data-vehicle-id="' + vehicle.id + '">' + vehicle.name + '</a></td>';
+                        html_row += '<td>' + stationsPool.get(vehicle.st_b) + '</td>';
+                        html_row += '<td>' + time_helpers.s2hm(vehicle.dep) + '</td>';
+                        html_rows.push(html_row);
+                    });
+                    $('#station_departures > tbody').html(html_rows.join(''));
+
+                    $('#station_info').removeClass('hidden');
+                    $('.station_name', $('#station_info')).text(stationsPool.get(station_id));
+                }
+            });
+        }
+        
+        function init() {
+            vehicle_follow.init();
+            vehicle_route.init();
+            
+            $('#station_departures tbody tr a').live('click', function(){
+                var vehicle_id = $(this).attr('data-vehicle-id');
+                if (typeof simulation_vehicles[vehicle_id] !== 'undefined') {
+                    var vehicle = simulation_vehicles[vehicle_id];
+                    simulation_panel.displayVehicle(vehicle);
+                    simulation_panel.followVehicle(vehicle);
+                } else {
+                    console.log('Vehicle not yet running !');
+                }
+
+                return false;
+            });
+            
+            $('#vehicle_timetable tbody tr a').live('click', function(){
+                var station_id = $(this).attr('data-station-id');
+                var station_location = stationsPool.location_get(station_id);
+                if (parseInt(station_location.lng(), 10) === 0) { return; }
+                
+                map.setCenter(station_location);
+                if (map.getZoom() < config.getParam('zoom_station')) {
+                    map.setZoom(config.getParam('zoom_station'));
+                }
+                
+                vehicle_info_hide();
+                station_info_display(station_id);
+                
+                return false;
+            });
+            
+            var location_el = $('#user_location');
+            location_el.attr('value-default', location_el.attr('value'));
+
+            var geocoder = new google.maps.Geocoder();
+            function geocoding_handle(params) {
+                geocoder.geocode(params, function(results, status) {
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        location_el.val(results[0].formatted_address);
+                        map.setCenter(results[0].geometry.location);
+                        map.setZoom(15);
+                    }
+                });
+            }
+
+            $('#geolocation_click').click(function(){
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function (position) {
+                        geocoding_handle({'latLng': new google.maps.LatLng(position.coords.latitude, position.coords.longitude)});
+                    });
+                }
+            });
+            location_el.focus(function(){
+                if ($(this).val() === $(this).attr('value-default')) {
+                    $(this).val('');
+                }
+            });
+            location_el.keypress(function(e) {
+                if(e.which === 13) {
+                    geocoding_handle({'address': $(this).val()});
+                }
+            });
+
+            $('input.panel_collapsible').click(function() {
+                var panel_content = $(this).closest('div[data-type="panel"]').children('div.panel_content');
+
+                if ($(this).hasClass('expanded')) {
+                    $(this).removeClass('expanded');
+                    panel_content.addClass('hidden');
+                } else {
+                    $(this).addClass('expanded');
+                    panel_content.removeClass('hidden');
+                }
+            });
+        }
+        
+        return {
+            init: init,
+            displayVehicle: vehicle_info_display,
+            followVehicle: vehicle_follow.start,
+            displayStation: station_info_display
+        };
+    })();
+    
     function map_init(){
         var mapStyles = [
           {
@@ -403,263 +651,7 @@ var simulation_manager = (function(){
             }
         });
     }
-    
-    var simulation_panel = (function(){
-        var selected_vehicle = null;
-        
-        function vehicle_info_display(vehicle) {
-            if ((selected_vehicle !== null) && (selected_vehicle.id === vehicle.id)) {
-                return;
-            }
-            selected_vehicle = vehicle;
-            
-            vehicle_follow.stop();
-            station_info_hide();
 
-            $('.vehicle_name', $('#vehicle_info')).text(vehicle.name);
-            
-            var hms = timer.getTime();
-            if (vehicle.has_multiple_days && (hms < vehicle.depS[0])) {
-                hms += 24 * 3600;
-            }
-            
-            var html_rows = [];
-            $.each(vehicle.edges, function(index, edges) {
-                var s_dep = (typeof vehicle.depS[index] === 'undefined') ? 24 * 3600 : vehicle.depS[index];
-                var html_row = '<tr data-dep-sec="' + s_dep + '"><td>' + (index + 1) + '.</td>';
-
-                var stop_id = vehicle.stations[index];
-                html_row += '<td><a href="#station_id=' + stop_id + '" data-station-id="' + stop_id + '">' + stationsPool.get(stop_id) + '</a></td>';
-                var hm_arr = (typeof vehicle.arrS[index - 1] === 'undefined') ? '' : time_helpers.s2hm(vehicle.arrS[index - 1]);
-                html_row += '<td>' + hm_arr + '</td>';
-
-                var hm_dep = (typeof vehicle.depS[index] === 'undefined') ? '' : time_helpers.s2hm(vehicle.depS[index]);
-                html_row += '<td>' + hm_dep + '</td></tr>';
-
-                html_rows.push(html_row);
-            });
-            
-            $('#vehicle_timetable > tbody').html(html_rows.join(''));
-            $('#vehicle_timetable tbody tr').each(function(){
-                if ($(this).attr('data-dep-sec') < hms) {
-                    $(this).addClass('passed');
-                }
-            });
-            
-            $('#vehicle_info').removeClass('hidden');
-        }
-        
-        function vehicle_info_hide() {
-            vehicle_follow.stop();
-            vehicle_route.hide();
-            selected_vehicle = null;
-            $('#vehicle_info').addClass('hidden');
-        }
-        
-        function Toggler(el) {
-            var el = $(el);
-            el.attr('data-value-original', el.val());
-            
-            function toggle(enable) {
-                if (enable) {
-                    el.addClass('toggled');
-                    el.val(el.attr('data-value-toggle'));
-                } else {
-                    el.removeClass('toggled');
-                    el.val(el.attr('data-value-original'));
-                }
-            }
-            
-            var subscriber_types = {
-                'enable': [function(){
-                    toggle(true)
-                }],
-                'disable': [function(){
-                    toggle(false)
-                }]
-            };
-            this.subscriber_types = subscriber_types;
-            
-            el.click(function(){
-                var subscribers = el.hasClass('toggled') ? subscriber_types['disable'] : subscriber_types['enable'];
-                $.each(subscribers, function(index, fn){
-                    fn();
-                });
-            });
-        }
-        Toggler.prototype.subscribe = function(type, fn) {
-            this.subscriber_types[type].push(fn);
-        }
-        Toggler.prototype.trigger = function(type) {
-            $.each(this.subscriber_types[type], function(index, fn){
-                fn();
-            });
-        }
-        
-        var vehicle_follow = (function(){
-            var toggler;
-            function init() {
-                toggler = new Toggler('#follow_trigger');
-                toggler.subscribe('enable', function(){
-                    selected_vehicle.marker.set('follow', 'yes-init');
-                });
-                toggler.subscribe('disable', function(){
-                    map.unbind('center');
-                });
-            }
-            
-            function start(vehicle) {
-                selected_vehicle = vehicle;
-                toggler.trigger('enable');
-            }
-            
-            function stop() {
-                toggler.trigger('disable');
-            }
-            
-            return {
-                init: init,
-                start: start,
-                stop: stop
-            };
-        })();
-        
-        var vehicle_route = (function(){
-            var toggler;
-            
-            function init() {
-                toggler = new Toggler('#route_show_trigger');
-                toggler.subscribe('enable', function(){
-                    linesPool.routeHighlight(selected_vehicle.stations);
-                });
-                toggler.subscribe('disable', function(){
-                    linesPool.routeHighlightRemove();
-                });
-            }
-            
-            function hide() {
-                toggler.trigger('disable');
-            }
-            
-            return {
-                init: init,
-                hide: hide
-            };
-        })();
-        
-        var station_info_display = function(station_id) {
-            $.ajax({
-                url: config.getParam('json_paths').station_vehicles + '/' + station_id + '/' + timer.getHM(),
-                dataType: 'json',
-                success: function(vehicles) {
-                    vehicle_info_hide();
-
-                    var html_rows = [];
-                    $.each(vehicles, function(index, vehicle) {
-                        var html_row = '<tr><td>' + (index + 1) + '.</td>';
-                        html_row += '<td><a href="#vehicle_id=' + vehicle.id + '" data-vehicle-id="' + vehicle.id + '">' + vehicle.name + '</a></td>';
-                        html_row += '<td>' + stationsPool.get(vehicle.st_b) + '</td>';
-                        html_row += '<td>' + time_helpers.s2hm(vehicle.dep) + '</td>';
-                        html_rows.push(html_row);
-                    });
-                    $('#station_departures > tbody').html(html_rows.join(''));
-
-                    $('#station_info').removeClass('hidden');
-                    $('.station_name', $('#station_info')).text(stationsPool.get(station_id));
-                }
-            });
-        }
-        
-        function station_info_hide() {
-            $('#station_info').addClass('hidden');
-        }
-
-        function init() {
-            vehicle_follow.init();
-            vehicle_route.init();
-            
-            $('#station_departures tbody tr a').live('click', function(){
-                var vehicle_id = $(this).attr('data-vehicle-id');
-                if (typeof simulation_vehicles[vehicle_id] !== 'undefined') {
-                    var vehicle = simulation_vehicles[vehicle_id];
-                    simulation_panel.displayVehicle(vehicle);
-                    simulation_panel.followVehicle(vehicle);
-                } else {
-                    alert('Vehicle not yet running !');
-                }
-
-                return false;
-            });
-            
-            $('#vehicle_timetable tbody tr a').live('click', function(){
-                var station_id = $(this).attr('data-station-id');
-                var station_location = stationsPool.location_get(station_id);
-                if (parseInt(station_location.lng(), 10) === 0) { return; }
-                
-                map.setCenter(station_location);
-                if (map.getZoom() < config.getParam('zoom_station')) {
-                    map.setZoom(config.getParam('zoom_station'));
-                }
-                
-                vehicle_info_hide();
-                station_info_display(station_id);
-                
-                return false;
-            });
-            
-            var location_el = $('#user_location');
-            location_el.attr('value-default', location_el.attr('value'));
-
-            var geocoder = new google.maps.Geocoder();
-            function geocoding_handle(params) {
-                geocoder.geocode(params, function(results, status) {
-                    if (status === google.maps.GeocoderStatus.OK) {
-                        location_el.val(results[0].formatted_address);
-                        map.setCenter(results[0].geometry.location);
-                        map.setZoom(15);
-                    }
-                });
-            }
-
-            $('#geolocation_click').click(function(){
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(function (position) {
-                        geocoding_handle({'latLng': new google.maps.LatLng(position.coords.latitude, position.coords.longitude)});
-                    });
-                }
-            });
-            location_el.focus(function(){
-                if ($(this).val() === $(this).attr('value-default')) {
-                    $(this).val('');
-                }
-            });
-            location_el.keypress(function(e) {
-                if(e.which === 13) {
-                    geocoding_handle({'address': $(this).val()});
-                }
-            });
-
-            $('input.panel_collapsible').click(function() {
-                var panel_content = $(this).closest('div[data-type="panel"]').children('div.panel_content');
-
-                if ($(this).hasClass('expanded')) {
-                    $(this).removeClass('expanded');
-                    panel_content.addClass('hidden');
-                } else {
-                    $(this).addClass('expanded');
-                    panel_content.removeClass('hidden');
-                }
-            });
-        }
-        
-        return {
-            init: init,
-            displayVehicle: vehicle_info_display,
-            followVehicle: vehicle_follow.start,
-            displayStation: station_info_display
-        };
-    })();
-    
     // Vehicle helpers
     // Roles:
     // - check backend for new vehicles
