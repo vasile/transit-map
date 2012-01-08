@@ -387,404 +387,420 @@ var simulation_manager = (function(){
             if (map_inited === false) {
                 // TODO - FIXME later ?
                 // Kind of a hack, getBounds is ready only after a while since loading, so we hook in the 'idle' event
+                map_inited = true;
+                
                 map_layers_add();
                 listener_helpers.notify('map_init');
-                map_inited = true;
-            }
-        });
-        
-        // SIMULATION PANEL
-        var location_el = $('#user_location');
-        location_el.attr('value-default', location_el.attr('value'));
-
-        var geocoder = new google.maps.Geocoder();
-        function geocoding_handle(params) {
-            geocoder.geocode(params, function(results, status) {
-                if (status === google.maps.GeocoderStatus.OK) {
-                    location_el.val(results[0].formatted_address);
-                    map.setCenter(results[0].geometry.location);
-                    map.setZoom(15);
-                }
-            });
-        }
-        
-        $('#geolocation_click').click(function(){
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    geocoding_handle({'latLng': new google.maps.LatLng(position.coords.latitude, position.coords.longitude)});
-                });
-            }
-        });
-        location_el.focus(function(){
-            if ($(this).val() === $(this).attr('value-default')) {
-                $(this).val('');
-            }
-        });
-        location_el.keypress(function(e) {
-            if(e.which === 13) {
-                geocoding_handle({'address': $(this).val()});
-            }
-        });
-        
-        $('input.panel_collapsible').click(function() {
-            var panel_content = $(this).closest('div[data-type="panel"]').children('div.panel_content');
-            
-            if ($(this).hasClass('expanded')) {
-                $(this).removeClass('expanded');
-                panel_content.addClass('hidden');
-            } else {
-                $(this).addClass('expanded');
-                panel_content.removeClass('hidden');
             }
         });
     }
     
-    listener_helpers.subscribe('map_init', function(){
-        // Vehicle helpers
-        // Roles:
-        // - check backend for new vehicles
-        // - manages vehicle objects(class Vehicle) and animates them (see Vehicle.render method)
-        var vehicle_helpers = (function(){
+    var simulation_panel = (function(){
+        var selected_vehicle = null;
+        
+        function vehicle_display(vehicle) {
+            if ((selected_vehicle !== null) && (selected_vehicle.id === vehicle.id)) {
+                return;
+            }
+            selected_vehicle = vehicle;
 
-            // Vehicle icons manager. 
-            // Roles:
-            // - keep a reference for each vehicle type (IC, ICE, etc..)
-            var imagesPool = (function(){
-                var icons = {};
-                function iconGet(type) {
-                    if (typeof icons[type] !== 'undefined') {
-                        return icons[type];
-                    }
+            $('.vehicle_name', $('#vehicle_info')).text(vehicle.name);
+            
+            var hms = timer.getTime();
+            if (vehicle.has_multiple_days && (hms < vehicle.depS[0])) {
+                hms += 24 * 3600;
+            }
+            
+            var html_rows = [];
+            $.each(vehicle.edges, function(index, edges) {
+                var s_dep = (typeof vehicle.depS[index] === 'undefined') ? 24 * 3600 : vehicle.depS[index];
+                var html_row = '<tr data-dep-sec="' + s_dep + '"><td>' + (index + 1) + '.</td>';
 
-                    var icon = new google.maps.MarkerImage(
-                        'static/images/vehicle-types/' + type + '.png',
-                         new google.maps.Size(20, 20),
-                         new google.maps.Point(0, 0),
-                         new google.maps.Point(10, 10)
-                    );
-                    icons[type] = icon;
+                var stop_id = vehicle.stations[index];
+                html_row += '<td><a href="#station_id=' + stop_id + '" data-station-id="' + stop_id + '">' + stationsPool.get(stop_id) + '</a></td>';
+                var hm_arr = (typeof vehicle.arrS[index - 1] === 'undefined') ? '' : time_helpers.s2hm(vehicle.arrS[index - 1]);
+                html_row += '<td>' + hm_arr + '</td>';
 
-                    return icon;
-                }
+                var hm_dep = (typeof vehicle.depS[index] === 'undefined') ? '' : time_helpers.s2hm(vehicle.depS[index]);
+                html_row += '<td>' + hm_dep + '</td></tr>';
 
-                return {
-                    iconGet: iconGet
-                };
-            })();
-
-            var vehicle_ib = new InfoBox({
-                disableAutoPan: true,
-                pixelOffset: new google.maps.Size(10, 10),
-                vehicle_id: 0,
-                closeBoxURL: ''
+                html_rows.push(html_row);
             });
-
-            var vehicleFollower = (function(){
-                var track_vehicle_name = null;
-                var vehicle_name_found = window.location.href.match(/vehicle_name=([^&]*)/);
-                if (vehicle_name_found !== null) {
-                    track_vehicle_name = decodeURIComponent(vehicle_name_found[1]).replace(/[^A-Z0-9]/i, '');
+            
+            $('#vehicle_timetable > tbody').html(html_rows.join(''));
+            $('#vehicle_timetable tbody tr').each(function(){
+                if ($(this).attr('data-dep-sec') < hms) {
+                    $(this).addClass('passed');
                 }
-
-                function isWaiting(id) {
-                    if ($('#vehicle_info').attr('data-vehicle-id') !== id) {
-                        return false;
-                    }
-
-                    if ($('#vehicle_info').attr('data-vehicle-follow') !== 'yes-init') {
-                        return false;
-                    }
-
-                    return true;
-                }
-
-                function matchByName(name) {
-                    if (track_vehicle_name === null) {
-                        return false;
-                    }
-
-                    name = name.replace(/[^A-Z0-9]/i, '');
-                    if (track_vehicle_name !== name) {
-                        return false;
-                    }
-
-                    return true;
-                }
-
-                function setActive() {
-                    $('#vehicle_info').attr('data-vehicle-follow', 'yes');
-                }
-
-                function isActive(id) {
-                    if ($('#vehicle_info').attr('data-vehicle-id') !== id) {
-                        return false;
-                    }
-
-                    if ($('#vehicle_info').attr('data-vehicle-follow') !== 'yes') {
-                        return false;
-                    }
-
-                    return true;
-                }
-
-                var toggler = $('#follow_trigger');
-                function toggle(stop_following) {
-                    var toggler_value = 'Follow';
-                    if (stop_following) {
-                        $('#vehicle_info').attr('data-vehicle-follow', 'no');
-                        toggler.removeClass('toggled');
-                        map.unbind('center');
-                    } else {
-                        $('#vehicle_info').attr('data-vehicle-follow', 'yes-init');
-                        toggler.addClass('toggled');
-                        toggler_value = toggler.attr('data-value-toggle');
-                    }
-
-                    toggler.val(toggler_value);
-                }
-                toggler.click(function(){
-                    toggle(toggler.hasClass('toggled'));
-                });
-
-                return {
-                    isWaiting: isWaiting,
-                    matchByName: matchByName,
-                    setActive: setActive,
-                    isActive: isActive,
-                    toggle: toggle
-                };
-            })();
-
-            $('#route_show_trigger').click(function(){
-                if ($(this).hasClass('toggled')) {
-                    $(this).removeClass('toggled');
-
-                    linesPool.routeHighlightRemove();
+            });
+            
+            $('#vehicle_info').removeClass('hidden');
+        }
+        
+        function Toggler(el) {
+            var el = $(el);
+            el.attr('data-value-original', el.val());
+            
+            function toggle(enable) {
+                if (enable) {
+                    el.addClass('toggled');
+                    el.val(el.attr('data-value-toggle'));
                 } else {
-                    $(this).addClass('toggled');
-
-                    var station_ids = $('#vehicle_info').attr('data-station-ids').split(',');
-                    linesPool.routeHighlight(station_ids);
-                }
-
-                var value_new = $(this).attr('data-value-toggle');
-                $(this).attr('data-value-toggle', $(this).val());
-                $(this).val(value_new);
-            });
-
-            $('#vehicle_timetable tbody tr a').live('click', function(){
-                var station_location = stationsPool.location_get($(this).attr('data-station-id'));
-                if (parseInt(station_location.lng(), 10) === 0) { return; }
-
-                map.setCenter(station_location);
-                if (map.getZoom() < config.getParam('zoom_station')) {
-                    map.setZoom(config.getParam('zoom_station'));
-                }
-
-                return false;
-            });
-
-            var vehicleIDs = [];
-
-            function Vehicle(params) {
-                var has_multiple_days = params.arrs[params.arrs.length - 1] > 24 * 3600;
-
-                this.id             = params.id;
-                this.stations       = params.sts;
-                this.depS           = params.deps;
-                this.arrS           = params.arrs;
-                this.multiple_days  = has_multiple_days;
-
-                var html_rows = [];
-                $.each(params.edges, function(index, edges) {
-                    var s_dep = (typeof params.deps[index] === 'undefined') ? 24 * 3600 : params.deps[index];
-
-                    var html_row = '<tr data-dep-sec="' + s_dep + '"><td>' + (index + 1) + '.</td>';
-                    html_row += '<td><a href="#station_id=' + params.sts[index] + '" data-station-id="' + params.sts[index] + '">' + stationsPool.get(params.sts[index]) + '</a></td>';
-                    var hm_arr = (typeof params.arrs[index - 1] === 'undefined') ? '' : time_helpers.s2hm(params.arrs[index - 1]);
-                    html_row += '<td>' + hm_arr + '</td>';
-                    var hm_dep = (typeof params.deps[index] === 'undefined') ? '' : time_helpers.s2hm(params.deps[index]);
-                    html_row += '<td>' + hm_dep + '</td></tr>';
-                    html_rows.push(html_row);
-
-                    if (index === 0) { return; }
-
-                    if (linesPool.routeExists(params.sts[index-1], params.sts[index])) {
-                        return;
-                    }
-
-                    linesPool.routeAdd(params.sts[index-1], params.sts[index], edges.split(','));
-                });
-                var timetables_rows = html_rows.join('');
-
-                var marker = new google.maps.Marker({
-                    position: new google.maps.LatLng(0, 0),
-                    icon: imagesPool.iconGet(params.type),
-                    map: null,
-                    speed: 0,
-                    status: 'not on map'
-                });
-                this.marker = marker;
-
-                function vehicle_clickHandler() {
-                    if ($('#vehicle_info').attr('data-vehicle-id') === params.id) {
-                        return;
-                    }
-
-                    $('.vehicle_name', $('#vehicle_info')).text(params.name);
-
-                    var hms = timer.getTime();
-                    if (has_multiple_days && (hms < params.deps[0])) {
-                        hms += 24 * 3600;
-                    }
-
-                    $('#vehicle_timetable > tbody').html(timetables_rows);
-                    $('#vehicle_timetable tbody tr').each(function(){
-                        if ($(this).attr('data-dep-sec') < hms) {
-                            $(this).addClass('passed');
-                        }
-                    });
-
-                    $('#vehicle_info').attr('data-vehicle-id', params.id);
-                    $('#vehicle_info').attr('data-station-ids', params.sts.join(','));
-
-                    $('#vehicle_info').removeClass('hidden');
-                }
-                google.maps.event.addListener(marker, 'click', function() {
-                    vehicle_clickHandler();
-                    vehicleFollower.toggle(true);
-                });
-
-                google.maps.event.addListener(marker, 'mouseover', function(){
-                    if (map.getZoom() < config.getParam('zoom_mouseover_min')) {
-                        return;
-                    }
-
-                    if (vehicle_ib.get('vehicle_id') === params.id) { return; }
-                    vehicle_ib.set('vehicle_id', params.id);
-
-                    vehicle_ib.close();
-
-                    var popup_div = $('#vehicle_popup');
-                    $('span.vehicle_name', popup_div).text(params.name);
-                    $('.status', popup_div).text(marker.get('status'));
-
-                    vehicle_ib.setContent($('#vehicle_popup_container').html());
-                    vehicle_ib.open(map, marker);
-                });
-                google.maps.event.addListener(marker, 'mouseout', function(){
-                    vehicle_ib.set('vehicle_id', null);
-                    vehicle_ib.close();
-                });
-
-                if (vehicleFollower.matchByName(params.name)) {
-                    vehicle_clickHandler();
-                    vehicleFollower.toggle(false);
+                    el.removeClass('toggled');
+                    el.val(el.attr('data-value-original'));
                 }
             }
-            Vehicle.prototype.render = function() {
-                var that = this;
-                function animate() {
-                    var hms = timer.getTime();
-                    if (that.multiple_days && (hms < that.depS[0])) {
-                        hms += 24 * 3600;
-                    }
-
-                    var vehicle_found = false;
-                    for (var i=0; i<that.arrS.length; i++) {
-                        if (hms < that.arrS[i]) {
-                            var station_a = that.stations[i];
-                            var station_b = that.stations[i+1];
-
-                            var vehicle_position = null;
-
-                            if (hms > that.depS[i]) {
-                                // Vehicle is in motion between two stations
-                                vehicle_found = true;
-                                if (that.marker.get('speed') === 0) {
-                                    var speed = linesPool.lengthGet(station_a, station_b) * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
-                                    that.marker.set('speed', parseInt(speed, 10));
-
-                                    that.marker.set('status', 'Heading to ' + stationsPool.get(station_b) + '(' + time_helpers.s2hm(that.arrS[i]) + ') with ' + that.marker.get('speed') + ' km/h');
-                                }
-
-                                var route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
-
-                                vehicle_position = linesPool.positionGet(station_a, station_b, route_percent);
-                                if (vehicle_position === null) {
-                                    console.log('Couldn\'t get the position of ' + that.id + ' between stations: ' + [station_a, station_b]);
-                                    that.marker.setMap(null);
-                                    break;
-                                }
-                            } else {
-                                // Vehicle is in a station
-                                vehicle_found = true;
-                                that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + time_helpers.s2hm(that.depS[i]));
-                                that.marker.set('speed', 0);
-
-                                vehicle_position = stationsPool.location_get(station_a);
-                            }
-
-                            if (map.getBounds().contains(vehicle_position)) {
-                                if (that.marker.getMap() === null) {
-                                    that.marker.setMap(map);
-                                }
-                                that.marker.setPosition(vehicle_position);
-                            } else {
-                                that.marker.setMap(null);
-                            }
-
-                            if (vehicleFollower.isWaiting(that.id)) {
-                                vehicleFollower.setActive();
-
-                                map.panTo(vehicle_position);
-                                map.setZoom(config.getParam('zoom_follow'));
-                                map.setMapTypeId('satellite');
-
-                                map.bindTo('center', that.marker, 'position');
-                            }
-
-                            if (vehicleFollower.isActive(that.id)) {
-                                // On mobile devices it might be that the followed vehicle 
-                                //      to be out already of the map viewport.
-                                //      So we bring it back :)
-                                if (that.marker.getMap() === null) {
-                                    map.panTo(vehicle_position);
-                                }
-                            }
-
-                            setTimeout(animate, 1000);
-                            break;
-                        }
-                    } // end arrivals loop
-
-                    if (vehicle_found === false) {
-                        that.marker.setMap(null);
-                    }
-                }
-
-                animate();
+            
+            var subscriber_types = {
+                'enable': [function(){
+                    toggle(true)
+                }],
+                'disable': [function(){
+                    toggle(false)
+                }]
             };
-
+            this.subscriber_types = subscriber_types;
+            
+            el.click(function(){
+                var subscribers = el.hasClass('toggled') ? subscriber_types['disable'] : subscriber_types['enable'];
+                $.each(subscribers, function(index, fn){
+                    fn();
+                });
+            });
+        }
+        Toggler.prototype.subscribe = function(type, fn) {
+            this.subscriber_types[type].push(fn);
+        }
+        Toggler.prototype.trigger = function(type) {
+            $.each(this.subscriber_types[type], function(index, fn){
+                fn();
+            });
+        }
+        
+        var vehicle_follow = (function(){
+            var toggler;
+            function init() {
+                toggler = new Toggler('#follow_trigger');
+                toggler.subscribe('enable', function(){
+                    selected_vehicle.marker.set('follow', 'yes-init');
+                });
+                toggler.subscribe('disable', function(){
+                    map.unbind('center');
+                });
+            }
+            
+            function start(vehicle) {
+                selected_vehicle = vehicle;
+                toggler.trigger('enable');
+            }
+            
             return {
-                load: function() {
-                    $.ajax({
-                        url: config.getParam('json_paths').vehicles + timer.getHM(),
-                        dataType: 'json',
-                        success: function(vehicles) {
-                            $.each(vehicles, function(index, data) {
-                                if (vehicleIDs.indexOf(data.id) !== -1) { return; }
-
-                                var v = new Vehicle(data);
-                                v.render();
-                                vehicleIDs.push(data.id);
-                            });
-                        }
-                    });
-                }
+                init: init,
+                start: start
             };
         })();
         
+        var vehicle_route_display = (function(){
+            function init() {
+                var toggler = new Toggler('#route_show_trigger');
+                toggler.subscribe('enable', function(){
+                    linesPool.routeHighlight(selected_vehicle.stations);
+                });
+                toggler.subscribe('disable', function(){
+                    linesPool.routeHighlightRemove();
+                });
+            }
+            
+            return {
+                init: init
+            };
+        })();
+
+        function init() {
+            vehicle_follow.init();
+            vehicle_route_display.init();
+            
+            var location_el = $('#user_location');
+            location_el.attr('value-default', location_el.attr('value'));
+
+            var geocoder = new google.maps.Geocoder();
+            function geocoding_handle(params) {
+                geocoder.geocode(params, function(results, status) {
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        location_el.val(results[0].formatted_address);
+                        map.setCenter(results[0].geometry.location);
+                        map.setZoom(15);
+                    }
+                });
+            }
+
+            $('#geolocation_click').click(function(){
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function (position) {
+                        geocoding_handle({'latLng': new google.maps.LatLng(position.coords.latitude, position.coords.longitude)});
+                    });
+                }
+            });
+            location_el.focus(function(){
+                if ($(this).val() === $(this).attr('value-default')) {
+                    $(this).val('');
+                }
+            });
+            location_el.keypress(function(e) {
+                if(e.which === 13) {
+                    geocoding_handle({'address': $(this).val()});
+                }
+            });
+
+            $('input.panel_collapsible').click(function() {
+                var panel_content = $(this).closest('div[data-type="panel"]').children('div.panel_content');
+
+                if ($(this).hasClass('expanded')) {
+                    $(this).removeClass('expanded');
+                    panel_content.addClass('hidden');
+                } else {
+                    $(this).addClass('expanded');
+                    panel_content.removeClass('hidden');
+                }
+            });
+        }
+        
+        return {
+            init: init,
+            displayVehicle: vehicle_display,
+            followVehicle: vehicle_follow.start
+        };
+    })();
+    
+    // Vehicle helpers
+    // Roles:
+    // - check backend for new vehicles
+    // - manages vehicle objects(class Vehicle) and animates them (see Vehicle.render method)
+    var vehicle_helpers = (function(){
+        var vehicle_detect = (function(){
+            var track_vehicle_name = null;
+            var vehicle_name_found = window.location.href.match(/vehicle_name=([^&]*)/);
+            if (vehicle_name_found !== null) {
+                track_vehicle_name = decodeURIComponent(vehicle_name_found[1]).replace(/[^A-Z0-9]/i, '');
+            }
+            
+            function match_by_name(vehicle_name) {
+                if (track_vehicle_name === null) {
+                    return false;
+                }
+
+                vehicle_name = vehicle_name.replace(/[^A-Z0-9]/i, '');
+                if (track_vehicle_name !== vehicle_name) {
+                    return false;
+                }
+
+                return true;
+            }
+            
+            function match(vehicle_name, vehicle_id) {
+                return match_by_name(vehicle_name);
+            }
+            
+            return {
+                match: match
+            };
+        })();
+
+
+        // Vehicle icons manager. 
+        // Roles:
+        // - keep a reference for each vehicle type (IC, ICE, etc..)
+        var imagesPool = (function(){
+            var icons = {};
+            function iconGet(type) {
+                if (typeof icons[type] !== 'undefined') {
+                    return icons[type];
+                }
+
+                var icon = new google.maps.MarkerImage(
+                    'static/images/vehicle-types/' + type + '.png',
+                     new google.maps.Size(20, 20),
+                     new google.maps.Point(0, 0),
+                     new google.maps.Point(10, 10)
+                );
+                icons[type] = icon;
+
+                return icon;
+            }
+
+            return {
+                iconGet: iconGet
+            };
+        })();
+
+        var vehicle_ib = new InfoBox({
+            disableAutoPan: true,
+            pixelOffset: new google.maps.Size(10, 10),
+            vehicle_id: 0,
+            closeBoxURL: ''
+        });
+        
+        var vehicleIDs = [];
+
+        function Vehicle(params) {
+            var has_multiple_days = params.arrs[params.arrs.length - 1] > 24 * 3600;
+
+            this.id                 = params.id;
+            this.name               = params.name;
+            this.edges              = params.edges;
+            this.stations           = params.sts;
+            this.depS               = params.deps;
+            this.arrS               = params.arrs;
+            this.has_multiple_days  = has_multiple_days;
+            
+            $.each(params.edges, function(index, edges) {
+                if (index === 0) { return; }
+                linesPool.routeAdd(params.sts[index-1], params.sts[index], edges.split(','));
+            });
+
+            var marker = new google.maps.Marker({
+                position: new google.maps.LatLng(0, 0),
+                icon: imagesPool.iconGet(params.type),
+                map: null,
+                speed: 0,
+                status: 'not on map'
+            });
+            this.marker = marker;
+            
+            // TODO - FIXME .apply
+            var that = this;
+
+            google.maps.event.addListener(marker, 'click', function() {
+                simulation_panel.displayVehicle(that);
+            });
+
+            google.maps.event.addListener(marker, 'mouseover', function(){
+                if (map.getZoom() < config.getParam('zoom_mouseover_min')) {
+                    return;
+                }
+
+                if (vehicle_ib.get('vehicle_id') === params.id) { return; }
+                vehicle_ib.set('vehicle_id', params.id);
+
+                vehicle_ib.close();
+
+                var popup_div = $('#vehicle_popup');
+                $('span.vehicle_name', popup_div).text(params.name);
+                $('.status', popup_div).text(marker.get('status'));
+
+                vehicle_ib.setContent($('#vehicle_popup_container').html());
+                vehicle_ib.open(map, marker);
+            });
+            google.maps.event.addListener(marker, 'mouseout', function(){
+                vehicle_ib.set('vehicle_id', null);
+                vehicle_ib.close();
+            });
+            
+            if (vehicle_detect.match(this.name, this.id)) {
+                simulation_panel.displayVehicle(this);
+                simulation_panel.followVehicle(this);
+            }
+        }
+        Vehicle.prototype.render = function() {
+            // TODO - FIXME .apply
+            var that = this;
+            
+            function animate() {
+                var hms = timer.getTime();
+                if (that.multiple_days && (hms < that.depS[0])) {
+                    hms += 24 * 3600;
+                }
+
+                var vehicle_found = false;
+                for (var i=0; i<that.arrS.length; i++) {
+                    if (hms < that.arrS[i]) {
+                        var station_a = that.stations[i];
+                        var station_b = that.stations[i+1];
+
+                        var vehicle_position = null;
+
+                        if (hms > that.depS[i]) {
+                            // Vehicle is in motion between two stations
+                            vehicle_found = true;
+                            if (that.marker.get('speed') === 0) {
+                                var speed = linesPool.lengthGet(station_a, station_b) * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
+                                that.marker.set('speed', parseInt(speed, 10));
+                                that.marker.set('status', 'Heading to ' + stationsPool.get(station_b) + '(' + time_helpers.s2hm(that.arrS[i]) + ') with ' + that.marker.get('speed') + ' km/h');
+                            }
+
+                            var route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
+
+                            vehicle_position = linesPool.positionGet(station_a, station_b, route_percent);
+                            if (vehicle_position === null) {
+                                console.log('Couldn\'t get the position of ' + that.id + ' between stations: ' + [station_a, station_b]);
+                                that.marker.setMap(null);
+                                break;
+                            }
+                        } else {
+                            // Vehicle is in a station
+                            vehicle_found = true;
+                            that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + time_helpers.s2hm(that.depS[i]));
+                            that.marker.set('speed', 0);
+
+                            vehicle_position = stationsPool.location_get(station_a);
+                        }
+                        
+                        if (that.marker.get('follow') === 'yes-init') {
+                            that.marker.set('follow', 'yes');
+                            
+                            that.marker.setMap(map);
+                            that.marker.setPosition(vehicle_position);
+                            
+                            map.panTo(vehicle_position);
+                            map.setZoom(config.getParam('zoom_follow'));
+                            map.setMapTypeId('satellite');
+
+                            map.bindTo('center', that.marker, 'position');
+                        }
+                        
+                        if (map.getBounds().contains(vehicle_position)) {
+                            if (that.marker.getMap() === null) {
+                                that.marker.setMap(map);
+                            }
+                            that.marker.setPosition(vehicle_position);
+                        } else {
+                            that.marker.setMap(null);
+                        }
+
+                        setTimeout(animate, 1000);
+                        break;
+                    }
+                } // end arrivals loop
+
+                if (vehicle_found === false) {
+                    that.marker.setMap(null);
+                }
+            }
+
+            animate();
+        };
+
+        return {
+            load: function() {
+                $.ajax({
+                    url: config.getParam('json_paths').vehicles + timer.getHM(),
+                    dataType: 'json',
+                    success: function(vehicles) {
+                        $.each(vehicles, function(index, data) {
+                            if (vehicleIDs.indexOf(data.id) !== -1) { return; }
+
+                            var v = new Vehicle(data);
+                            v.render();
+
+                            vehicleIDs.push(data.id);
+                        });
+                    }
+                });
+            }
+        };
+    })();
+    
+    listener_helpers.subscribe('map_init', function(){
         // LOAD network lines 
         $.ajax({
             url: config.getParam('json_paths').edges,
@@ -815,6 +831,7 @@ var simulation_manager = (function(){
         init: function(){
             timer.init();
             map_init();
+            simulation_panel.init();
         },
         getMap: function(){
             return map;
