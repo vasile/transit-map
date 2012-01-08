@@ -31,6 +31,16 @@ body {
     border: 1px solid #717D7D;
 }
 
+#panel h3 {
+    font-size: 20px;
+    font-weight: bold;
+    font-family: Georgia, Helvetica
+}
+
+#panel b {
+    font-weight: bold;
+}
+
 #panel > div {
     margin: 5px 5px 10px 5px;
     padding: 5px;
@@ -41,10 +51,12 @@ body {
     border: 1px solid #CACACA;
 }
 
-#panel p {
-    font-size: 20px;
-    font-weight: bold;
-    font-family: Georgia, Helvetica
+div.panel_content {
+    padding: 3px;
+}
+
+div.panel_content > div {
+    margin-bottom: 6px;
 }
 
 #geolocation_click {
@@ -58,9 +70,6 @@ body {
 #user_location {
     width: 245px;
 }
-/* END */
-
-/* VEHICLE PANEL */
 
 /* Source of collapsible icons: http://www.shapes4free.com/vector-icons/expand-collapse-icons/ */
 input.panel_collapsible {
@@ -80,40 +89,34 @@ input.expanded {
     background: transparent url(../images/panel_collapse.png) no-repeat top;
 }
 
-#vehicle_info div {
-    margin-bottom: 6px;
+input.toggled {
+    background-color: #FF0000;
+    color: #FFFFFF;
 }
 
-#vehicle_timetable {
+/* END */
+
+/* PANEL TABLES */
+table.panel_table {
     width: 275px;
 }
 
-#vehicle_timetable td.station {
-    width: 150px;
-}
-
-#vehicle_timetable thead td {
+table.panel_table thead td {
     background-color: #DDD;
 }
 
-#vehicle_timetable tbody td {
+table.panel_table tbody td {
     border-top: 1px solid #DDD;
     background-color: #FFFFFF;
 }
 
-#vehicle_timetable tbody tr.passed td, 
-#vehicle_timetable tbody tr.passed td a {
+table.panel_table tbody tr.passed td, 
+table.panel_table tbody tr.passed td a {
     color: #CACACA;
 }
 
-#panel b {
-    font-weight: bold;
-}
-
-
-input.toggled {
-    background-color: #FF0000;
-    color: #FFFFFF;
+td.station {
+    width: 150px;
 }
 /* END */
 
