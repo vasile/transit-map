@@ -13,8 +13,8 @@ var simulation_manager = (function(){
             json_paths: {
                 edges: 'static/js/edges_encoded-sbb.js',
                 stations: 'feed/stations/sbb/list',
-                vehicles: 'feed/vehicles/sbb/',
-                station_vehicles: 'feed/station_vehicles/sbb'
+                vehicles: 'feed/vehicles/sbb/[hhmm]',
+                station_vehicles: 'feed/station_vehicles/sbb/[station_id]/[hhmm]'
             }
         };
         
@@ -405,8 +405,12 @@ var simulation_manager = (function(){
         }
         
         function station_info_display(station_id) {
+            var url = config.getParam('json_paths').station_vehicles;
+            url = url.replace(/\[station_id\]/, station_id);
+            url = url.replace(/\[hhmm\]/, timer.getHM());
+            
             $.ajax({
-                url: config.getParam('json_paths').station_vehicles + '/' + station_id + '/' + timer.getHM(),
+                url: url,
                 dataType: 'json',
                 success: function(vehicles) {
                     vehicle_info_hide();
@@ -866,8 +870,11 @@ var simulation_manager = (function(){
 
         return {
             load: function() {
+                var url = config.getParam('json_paths').vehicles;
+                url = url.replace(/\[hhmm\]/, timer.getHM());
+                
                 $.ajax({
-                    url: config.getParam('json_paths').vehicles + timer.getHM(),
+                    url: url,
                     dataType: 'json',
                     success: function(vehicles) {
                         $.each(vehicles, function(index, data) {
