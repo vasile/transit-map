@@ -403,6 +403,8 @@ var simulation_manager = (function(){
                 return;
             }
             selected_vehicle = vehicle;
+            
+            vehicle_follow.stop();
 
             $('.vehicle_name', $('#vehicle_info')).text(vehicle.name);
             
@@ -494,9 +496,14 @@ var simulation_manager = (function(){
                 toggler.trigger('enable');
             }
             
+            function stop() {
+                toggler.trigger('disable');
+            }
+            
             return {
                 init: init,
-                start: start
+                start: start,
+                stop: stop
             };
         })();
         
