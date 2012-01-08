@@ -111,11 +111,11 @@ var simulation_manager = (function(){
             return null;
         }
         
-        function routeExists(a, b) {
-          return typeof routes[a + '_' + b] !== 'undefined';
-        }
-        
         function routeAdd(a, b, edges) {
+            if (typeof routes[a + '_' + b] !== 'undefined') {
+                return;
+            }
+            
             var routePoints = [];
             $.each(edges, function(k, edgeID) {
                 var points = network_lines[Math.abs(edgeID)];
@@ -166,7 +166,6 @@ var simulation_manager = (function(){
         
         return {
             positionGet: positionOnRouteAtPercentGet,
-            routeExists: routeExists,
             routeAdd: routeAdd,
             lengthGet: lengthGet,
             routeHighlight: routeHighlight,
