@@ -41,7 +41,7 @@ Config: [static/js/map.js - simulation_manager > config > params](https://github
 * *zoom_follow:* zoom level used to follow a vehicle
 * *zoom_station:* zoom level used when clicking on a station
 * *zoom_mouseover_min:* minimum zoom level where mousover vehicles brings a panel
-* *ft_id_mask:* Fusion Table ID containing the simulation mask (optional but cool :) - example [FT #812706](http://www.google.com/fusiontables/DataSource?dsrcid=812706)
+* *ft_id_mask:* Fusion Table ID containing the simulation mask (optional but cool :) - example [FT #812706](http://www.google.com/fusiontables/DataSource?dsrcid=812706) . Check [this script](https://github.com/vasile/Mask-KML-polygons) if you are not sure how to generate one
 * *ft_id_lines:* Fusion Table ID of the polylines layer - example [FT #1497331](http://www.google.com/fusiontables/DataSource?dsrcid=1497331)
 * *ft_id_stations:* Fusion Table ID of the stations layer - example [FT #1497361](http://www.google.com/fusiontables/DataSource?dsrcid=1497361)
 * *json_paths.edges:* JSON file containing the simulation polylines. For now only [Encoded Polylines](http://code.google.com/apis/maps/documentation/utilities/polylinealgorithm.html) are supported. **Please note** that the FT layers are used just to render the lines, the actual coordinates for moving the vehicles along are in this JSON file. 
