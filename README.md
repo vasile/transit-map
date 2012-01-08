@@ -59,10 +59,10 @@ Config: [static/js/map.js - simulation_manager > config > params](https://github
         "y": "46.631779",
         "name": "Bergün/Bravuogn"
 
-    *id:* station unique ID
-    *x:* station longitude (decimal degrees)
-    *y:* station latitude (decimal degrees)
-    *name:* station name
+    * *id:* station unique ID
+    * *x:* station longitude (decimal degrees)
+    * *y:* station latitude (decimal degrees)
+    * *name:* station name
 
 * *json_paths.vehicles:* JSON file containing the vehicles running at given time (hhmm format)
 
