@@ -13,7 +13,8 @@ var simulation_manager = (function(){
             json_paths: {
                 edges: 'static/js/edges_encoded-sbb.js',
                 stations: 'feed/stations/sbb/list',
-                vehicles: 'feed/vehicles/sbb/'
+                vehicles: 'feed/vehicles/sbb/',
+                station_vehicles: 'feed/station_vehicles/sbb'
             }
         };
         
@@ -25,6 +26,8 @@ var simulation_manager = (function(){
     })();
     
     var map = null;
+    
+    var simulation_vehicles = {};
     
     var listener_helpers = (function(){
         var listeners = {
@@ -322,8 +325,8 @@ var simulation_manager = (function(){
         });
         
         function map_layers_add(){
-            var layer = null;
-            layer = new google.maps.FusionTablesLayer({
+            var edges_layer = null;
+            edges_layer = new google.maps.FusionTablesLayer({
                 query: {
                     select: 'geometry',
                     from: config.getParam('ft_id_lines')
@@ -345,15 +348,21 @@ var simulation_manager = (function(){
                     }
                 ]
             });
+            
             var stations_layer = new google.maps.FusionTablesLayer({
               query: {
                 select: 'geometry',
                 from: config.getParam('ft_id_stations')
               },
-              clickable: false,
+              suppressInfoWindows: true,
               map: map
             });
-            layer = new google.maps.FusionTablesLayer({
+            google.maps.event.addListener(stations_layer, 'click', function(ev){
+                var station_id = ev.row.id.value;
+                simulation_panel.displayStation(station_id);
+            });
+            
+            var layer = new google.maps.FusionTablesLayer({
               query: {
                 select: 'geometry',
                 from: config.getParam('ft_id_mask')
@@ -398,13 +407,14 @@ var simulation_manager = (function(){
     var simulation_panel = (function(){
         var selected_vehicle = null;
         
-        function vehicle_display(vehicle) {
+        function vehicle_info_display(vehicle) {
             if ((selected_vehicle !== null) && (selected_vehicle.id === vehicle.id)) {
                 return;
             }
             selected_vehicle = vehicle;
             
             vehicle_follow.stop();
+            station_info_hide();
 
             $('.vehicle_name', $('#vehicle_info')).text(vehicle.name);
             
@@ -437,6 +447,13 @@ var simulation_manager = (function(){
             });
             
             $('#vehicle_info').removeClass('hidden');
+        }
+        
+        function vehicle_info_hide() {
+            vehicle_follow.stop();
+            vehicle_route.hide();
+            selected_vehicle = null;
+            $('#vehicle_info').addClass('hidden');
         }
         
         function Toggler(el) {
@@ -507,9 +524,11 @@ var simulation_manager = (function(){
             };
         })();
         
-        var vehicle_route_display = (function(){
+        var vehicle_route = (function(){
+            var toggler;
+            
             function init() {
-                var toggler = new Toggler('#route_show_trigger');
+                toggler = new Toggler('#route_show_trigger');
                 toggler.subscribe('enable', function(){
                     linesPool.routeHighlight(selected_vehicle.stations);
                 });
@@ -518,14 +537,75 @@ var simulation_manager = (function(){
                 });
             }
             
+            function hide() {
+                toggler.trigger('disable');
+            }
+            
             return {
-                init: init
+                init: init,
+                hide: hide
             };
         })();
+        
+        var station_info_display = function(station_id) {
+            $.ajax({
+                url: config.getParam('json_paths').station_vehicles + '/' + station_id + '/' + timer.getHM(),
+                dataType: 'json',
+                success: function(vehicles) {
+                    vehicle_info_hide();
+
+                    var html_rows = [];
+                    $.each(vehicles, function(index, vehicle) {
+                        var html_row = '<tr><td>' + (index + 1) + '.</td>';
+                        html_row += '<td><a href="#vehicle_id=' + vehicle.id + '" data-vehicle-id="' + vehicle.id + '">' + vehicle.name + '</a></td>';
+                        html_row += '<td>' + stationsPool.get(vehicle.st_b) + '</td>';
+                        html_row += '<td>' + time_helpers.s2hm(vehicle.dep) + '</td>';
+                        html_rows.push(html_row);
+                    });
+                    $('#station_departures > tbody').html(html_rows.join(''));
+
+                    $('#station_info').removeClass('hidden');
+                    $('.station_name', $('#station_info')).text(stationsPool.get(station_id));
+                }
+            });
+        }
+        
+        function station_info_hide() {
+            $('#station_info').addClass('hidden');
+        }
 
         function init() {
             vehicle_follow.init();
-            vehicle_route_display.init();
+            vehicle_route.init();
+            
+            $('#station_departures tbody tr a').live('click', function(){
+                var vehicle_id = $(this).attr('data-vehicle-id');
+                if (typeof simulation_vehicles[vehicle_id] !== 'undefined') {
+                    var vehicle = simulation_vehicles[vehicle_id];
+                    simulation_panel.displayVehicle(vehicle);
+                    simulation_panel.followVehicle(vehicle);
+                } else {
+                    alert('Vehicle not yet running !');
+                }
+
+                return false;
+            });
+            
+            $('#vehicle_timetable tbody tr a').live('click', function(){
+                var station_id = $(this).attr('data-station-id');
+                var station_location = stationsPool.location_get(station_id);
+                if (parseInt(station_location.lng(), 10) === 0) { return; }
+                
+                map.setCenter(station_location);
+                if (map.getZoom() < config.getParam('zoom_station')) {
+                    map.setZoom(config.getParam('zoom_station'));
+                }
+                
+                vehicle_info_hide();
+                station_info_display(station_id);
+                
+                return false;
+            });
             
             var location_el = $('#user_location');
             location_el.attr('value-default', location_el.attr('value'));
@@ -574,8 +654,9 @@ var simulation_manager = (function(){
         
         return {
             init: init,
-            displayVehicle: vehicle_display,
-            followVehicle: vehicle_follow.start
+            displayVehicle: vehicle_info_display,
+            followVehicle: vehicle_follow.start,
+            displayStation: station_info_display
         };
     })();
     
@@ -794,12 +875,14 @@ var simulation_manager = (function(){
                     dataType: 'json',
                     success: function(vehicles) {
                         $.each(vehicles, function(index, data) {
-                            if (vehicleIDs.indexOf(data.id) !== -1) { return; }
-
+                            if (typeof simulation_vehicles[data.id] !== 'undefined') {
+                                return;
+                            }
+                            
                             var v = new Vehicle(data);
                             v.render();
 
-                            vehicleIDs.push(data.id);
+                            simulation_vehicles[data.id] = v;
                         });
                     }
                 });
