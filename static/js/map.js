@@ -694,6 +694,44 @@ var simulation_manager = (function(){
                 return match_by_name(vehicle_name);
             }
             
+            listener_helpers.subscribe('vehicles_load', function(){
+                var new_vehicle_matches = window.location.href.match(/vehicle_add&vehicle_name=([^&]+?)&vehicle_type=([^&]+?)&station_ids=([^&]+?)&deps=([^&]+?)&arrs=([^&]*)/);
+                if (new_vehicle_matches === null) {
+                    return;
+                }
+                
+                function str_hhmm_2_sec_ar(str_hhmm) {
+                    var sec_ar = [];
+                    $.each(str_hhmm.split('_'), function(index, hhmm){
+                        var hhmm_matches = hhmm.match(/([0-9]{2})([0-9]{2})/);
+                        sec_ar.push(time_helpers.hms2s(hhmm_matches[1] + ':' + hhmm_matches[2] + ':00'));
+                    });
+                    return sec_ar;
+                }
+                
+                var station_ids = new_vehicle_matches[3].split('_');
+                $.each(station_ids, function(index, station_id_s){
+                    station_ids[index] = station_id_s;
+                });
+                
+                var vehicle_data = {
+                    arrs: str_hhmm_2_sec_ar(new_vehicle_matches[5]),
+                    deps: str_hhmm_2_sec_ar(new_vehicle_matches[4]),
+                    id: 'custom_vehicle',
+                    name: decodeURIComponent(new_vehicle_matches[1]),
+                    sts: station_ids,
+                    type: new_vehicle_matches[2],
+                    edges: []
+                };
+                
+                var v = new Vehicle(vehicle_data);
+                v.render();
+                simulation_vehicles[vehicle_data.id] = v;
+                
+                simulation_panel.displayVehicle(v);
+                simulation_panel.followVehicle(v);
+            })
+            
             return {
                 match: match
             };
@@ -891,6 +929,8 @@ var simulation_manager = (function(){
 
                             simulation_vehicles[data.id] = v;
                         });
+                        
+                        listener_helpers.notify('vehicles_load');
                     }
                 });
             }
