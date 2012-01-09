@@ -30,17 +30,23 @@ var simulation_manager = (function(){
     var simulation_vehicles = {};
     
     var listener_helpers = (function(){
-        var listeners = {
-            map_init: []
-        };
+        var listeners = {};
         
         function notify(type) {
+            if (listeners[type] === 'undefined') {
+                return;
+            }
+            
             $.each(listeners[type], function(i, fn){
                 fn();
             });
         }
 
         function subscribe(type, fn) {
+            if (typeof listeners[type] === 'undefined') {
+                listeners[type] = [];
+            }
+            
             listeners[type].push(fn);
         }
         
