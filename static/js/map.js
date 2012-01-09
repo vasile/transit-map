@@ -378,11 +378,10 @@ var simulation_manager = (function(){
             }
             
             var html_rows = [];
-            $.each(vehicle.edges, function(index, edges) {
+            $.each(vehicle.stations, function(index, stop_id) {
                 var s_dep = (typeof vehicle.depS[index] === 'undefined') ? 24 * 3600 : vehicle.depS[index];
                 var html_row = '<tr data-dep-sec="' + s_dep + '"><td>' + (index + 1) + '.</td>';
 
-                var stop_id = vehicle.stations[index];
                 html_row += '<td><a href="#station_id=' + stop_id + '" data-station-id="' + stop_id + '">' + stationsPool.get(stop_id) + '</a></td>';
                 var hm_arr = (typeof vehicle.arrS[index - 1] === 'undefined') ? '' : time_helpers.s2hm(vehicle.arrS[index - 1]);
                 html_row += '<td>' + hm_arr + '</td>';
@@ -741,7 +740,6 @@ var simulation_manager = (function(){
 
             this.id                 = params.id;
             this.name               = params.name;
-            this.edges              = params.edges;
             this.stations           = params.sts;
             this.depS               = params.deps;
             this.arrS               = params.arrs;
