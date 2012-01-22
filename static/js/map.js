@@ -696,11 +696,12 @@ var simulation_manager = (function(){
     // - manages vehicle objects(class Vehicle) and animates them (see Vehicle.render method)
     var vehicle_helpers = (function(){
         var vehicle_detect = (function(){
-            var track_vehicle_name = null;
-            var vehicle_name_found = window.location.href.match(/vehicle_name=([^&]*)/);
-            if (vehicle_name_found !== null) {
-                track_vehicle_name = decodeURIComponent(vehicle_name_found[1]).replace(/[^A-Z0-9]/i, '');
+            var track_vehicle_name = config.getUserParam('vehicle_name');
+            if (track_vehicle_name !== null) {
+                track_vehicle_name = track_vehicle_name.replace(/[^A-Z0-9]/i, '');
             }
+            
+            var track_vehicle_id = config.getUserParam('vehicle_id');
             
             function match_by_name(vehicle_name) {
                 if (track_vehicle_name === null) {
@@ -716,12 +717,15 @@ var simulation_manager = (function(){
             }
             
             function match(vehicle_name, vehicle_id) {
+                if (track_vehicle_id === vehicle_id) {
+                    return true;
+                }
+                
                 return match_by_name(vehicle_name);
             }
             
             listener_helpers.subscribe('vehicles_load', function(){
-                var new_vehicle_matches = window.location.href.match(/vehicle_add&vehicle_name=([^&]+?)&vehicle_type=([^&]+?)&station_ids=([^&]+?)&deps=([^&]+?)&arrs=([^&]*)/);
-                if (new_vehicle_matches === null) {
+                if (config.getUserParam('action') !== 'vehicle_add') {
                     return;
                 }
                 
@@ -734,18 +738,18 @@ var simulation_manager = (function(){
                     return sec_ar;
                 }
                 
-                var station_ids = new_vehicle_matches[3].split('_');
+                var station_ids = config.getUserParam('station_ids').split('_');
                 $.each(station_ids, function(index, station_id_s){
                     station_ids[index] = station_id_s;
                 });
                 
                 var vehicle_data = {
-                    arrs: str_hhmm_2_sec_ar(new_vehicle_matches[5]),
-                    deps: str_hhmm_2_sec_ar(new_vehicle_matches[4]),
+                    arrs: str_hhmm_2_sec_ar(config.getUserParam('arrs')),
+                    deps: str_hhmm_2_sec_ar(config.getUserParam('deps')),
                     id: 'custom_vehicle',
-                    name: decodeURIComponent(new_vehicle_matches[1]),
+                    name: decodeURIComponent(config.getUserParam('vehicle_name')),
                     sts: station_ids,
-                    type: new_vehicle_matches[2],
+                    type: config.getUserParam('vehicle_type'),
                     edges: []
                 };
                 
