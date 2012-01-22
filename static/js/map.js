@@ -379,7 +379,7 @@ var simulation_manager = (function(){
             
             var html_rows = [];
             $.each(vehicle.stations, function(index, stop_id) {
-                var s_dep = (typeof vehicle.depS[index] === 'undefined') ? 24 * 3600 : vehicle.depS[index];
+                var s_dep = (typeof vehicle.depS[index] === 'undefined') ? "n/a" : vehicle.depS[index];
                 var html_row = '<tr data-dep-sec="' + s_dep + '"><td>' + (index + 1) + '.</td>';
 
                 html_row += '<td><a href="#station_id=' + stop_id + '" data-station-id="' + stop_id + '">' + stationsPool.get(stop_id) + '</a></td>';
@@ -394,7 +394,11 @@ var simulation_manager = (function(){
             
             $('#vehicle_timetable > tbody').html(html_rows.join(''));
             $('#vehicle_timetable tbody tr').each(function(){
-                if ($(this).attr('data-dep-sec') < hms) {
+                var row_dep_sec = $(this).attr('data-dep-sec');
+                if (row_dep_sec === "n/a") {
+                    return;
+                }
+                if (row_dep_sec < hms) {
                     $(this).addClass('passed');
                 }
             });
@@ -837,7 +841,7 @@ var simulation_manager = (function(){
             
             function animate() {
                 var hms = timer.getTime();
-                if (that.multiple_days && (hms < that.depS[0])) {
+                if (that.has_multiple_days && (hms < that.depS[0])) {
                     hms += 24 * 3600;
                 }
 
