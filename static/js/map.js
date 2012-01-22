@@ -18,9 +18,22 @@ var simulation_manager = (function(){
             }
         };
         
+        var user_params = {};
+        var url_parts = window.location.href.split('?');
+        if (url_parts.length === 2) {
+            var queryparam_groups = url_parts[1].split('&');
+            $.each(queryparam_groups, function(index, queryparams_group){
+                var queryparam_parts = queryparams_group.split('=');
+                user_params[queryparam_parts[0]] = decodeURIComponent(queryparam_parts[1]);
+            });
+        }
+        
         return {
             getParam: function(p) {
                 return params[p];
+            },
+            getUserParam: function(p) {
+                return typeof user_params[p] === 'undefined' ? null : user_params[p];
             }
         };
     })();
