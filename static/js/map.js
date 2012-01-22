@@ -258,7 +258,7 @@ var simulation_manager = (function(){
         }
         
         function init(hms) {
-            if (typeof(hms) !== 'undefined') {
+            if (hms !== null) {
                 delay = getNow() - time_helpers.hms2s(hms);
             }
             
@@ -983,7 +983,7 @@ var simulation_manager = (function(){
     return {
         subscribe: listener_helpers.subscribe,
         init: function(){
-            timer.init();
+            timer.init(config.getUserParam('hms'));
             map_init();
             simulation_panel.init();
         },
