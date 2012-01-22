@@ -105,7 +105,8 @@ Config: [static/js/map.js - simulation_manager > config > params](https://github
 Once you are able to generate these APIs programmatically, you can:
 
 * change the vehicle API URLs to use [station_id], [hhmm] parameters (see the comments in the config file)
-* remove the '09:00' custom time used by this demo. Just remove the argument given to timer.init()
+* change the '09:00:00' custom time
+    timer.init(config.getUserParam('hms'));
 
 
 ### Stay in touch
