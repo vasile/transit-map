@@ -83,7 +83,12 @@ var simulation_manager = (function(){
         function add(id, name, x, y) {
             var station = new google.maps.MVCObject();
             station.set('name', name);
-            station.set('location', new google.maps.LatLng(parseFloat(y), parseFloat(x)));
+
+            if (parseInt(x, 10) === 0) {
+                station.set('location', null);
+            } else {
+                station.set('location', new google.maps.LatLng(parseFloat(y), parseFloat(x)));
+            }
             
             stations[id] = station;
         }
@@ -394,8 +399,14 @@ var simulation_manager = (function(){
             $.each(vehicle.stations, function(index, stop_id) {
                 var s_dep = (typeof vehicle.depS[index] === 'undefined') ? "n/a" : vehicle.depS[index];
                 var html_row = '<tr data-dep-sec="' + s_dep + '"><td>' + (index + 1) + '.</td>';
-
-                html_row += '<td><a href="#station_id=' + stop_id + '" data-station-id="' + stop_id + '">' + stationsPool.get(stop_id) + '</a></td>';
+                
+                var station_location = stationsPool.location_get(stop_id);
+                if (station_location === null) { 
+                    html_row += '<td>' + stationsPool.get(stop_id) + '</td>';
+                } else {
+                    html_row += '<td><a href="#station_id=' + stop_id + '" data-station-id="' + stop_id + '">' + stationsPool.get(stop_id) + '</a></td>';
+                }
+                
                 var hm_arr = (typeof vehicle.arrS[index - 1] === 'undefined') ? '' : time_helpers.s2hm(vehicle.arrS[index - 1]);
                 html_row += '<td>' + hm_arr + '</td>';
 
@@ -475,7 +486,7 @@ var simulation_manager = (function(){
             $('#vehicle_timetable tbody tr a').live('click', function(){
                 var station_id = $(this).attr('data-station-id');
                 var station_location = stationsPool.location_get(station_id);
-                if (parseInt(station_location.lng(), 10) === 0) { return; }
+                if (station_location === null) { return; }
                 
                 map.setCenter(station_location);
                 if (map.getZoom() < config.getParam('zoom_station')) {
