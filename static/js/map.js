@@ -910,6 +910,10 @@ var simulation_manager = (function(){
                             that.marker.set('speed', 0);
 
                             vehicle_position = stationsPool.location_get(station_a);
+                            if (vehicle_position === null) {
+                                console.log('Vehicle ' + that.name + ' is in a station without coordinates: ' + stationsPool.get(station_a) + '(' + station_a + ')');
+                                break;
+                            }
                         }
                         
                         if (that.marker.get('follow') === 'yes-init') {
@@ -943,7 +947,7 @@ var simulation_manager = (function(){
                     that.marker.setMap(null);
                 }
             }
-
+            
             animate();
         };
 
