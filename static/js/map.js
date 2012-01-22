@@ -22,9 +22,22 @@ var simulation_manager = (function(){
             }
         };
         
+        var user_params = {};
+        var url_parts = window.location.href.split('?');
+        if (url_parts.length === 2) {
+            var queryparam_groups = url_parts[1].split('&');
+            $.each(queryparam_groups, function(index, queryparams_group){
+                var queryparam_parts = queryparams_group.split('=');
+                user_params[queryparam_parts[0]] = decodeURIComponent(queryparam_parts[1]);
+            });
+        }
+        
         return {
             getParam: function(p) {
                 return params[p];
+            },
+            getUserParam: function(p) {
+                return typeof user_params[p] === 'undefined' ? null : user_params[p];
             }
         };
     })();
@@ -34,17 +47,23 @@ var simulation_manager = (function(){
     var simulation_vehicles = {};
     
     var listener_helpers = (function(){
-        var listeners = {
-            map_init: []
-        };
+        var listeners = {};
         
         function notify(type) {
+            if (listeners[type] === 'undefined') {
+                return;
+            }
+            
             $.each(listeners[type], function(i, fn){
                 fn();
             });
         }
 
         function subscribe(type, fn) {
+            if (typeof listeners[type] === 'undefined') {
+                listeners[type] = [];
+            }
+            
             listeners[type].push(fn);
         }
         
@@ -68,7 +87,12 @@ var simulation_manager = (function(){
         function add(id, name, x, y) {
             var station = new google.maps.MVCObject();
             station.set('name', name);
-            station.set('location', new google.maps.LatLng(parseFloat(y), parseFloat(x)));
+
+            if (parseInt(x, 10) === 0) {
+                station.set('location', null);
+            } else {
+                station.set('location', new google.maps.LatLng(parseFloat(y), parseFloat(x)));
+            }
             
             stations[id] = station;
         }
@@ -243,7 +267,7 @@ var simulation_manager = (function(){
         }
         
         function init(hms) {
-            if (typeof(hms) !== 'undefined') {
+            if (hms !== null) {
                 delay = getNow() - time_helpers.hms2s(hms);
             }
             
@@ -376,12 +400,17 @@ var simulation_manager = (function(){
             }
             
             var html_rows = [];
-            $.each(vehicle.edges, function(index, edges) {
-                var s_dep = (typeof vehicle.depS[index] === 'undefined') ? 24 * 3600 : vehicle.depS[index];
+            $.each(vehicle.stations, function(index, stop_id) {
+                var s_dep = (typeof vehicle.depS[index] === 'undefined') ? "n/a" : vehicle.depS[index];
                 var html_row = '<tr data-dep-sec="' + s_dep + '"><td>' + (index + 1) + '.</td>';
-
-                var stop_id = vehicle.stations[index];
-                html_row += '<td><a href="#station_id=' + stop_id + '" data-station-id="' + stop_id + '">' + stationsPool.get(stop_id) + '</a></td>';
+                
+                var station_location = stationsPool.location_get(stop_id);
+                if (station_location === null) { 
+                    html_row += '<td>' + stationsPool.get(stop_id) + '</td>';
+                } else {
+                    html_row += '<td><a href="#station_id=' + stop_id + '" data-station-id="' + stop_id + '">' + stationsPool.get(stop_id) + '</a></td>';
+                }
+                
                 var hm_arr = (typeof vehicle.arrS[index - 1] === 'undefined') ? '' : time_helpers.s2hm(vehicle.arrS[index - 1]);
                 html_row += '<td>' + hm_arr + '</td>';
 
@@ -393,7 +422,11 @@ var simulation_manager = (function(){
             
             $('#vehicle_timetable > tbody').html(html_rows.join(''));
             $('#vehicle_timetable tbody tr').each(function(){
-                if ($(this).attr('data-dep-sec') < hms) {
+                var row_dep_sec = $(this).attr('data-dep-sec');
+                if (row_dep_sec === "n/a") {
+                    return;
+                }
+                if (row_dep_sec < hms) {
                     $(this).addClass('passed');
                 }
             });
@@ -446,7 +479,6 @@ var simulation_manager = (function(){
             
             $('#station_departures tbody tr a').live('click', function(){
                 var vehicle_id = $(this).attr('data-vehicle-id');
-                
                 var vehicle = simulation_vehicles[vehicle_id];
                 simulation_panel.displayVehicle(vehicle);
                 simulation_panel.followVehicle(vehicle);
@@ -457,7 +489,7 @@ var simulation_manager = (function(){
             $('#vehicle_timetable tbody tr a').live('click', function(){
                 var station_id = $(this).attr('data-station-id');
                 var station_location = stationsPool.location_get(station_id);
-                if (parseInt(station_location.lng(), 10) === 0) { return; }
+                if (station_location === null) { return; }
                 
                 map.setCenter(station_location);
                 if (map.getZoom() < config.getParam('zoom_station')) {
@@ -563,7 +595,7 @@ var simulation_manager = (function(){
         ];
         
         var map_inited = false;
-        map = new google.maps.Map(document.getElementById("map_canvas"), {
+        var map_options = {
             zoom: config.getParam('zoom_start'),
             center: config.getParam('center_start'),
             mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -573,7 +605,15 @@ var simulation_manager = (function(){
             scaleControl: true,
             streetViewControl: true,
             overviewMapControl: true
-        });
+        };
+
+        if (config.getUserParam('x') !== null) {
+            map_options.center = new google.maps.LatLng(parseFloat(config.getUserParam('y')), parseFloat(config.getUserParam('x')));
+            map_options.zoom = config.getParam('zoom_follow');
+            map_options.mapTypeId = google.maps.MapTypeId.SATELLITE;
+        }
+        
+        map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
         
         map.setOptions({
             mapTypeControl: true,
@@ -667,11 +707,12 @@ var simulation_manager = (function(){
     // - manages vehicle objects(class Vehicle) and animates them (see Vehicle.render method)
     var vehicle_helpers = (function(){
         var vehicle_detect = (function(){
-            var track_vehicle_name = null;
-            var vehicle_name_found = window.location.href.match(/vehicle_name=([^&]*)/);
-            if (vehicle_name_found !== null) {
-                track_vehicle_name = decodeURIComponent(vehicle_name_found[1]).replace(/[^A-Z0-9]/i, '');
+            var track_vehicle_name = config.getUserParam('vehicle_name');
+            if (track_vehicle_name !== null) {
+                track_vehicle_name = track_vehicle_name.replace(/[^A-Z0-9]/i, '');
             }
+            
+            var track_vehicle_id = config.getUserParam('vehicle_id');
             
             function match_by_name(vehicle_name) {
                 if (track_vehicle_name === null) {
@@ -687,8 +728,49 @@ var simulation_manager = (function(){
             }
             
             function match(vehicle_name, vehicle_id) {
+                if (track_vehicle_id === vehicle_id) {
+                    return true;
+                }
+                
                 return match_by_name(vehicle_name);
             }
+            
+            listener_helpers.subscribe('vehicles_load', function(){
+                if (config.getUserParam('action') !== 'vehicle_add') {
+                    return;
+                }
+                
+                function str_hhmm_2_sec_ar(str_hhmm) {
+                    var sec_ar = [];
+                    $.each(str_hhmm.split('_'), function(index, hhmm){
+                        var hhmm_matches = hhmm.match(/([0-9]{2})([0-9]{2})/);
+                        sec_ar.push(time_helpers.hms2s(hhmm_matches[1] + ':' + hhmm_matches[2] + ':00'));
+                    });
+                    return sec_ar;
+                }
+                
+                var station_ids = config.getUserParam('station_ids').split('_');
+                $.each(station_ids, function(index, station_id_s){
+                    station_ids[index] = station_id_s;
+                });
+                
+                var vehicle_data = {
+                    arrs: str_hhmm_2_sec_ar(config.getUserParam('arrs')),
+                    deps: str_hhmm_2_sec_ar(config.getUserParam('deps')),
+                    id: 'custom_vehicle',
+                    name: decodeURIComponent(config.getUserParam('vehicle_name')),
+                    sts: station_ids,
+                    type: config.getUserParam('vehicle_type'),
+                    edges: []
+                };
+                
+                var v = new Vehicle(vehicle_data);
+                v.render();
+                simulation_vehicles[vehicle_data.id] = v;
+                
+                simulation_panel.displayVehicle(v);
+                simulation_panel.followVehicle(v);
+            });
             
             return {
                 match: match
@@ -736,7 +818,6 @@ var simulation_manager = (function(){
 
             this.id                 = params.id;
             this.name               = params.name;
-            this.edges              = params.edges;
             this.stations           = params.sts;
             this.depS               = params.deps;
             this.arrS               = params.arrs;
@@ -796,7 +877,7 @@ var simulation_manager = (function(){
             
             function animate() {
                 var hms = timer.getTime();
-                if (that.multiple_days && (hms < that.depS[0])) {
+                if (that.has_multiple_days && (hms < that.depS[0])) {
                     hms += 24 * 3600;
                 }
 
@@ -832,6 +913,10 @@ var simulation_manager = (function(){
                             that.marker.set('speed', 0);
 
                             vehicle_position = stationsPool.location_get(station_a);
+                            if (vehicle_position === null) {
+                                // Vehicle is in a station without coordinates (like Paris or Milano)
+                                break;
+                            }
                         }
                         
                         if (that.marker.get('follow') === 'yes-init') {
@@ -865,7 +950,7 @@ var simulation_manager = (function(){
                     that.marker.setMap(null);
                 }
             }
-
+            
             animate();
         };
 
@@ -888,6 +973,8 @@ var simulation_manager = (function(){
 
                             simulation_vehicles[data.id] = v;
                         });
+                        
+                        listener_helpers.notify('vehicles_load');
                     }
                 });
             }
@@ -923,8 +1010,8 @@ var simulation_manager = (function(){
     return {
         subscribe: listener_helpers.subscribe,
         init: function(){
-            // WARNING: in production remove hh:mm:ss parameter 
-            //      timer.init();
+            // WARNING: in production change '09:00:00' with:
+            //      timer.init(config.getUserParam('hms'));
             timer.init('09:00:00');
             map_init();
             simulation_panel.init();
