@@ -13,7 +13,7 @@ Projects that are using this script
 ## Usage
 
 * clone the project in a location that can be accessible via your webserver
-* access the project in your browser (i.e. [http://localhost/vehicle-simulator/map.html](http://localhost/vehicle-simulator/map.html) ). 
+* access the project in your browser (i.e. [http://localhost/vehicle-simulator/](http://localhost/vehicle-simulator/) ). 
 
 You should already see some action on the map !
 
