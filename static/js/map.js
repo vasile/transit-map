@@ -767,7 +767,7 @@ var simulation_manager = (function(){
                 
                 simulation_panel.displayVehicle(v);
                 simulation_panel.followVehicle(v);
-            })
+            });
             
             return {
                 match: match
