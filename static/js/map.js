@@ -464,13 +464,10 @@ var simulation_manager = (function(){
             
             $('#station_departures tbody tr a').live('click', function(){
                 var vehicle_id = $(this).attr('data-vehicle-id');
-                if (typeof simulation_vehicles[vehicle_id] !== 'undefined') {
-                    var vehicle = simulation_vehicles[vehicle_id];
-                    simulation_panel.displayVehicle(vehicle);
-                    simulation_panel.followVehicle(vehicle);
-                } else {
-                    console.log('Vehicle not yet running !');
-                }
+
+                var vehicle = simulation_vehicles[vehicle_id];
+                simulation_panel.displayVehicle(vehicle);
+                simulation_panel.followVehicle(vehicle);
 
                 return false;
             });
