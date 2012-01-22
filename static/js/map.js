@@ -584,7 +584,7 @@ var simulation_manager = (function(){
         ];
         
         var map_inited = false;
-        map = new google.maps.Map(document.getElementById("map_canvas"), {
+        var map_options = {
             zoom: config.getParam('zoom_start'),
             center: config.getParam('center_start'),
             mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -594,7 +594,15 @@ var simulation_manager = (function(){
             scaleControl: true,
             streetViewControl: true,
             overviewMapControl: true
-        });
+        };
+
+        if (config.getUserParam('x') !== null) {
+            map_options.center = new google.maps.LatLng(parseFloat(config.getUserParam('y')), parseFloat(config.getUserParam('x')));
+            map_options.zoom = config.getParam('zoom_follow');
+            map_options.mapTypeId = google.maps.MapTypeId.SATELLITE;
+        }
+        
+        map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
         
         map.setOptions({
             mapTypeControl: true,
