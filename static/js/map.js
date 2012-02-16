@@ -1004,9 +1004,23 @@ var simulation_manager = (function(){
         });
     });
     
+    function ui_init() {
+        var view_mode = config.getUserParam('view_mode');
+        
+        // Keep the UI clean (no additional DIVs) for IFRAME, mobile
+        switch (view_mode) {
+            case 'iframe':
+                break;
+            default:
+                $('#panel').removeClass('hidden');
+                break;
+        }
+    }
+    
     return {
         subscribe: listener_helpers.subscribe,
         init: function(){
+            ui_init();
             timer.init(config.getUserParam('hms'));
             map_init();
             simulation_panel.init();
