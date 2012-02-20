@@ -496,9 +496,7 @@ var simulation_manager = (function(){
                 if (station_location === null) { return; }
                 
                 map.setCenter(station_location);
-                if (map.getZoom() < config.getParam('zoom_station')) {
-                    map.setZoom(config.getParam('zoom_station'));
-                }
+                map.setZoom(config.getParam('zoom_station'));
                 
                 vehicle_info_hide();
                 station_info_display(station_id);
