@@ -332,6 +332,7 @@ var simulation_manager = (function(){
                     selected_vehicle.marker.set('follow', 'yes-init');
                 });
                 toggler.subscribe('disable', function(){
+                    selected_vehicle.marker.set('follow', 'no');
                     map.unbind('center');
                 });
             }
@@ -381,6 +382,12 @@ var simulation_manager = (function(){
         
         function vehicle_info_display(vehicle) {
             if ((selected_vehicle !== null) && (selected_vehicle.id === vehicle.id)) {
+                if (selected_vehicle.marker.get('follow') === 'no') {
+                    vehicle_follow.start(selected_vehicle);
+                }
+                if (selected_vehicle.marker.get('follow') === 'yes') {
+                    vehicle_follow.stop();
+                }
                 return;
             }
             selected_vehicle = vehicle;
