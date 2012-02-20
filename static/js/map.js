@@ -332,7 +332,9 @@ var simulation_manager = (function(){
                     selected_vehicle.marker.set('follow', 'yes-init');
                 });
                 toggler.subscribe('disable', function(){
-                    selected_vehicle.marker.set('follow', 'no');
+                    if (selected_vehicle) {
+                        selected_vehicle.marker.set('follow', 'no');
+                    }
                     map.unbind('center');
                 });
             }
