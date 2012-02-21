@@ -1,5 +1,7 @@
 /*global $, google, InfoBox */
 var simulation_manager = (function(){
+    var ua_is_mobile = navigator.userAgent.indexOf('iPhone') !== -1 || navigator.userAgent.indexOf('Android') !== -1;
+    
     var config = (function(){
         var params = {
             center_start: new google.maps.LatLng(47.378, 8.540),
@@ -559,152 +561,183 @@ var simulation_manager = (function(){
         };
     })();
     
-    function map_init(){
-        var mapStyles = [
-          {
-            featureType: "poi.business",
-            stylers: [
-              { visibility: "off" }
-            ]
-          },{
-            featureType: "road",
-            elementType: "labels",
-            stylers: [
-              { visibility: "off" }
-            ]
-          },{
-            featureType: "road",
-            elementType: "labels",
-            stylers: [
-              { visibility: "off" }
-            ]
-          },{
-            featureType: "road",
-            elementType: "geometry",
-            stylers: [
-              { visibility: "simplified" },
-              { lightness: 70 }
-            ]
-          },{
-            featureType: "transit.line",
-            stylers: [
-              { visibility: "off" }
-            ]
-          },{
-            featureType: "transit.station.bus",
-            stylers: [
-              { visibility: "off" }
-            ]
-          }
-        ];
+    var map_helpers = (function(){
+        var geolocation_marker = null;
         
-        var map_inited = false;
-        var map_options = {
-            zoom: config.getParam('zoom_start'),
-            center: config.getParam('center_start'),
-            mapTypeId: google.maps.MapTypeId.ROADMAP,
-            styles: mapStyles,
-            disableDefaultUI: true,
-            zoomControl: true,
-            scaleControl: true,
-            streetViewControl: true,
-            overviewMapControl: true
-        };
-
-        if (config.getUserParam('x') !== null) {
-            map_options.center = new google.maps.LatLng(parseFloat(config.getUserParam('y')), parseFloat(config.getUserParam('x')));
-            map_options.zoom = config.getParam('zoom_follow');
-            map_options.mapTypeId = google.maps.MapTypeId.SATELLITE;
-        }
-        
-        map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
-        
-        map.setOptions({
-            mapTypeControl: true,
-            mapTypeControlOptions: {
-                position: google.maps.ControlPosition.TOP_LEFT
-            }
-        });
-        
-        function map_layers_add(){
-            var edges_layer = new google.maps.FusionTablesLayer({
-                query: {
-                    select: 'geometry',
-                    from: config.getParam('ft_id_lines')
-                },
-                clickable: false,
-                map: map,
-                styles: [
-                    {
-                        polylineOptions: {
-                            strokeColor: "#FF0000",
-                            strokeWeight: 2
-                        }
-                    },{
-                        where: "type = 'tunnel'",
-                        polylineOptions: {
-                            strokeColor: "#FAAFBE",
-                            strokeWeight: 1.5
-                        }
-                    }
+        function init(){
+            var mapStyles = [
+              {
+                featureType: "poi.business",
+                stylers: [
+                  { visibility: "off" }
                 ]
-            });
+              },{
+                featureType: "road",
+                elementType: "labels",
+                stylers: [
+                  { visibility: "off" }
+                ]
+              },{
+                featureType: "road",
+                elementType: "labels",
+                stylers: [
+                  { visibility: "off" }
+                ]
+              },{
+                featureType: "road",
+                elementType: "geometry",
+                stylers: [
+                  { visibility: "simplified" },
+                  { lightness: 70 }
+                ]
+              },{
+                featureType: "transit.line",
+                stylers: [
+                  { visibility: "off" }
+                ]
+              },{
+                featureType: "transit.station.bus",
+                stylers: [
+                  { visibility: "off" }
+                ]
+              }
+            ];
             
-            var stations_layer = new google.maps.FusionTablesLayer({
-              query: {
-                select: 'geometry',
-                from: config.getParam('ft_id_stations')
-              },
-              suppressInfoWindows: true,
-              map: map
-            });
-            google.maps.event.addListener(stations_layer, 'click', function(ev){
-                var station_id = ev.row.id.value;
-                simulation_panel.displayStation(station_id);
-            });
-            
-            var layer = new google.maps.FusionTablesLayer({
-              query: {
-                select: 'geometry',
-                from: config.getParam('ft_id_mask')
-              },
-              clickable: false,
-              map: map
+            geolocation_marker = new google.maps.Marker({
+                icon: new google.maps.MarkerImage(
+                    'static/images/geolocation-bluedot.png',
+                    new google.maps.Size(17, 17),
+                    new google.maps.Point(0, 0),
+                    new google.maps.Point(8, 8)
+                ),
+                map: null,
+                position: new google.maps.LatLng(0, 0)
             });
 
-            function trigger_toggleLayerVisibility() {
-                function toggleLayerVisibility(layer, show) {
-                    if (show) {
-                        if (layer.getMap() === null) {
-                            layer.setMap(map);
+            var map_inited = false;
+            var map_options = {
+                zoom: config.getParam('zoom_start'),
+                center: config.getParam('center_start'),
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                styles: mapStyles,
+                disableDefaultUI: true,
+                zoomControl: true,
+                scaleControl: true,
+                streetViewControl: true,
+                overviewMapControl: true
+            };
+
+            if (config.getUserParam('x') !== null) {
+                map_options.center = new google.maps.LatLng(parseFloat(config.getUserParam('y')), parseFloat(config.getUserParam('x')));
+                map_options.zoom = config.getParam('zoom_follow');
+                map_options.mapTypeId = google.maps.MapTypeId.SATELLITE;
+            }
+
+            map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
+
+            map.setOptions({
+                mapTypeControl: true,
+                mapTypeControlOptions: {
+                    position: google.maps.ControlPosition.TOP_LEFT
+                }
+            });
+
+            function map_layers_add(){
+                var edges_layer = new google.maps.FusionTablesLayer({
+                    query: {
+                        select: 'geometry',
+                        from: config.getParam('ft_id_lines')
+                    },
+                    clickable: false,
+                    map: map,
+                    styles: [
+                        {
+                            polylineOptions: {
+                                strokeColor: "#FF0000",
+                                strokeWeight: 2
+                            }
+                        },{
+                            where: "type = 'tunnel'",
+                            polylineOptions: {
+                                strokeColor: "#FAAFBE",
+                                strokeWeight: 1.5
+                            }
                         }
-                    } else {
-                        if (layer.getMap() !== null) {
-                            layer.setMap(null);
+                    ]
+                });
+
+                var stations_layer = new google.maps.FusionTablesLayer({
+                  query: {
+                    select: 'geometry',
+                    from: config.getParam('ft_id_stations')
+                  },
+                  suppressInfoWindows: true,
+                  map: map
+                });
+                google.maps.event.addListener(stations_layer, 'click', function(ev){
+                    var station_id = ev.row.id.value;
+                    simulation_panel.displayStation(station_id);
+                });
+
+                var layer = new google.maps.FusionTablesLayer({
+                  query: {
+                    select: 'geometry',
+                    from: config.getParam('ft_id_mask')
+                  },
+                  clickable: false,
+                  map: map
+                });
+
+                function trigger_toggleLayerVisibility() {
+                    function toggleLayerVisibility(layer, show) {
+                        if (show) {
+                            if (layer.getMap() === null) {
+                                layer.setMap(map);
+                            }
+                        } else {
+                            if (layer.getMap() !== null) {
+                                layer.setMap(null);
+                            }
                         }
                     }
+
+                    var zoom = map.getZoom();
+                    toggleLayerVisibility(stations_layer, zoom >= 12);            
                 }
 
-                var zoom = map.getZoom();
-                toggleLayerVisibility(stations_layer, zoom >= 12);            
+                google.maps.event.addListener(map, 'idle', trigger_toggleLayerVisibility);
+                trigger_toggleLayerVisibility();
             }
 
-            google.maps.event.addListener(map, 'idle', trigger_toggleLayerVisibility);
-            trigger_toggleLayerVisibility();
+            google.maps.event.addListener(map, 'idle', function() {
+                if (map_inited === false) {
+                    // TODO - FIXME later ?
+                    // Kind of a hack, getBounds is ready only after a while since loading, so we hook in the 'idle' event
+                    map_inited = true;
+
+                    map_layers_add();
+                    listener_helpers.notify('map_init');
+                }
+            });
         }
         
-        google.maps.event.addListener(map, 'idle', function() {
-            if (map_inited === false) {
-                // TODO - FIXME later ?
-                // Kind of a hack, getBounds is ready only after a while since loading, so we hook in the 'idle' event
-                map_inited = true;
-                
-                map_layers_add();
-                listener_helpers.notify('map_init');
+        function pan_and_zoom(x, y) {
+            var p = new google.maps.LatLng(y, x);
+            map.panTo(p);
+            map.setZoom(config.getParam('zoom_station'));
+            
+            geolocation_marker.setPosition(p);
+            if (geolocation_marker.getMap() === null) {
+                geolocation_marker.setMap(map);
             }
-        });
-    }
+        }
 
+        return {
+            init: init,
+            panAndZoomTo: pan_and_zoom
+        }
+    })();
+    
     // Vehicle helpers
     // Roles:
     // - check backend for new vehicles
@@ -931,7 +964,7 @@ var simulation_manager = (function(){
                             
                             map.panTo(vehicle_position);
                             map.setZoom(config.getParam('zoom_follow'));
-                            map.setMapTypeId('satellite');
+                            map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
 
                             map.bindTo('center', that.marker, 'position');
                         }
@@ -1014,22 +1047,41 @@ var simulation_manager = (function(){
     function ui_init() {
         var view_mode = config.getUserParam('view_mode');
         
-        // Keep the UI clean (no additional DIVs) for IFRAME, mobile
-        switch (view_mode) {
-            case 'iframe':
-                break;
-            default:
-                $('#panel').removeClass('hidden');
-                break;
+        var panel_display = (ua_is_mobile === false) && (view_mode !== 'iframe');
+        if (panel_display) {
+            $('#panel').removeClass('hidden');
         }
+    }
+    
+    function geolocation_init() {
+        function location_get(position) {
+            var x = position.coords.longitude;
+            var y = position.coords.latitude;
+            
+            listener_helpers.subscribe('map_init', function(){
+                map_helpers.panAndZoomTo(x, y);
+            });
+        }
+        function location_error(error) {
+            var errorMessage = [
+                'Geolocation: we are not quite sure what happened.',
+                'Sorry. Permission to find your location has been denied.',
+                'Sorry. Your position could not be determined.',
+                'Sorry. Geolocation requst timed out.'
+            ];
+            alert(errorMessage[ error.code ]);
+        }
+        
+        navigator.geolocation.getCurrentPosition(location_get, location_error);
     }
     
     return {
         subscribe: listener_helpers.subscribe,
         init: function(){
             ui_init();
+            geolocation_init();
             timer.init(config.getUserParam('hms'));
-            map_init();
+            map_helpers.init();
             simulation_panel.init();
         },
         getMap: function(){
