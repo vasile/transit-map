@@ -1079,7 +1079,9 @@ var simulation_manager = (function(){
         subscribe: listener_helpers.subscribe,
         init: function(){
             ui_init();
-            geolocation_init();
+            if (config.getUserParam('x') === null) {
+                geolocation_init();
+            }
             timer.init(config.getUserParam('hms'));
             map_helpers.init();
             simulation_panel.init();
