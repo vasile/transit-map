@@ -915,6 +915,7 @@ var simulation_manager = (function(){
                         var station_b = that.stations[i+1];
 
                         var vehicle_position = null;
+                        var route_percent = 0;
 
                         if (hms > that.depS[i]) {
                             // Vehicle is in motion between two stations
@@ -925,25 +926,19 @@ var simulation_manager = (function(){
                                 that.marker.set('status', 'Heading to ' + stationsPool.get(station_b) + '(' + time_helpers.s2hm(that.arrS[i]) + ') with ' + that.marker.get('speed') + ' km/h');
                             }
 
-                            var route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
-
-                            vehicle_position = linesPool.positionGet(that.edges[i+1], route_percent);
-                            if (vehicle_position === null) {
-                                console.log('Couldn\'t get the position of ' + that.id + ' between stations: ' + [station_a, station_b]);
-                                that.marker.setMap(null);
-                                break;
-                            }
+                            route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
                         } else {
                             // Vehicle is in a station
                             vehicle_found = true;
                             that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + time_helpers.s2hm(that.depS[i]));
                             that.marker.set('speed', 0);
-
-                            vehicle_position = stationsPool.location_get(station_a);
-                            if (vehicle_position === null) {
-                                console.log('Vehicle ' + that.name + ' is in a station without coordinates: ' + stationsPool.get(station_a) + '(' + station_a + ')');
-                                break;
-                            }
+                        }
+                        
+                        vehicle_position = linesPool.positionGet(that.edges[i+1], route_percent);
+                        if (vehicle_position === null) {
+                            console.log('Couldn\'t get the position of ' + that.id + ' between stations: ' + [station_a, station_b]);
+                            that.marker.setMap(null);
+                            break;
                         }
                         
                         if (that.marker.get('follow') === 'yes-init') {
