@@ -721,12 +721,8 @@ var simulation_manager = (function(){
             });
         }
         
-        function pan_and_zoom(x, y) {
-            var p = new google.maps.LatLng(y, x);
-            map.panTo(p);
-            map.setZoom(config.getParam('zoom_station'));
-            
-            geolocation_marker.setPosition(p);
+        function geolocation_update(x, y) {
+            geolocation_marker.setPosition(new google.maps.LatLng(y, x));
             if (geolocation_marker.getMap() === null) {
                 geolocation_marker.setMap(map);
             }
@@ -734,7 +730,7 @@ var simulation_manager = (function(){
 
         return {
             init: init,
-            panAndZoomTo: pan_and_zoom
+            updateGeolocation: geolocation_update
         }
     })();
     
@@ -1059,7 +1055,7 @@ var simulation_manager = (function(){
             var y = position.coords.latitude;
             
             listener_helpers.subscribe('map_init', function(){
-                map_helpers.panAndZoomTo(x, y);
+                map_helpers.updateGeolocation(x, y);
             });
         }
         function location_error(error) {
@@ -1079,9 +1075,7 @@ var simulation_manager = (function(){
         subscribe: listener_helpers.subscribe,
         init: function(){
             ui_init();
-            if (config.getUserParam('x') === null) {
-                geolocation_init();
-            }
+            geolocation_init();
             timer.init(config.getUserParam('hms'));
             map_helpers.init();
             simulation_panel.init();
