@@ -116,13 +116,12 @@ var simulation_manager = (function(){
             strokeColor: "#FDD017",
             strokeOpacity: 0.8,
             strokeWeight: 5,
-            map: null,
-            ids: null
+            map: null
         });
         
         // TODO - that can be a nice feature request for google.maps.geometry lib
-        function positionOnRouteAtPercentGet(a, b, perc) {
-            var route = routes[a + '_' + b];
+        function positionOnRouteAtPercentGet(ab_edges, perc) {
+            var route = routes[ab_edges];
             
             var dC = 0;
             var dAC = route.length*perc;
@@ -140,42 +139,37 @@ var simulation_manager = (function(){
             return null;
         }
         
-        function routeAdd(a, b, edges) {
-            if (typeof routes[a + '_' + b] !== 'undefined') {
+        function routeAdd(ab_edges) {
+            if (typeof routes[ab_edges] !== 'undefined') {
                 return;
             }
             
+            var edges = ab_edges.split(',');
             var routePoints = [];
             $.each(edges, function(k, edgeID) {
                 var points = network_lines[Math.abs(edgeID)];
                 if (edgeID < 0) {
-                    // slice() to the resue, otherwise reverse will alter network_lines
+                    // slice() to the rescue, otherwise reverse will alter network_lines
                     points = points.slice().reverse();
                 }
-                // TODO - use some MVCArray magic to remove the last element of edges when concatenating ?
                 routePoints = routePoints.concat(points);
             });
             
-            var routeLength = google.maps.geometry.spherical.computeLength(routePoints).toFixed(3);
-            
-            routes[a + '_' + b] = {
+            routes[ab_edges] = {
                 'points': routePoints,
-                'length': routeLength
+                'length': google.maps.geometry.spherical.computeLength(routePoints).toFixed(3)
             };
         }
         
-        function lengthGet(a, b) {
-            return routes[a + '_' + b].length;
+        function lengthGet(ab_edges) {
+            return routes[ab_edges].length;
         }
         
-        function routeHighlight(station_ids) {
-            if (route_highlight.get('ids') === station_ids.join(',')) { return; }
-            route_highlight.set('ids', station_ids.join(','));
-            
+        function routeHighlight(vehicle_edges) {
             var points = [];
-            $.each(station_ids, function(index, id){
-                if (index === 0) { return; }
-                points = points.concat(routes[station_ids[index-1] + '_' + id].points);
+            $.each(vehicle_edges, function(k, ab_edges){
+                if (k === 0) { return; }
+                points = points.concat(routes[ab_edges].points);
             });
             
             route_highlight.setPath(points);
@@ -184,7 +178,6 @@ var simulation_manager = (function(){
         
         function routeHighlightRemove() {
             route_highlight.setMap(null);
-            route_highlight.set('ids', null);
         }
         
         function loadEncodedEdges(edges) {
@@ -363,7 +356,7 @@ var simulation_manager = (function(){
             function init() {
                 toggler = new Toggler('#route_show_trigger');
                 toggler.subscribe('enable', function(){
-                    linesPool.routeHighlight(selected_vehicle.stations);
+                    linesPool.routeHighlight(selected_vehicle.edges);
                 });
                 toggler.subscribe('disable', function(){
                     linesPool.routeHighlightRemove();
@@ -852,13 +845,14 @@ var simulation_manager = (function(){
             this.id                 = params.id;
             this.name               = params.name;
             this.stations           = params.sts;
+            this.edges              = params.edges;
             this.depS               = params.deps;
             this.arrS               = params.arrs;
             this.has_multiple_days  = has_multiple_days;
             
-            $.each(params.edges, function(index, edges) {
-                if (index === 0) { return; }
-                linesPool.routeAdd(params.sts[index-1], params.sts[index], edges.split(','));
+            $.each(params.edges, function(k, edges) {
+                if (k === 0) { return; }
+                linesPool.routeAdd(edges);
             });
 
             var marker = new google.maps.Marker({
@@ -926,14 +920,14 @@ var simulation_manager = (function(){
                             // Vehicle is in motion between two stations
                             vehicle_found = true;
                             if (that.marker.get('speed') === 0) {
-                                var speed = linesPool.lengthGet(station_a, station_b) * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
+                                var speed = linesPool.lengthGet(that.edges[i+1]) * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
                                 that.marker.set('speed', parseInt(speed, 10));
                                 that.marker.set('status', 'Heading to ' + stationsPool.get(station_b) + '(' + time_helpers.s2hm(that.arrS[i]) + ') with ' + that.marker.get('speed') + ' km/h');
                             }
 
                             var route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
 
-                            vehicle_position = linesPool.positionGet(station_a, station_b, route_percent);
+                            vehicle_position = linesPool.positionGet(that.edges[i+1], route_percent);
                             if (vehicle_position === null) {
                                 console.log('Couldn\'t get the position of ' + that.id + ' between stations: ' + [station_a, station_b]);
                                 that.marker.setMap(null);
