@@ -1,5 +1,7 @@
 /*global $, google, InfoBox */
 var simulation_manager = (function(){
+    var ua_is_mobile = navigator.userAgent.indexOf('iPhone') !== -1 || navigator.userAgent.indexOf('Android') !== -1;
+    
     var config = (function(){
         var params = {
             center_start: new google.maps.LatLng(47.378, 8.540),
@@ -118,13 +120,12 @@ var simulation_manager = (function(){
             strokeColor: "#FDD017",
             strokeOpacity: 0.8,
             strokeWeight: 5,
-            map: null,
-            ids: null
+            map: null
         });
         
         // TODO - that can be a nice feature request for google.maps.geometry lib
-        function positionOnRouteAtPercentGet(a, b, perc) {
-            var route = routes[a + '_' + b];
+        function positionOnRouteAtPercentGet(ab_edges, perc) {
+            var route = routes[ab_edges];
             
             var dC = 0;
             var dAC = route.length*perc;
@@ -142,42 +143,37 @@ var simulation_manager = (function(){
             return null;
         }
         
-        function routeAdd(a, b, edges) {
-            if (typeof routes[a + '_' + b] !== 'undefined') {
+        function routeAdd(ab_edges) {
+            if (typeof routes[ab_edges] !== 'undefined') {
                 return;
             }
             
+            var edges = ab_edges.split(',');
             var routePoints = [];
             $.each(edges, function(k, edgeID) {
                 var points = network_lines[Math.abs(edgeID)];
                 if (edgeID < 0) {
-                    // slice() to the resue, otherwise reverse will alter network_lines
+                    // slice() to the rescue, otherwise reverse will alter network_lines
                     points = points.slice().reverse();
                 }
-                // TODO - use some MVCArray magic to remove the last element of edges when concatenating ?
                 routePoints = routePoints.concat(points);
             });
             
-            var routeLength = google.maps.geometry.spherical.computeLength(routePoints).toFixed(3);
-            
-            routes[a + '_' + b] = {
+            routes[ab_edges] = {
                 'points': routePoints,
-                'length': routeLength
+                'length': google.maps.geometry.spherical.computeLength(routePoints).toFixed(3)
             };
         }
         
-        function lengthGet(a, b) {
-            return routes[a + '_' + b].length;
+        function lengthGet(ab_edges) {
+            return routes[ab_edges].length;
         }
         
-        function routeHighlight(station_ids) {
-            if (route_highlight.get('ids') === station_ids.join(',')) { return; }
-            route_highlight.set('ids', station_ids.join(','));
-            
+        function routeHighlight(vehicle) {
             var points = [];
-            $.each(station_ids, function(index, id){
-                if (index === 0) { return; }
-                points = points.concat(routes[station_ids[index-1] + '_' + id].points);
+            $.each(vehicle.edges, function(k, ab_edges){
+                if (k === 0) { return; }
+                points = points.concat(routes[ab_edges].points);
             });
             
             route_highlight.setPath(points);
@@ -186,7 +182,6 @@ var simulation_manager = (function(){
         
         function routeHighlightRemove() {
             route_highlight.setMap(null);
-            route_highlight.set('ids', null);
         }
         
         function loadEncodedEdges(edges) {
@@ -336,6 +331,9 @@ var simulation_manager = (function(){
                     selected_vehicle.marker.set('follow', 'yes-init');
                 });
                 toggler.subscribe('disable', function(){
+                    if (selected_vehicle) {
+                        selected_vehicle.marker.set('follow', 'no');
+                    }
                     map.unbind('center');
                 });
             }
@@ -362,7 +360,7 @@ var simulation_manager = (function(){
             function init() {
                 toggler = new Toggler('#route_show_trigger');
                 toggler.subscribe('enable', function(){
-                    linesPool.routeHighlight(selected_vehicle.stations);
+                    linesPool.routeHighlight(selected_vehicle);
                 });
                 toggler.subscribe('disable', function(){
                     linesPool.routeHighlightRemove();
@@ -385,12 +383,19 @@ var simulation_manager = (function(){
         
         function vehicle_info_display(vehicle) {
             if ((selected_vehicle !== null) && (selected_vehicle.id === vehicle.id)) {
+                if (selected_vehicle.marker.get('follow') === 'no') {
+                    vehicle_follow.start(selected_vehicle);
+                }
+                if (selected_vehicle.marker.get('follow') === 'yes') {
+                    vehicle_follow.stop();
+                }
                 return;
             }
             selected_vehicle = vehicle;
             
             vehicle_follow.stop();
             station_info_hide();
+            vehicle_route.hide();
 
             $('.vehicle_name', $('#vehicle_info')).text(vehicle.name);
             
@@ -492,9 +497,7 @@ var simulation_manager = (function(){
                 if (station_location === null) { return; }
                 
                 map.setCenter(station_location);
-                if (map.getZoom() < config.getParam('zoom_station')) {
-                    map.setZoom(config.getParam('zoom_station'));
-                }
+                map.setZoom(config.getParam('zoom_station'));
                 
                 vehicle_info_hide();
                 station_info_display(station_id);
@@ -555,152 +558,176 @@ var simulation_manager = (function(){
         };
     })();
     
-    function map_init(){
-        var mapStyles = [
-          {
-            featureType: "poi.business",
-            stylers: [
-              { visibility: "off" }
-            ]
-          },{
-            featureType: "road",
-            elementType: "labels",
-            stylers: [
-              { visibility: "off" }
-            ]
-          },{
-            featureType: "road",
-            elementType: "labels",
-            stylers: [
-              { visibility: "off" }
-            ]
-          },{
-            featureType: "road",
-            elementType: "geometry",
-            stylers: [
-              { visibility: "simplified" },
-              { lightness: 70 }
-            ]
-          },{
-            featureType: "transit.line",
-            stylers: [
-              { visibility: "off" }
-            ]
-          },{
-            featureType: "transit.station.bus",
-            stylers: [
-              { visibility: "off" }
-            ]
-          }
-        ];
+    var map_helpers = (function(){
+        var geolocation_marker = null;
         
-        var map_inited = false;
-        var map_options = {
-            zoom: config.getParam('zoom_start'),
-            center: config.getParam('center_start'),
-            mapTypeId: google.maps.MapTypeId.ROADMAP,
-            styles: mapStyles,
-            disableDefaultUI: true,
-            zoomControl: true,
-            scaleControl: true,
-            streetViewControl: true,
-            overviewMapControl: true
-        };
-
-        if (config.getUserParam('x') !== null) {
-            map_options.center = new google.maps.LatLng(parseFloat(config.getUserParam('y')), parseFloat(config.getUserParam('x')));
-            map_options.zoom = config.getParam('zoom_follow');
-            map_options.mapTypeId = google.maps.MapTypeId.SATELLITE;
-        }
-        
-        map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
-        
-        map.setOptions({
-            mapTypeControl: true,
-            mapTypeControlOptions: {
-                position: google.maps.ControlPosition.TOP_LEFT
-            }
-        });
-        
-        function map_layers_add(){
-            var edges_layer = new google.maps.FusionTablesLayer({
-                query: {
-                    select: 'geometry',
-                    from: config.getParam('ft_id_lines')
-                },
-                clickable: false,
-                map: map,
-                styles: [
-                    {
-                        polylineOptions: {
-                            strokeColor: "#FF0000",
-                            strokeWeight: 2
-                        }
-                    },{
-                        where: "type = 'tunnel'",
-                        polylineOptions: {
-                            strokeColor: "#FAAFBE",
-                            strokeWeight: 1.5
-                        }
-                    }
+        function init(){
+            var mapStyles = [
+              {
+                featureType: "poi.business",
+                stylers: [
+                  { visibility: "off" }
                 ]
-            });
+              },{
+                featureType: "road",
+                elementType: "labels",
+                stylers: [
+                  { visibility: "off" }
+                ]
+              },{
+                featureType: "road",
+                elementType: "labels",
+                stylers: [
+                  { visibility: "off" }
+                ]
+              },{
+                featureType: "road",
+                elementType: "geometry",
+                stylers: [
+                  { visibility: "simplified" },
+                  { lightness: 70 }
+                ]
+              },{
+                featureType: "transit.line",
+                stylers: [
+                  { visibility: "off" }
+                ]
+              },{
+                featureType: "transit.station.bus",
+                stylers: [
+                  { visibility: "off" }
+                ]
+              }
+            ];
             
-            var stations_layer = new google.maps.FusionTablesLayer({
-              query: {
-                select: 'geometry',
-                from: config.getParam('ft_id_stations')
-              },
-              suppressInfoWindows: true,
-              map: map
-            });
-            google.maps.event.addListener(stations_layer, 'click', function(ev){
-                var station_id = ev.row.id.value;
-                simulation_panel.displayStation(station_id);
-            });
-            
-            var layer = new google.maps.FusionTablesLayer({
-              query: {
-                select: 'geometry',
-                from: config.getParam('ft_id_mask')
-              },
-              clickable: false,
-              map: map
+            geolocation_marker = new google.maps.Marker({
+                icon: new google.maps.MarkerImage(
+                    'static/images/geolocation-bluedot.png',
+                    new google.maps.Size(17, 17),
+                    new google.maps.Point(0, 0),
+                    new google.maps.Point(8, 8)
+                ),
+                map: null,
+                position: new google.maps.LatLng(0, 0)
             });
 
-            function trigger_toggleLayerVisibility() {
-                function toggleLayerVisibility(layer, show) {
-                    if (show) {
-                        if (layer.getMap() === null) {
-                            layer.setMap(map);
+            var map_inited = false;
+            var map_options = {
+                zoom: config.getParam('zoom_start'),
+                center: config.getParam('center_start'),
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                styles: mapStyles,
+                disableDefaultUI: true,
+                zoomControl: true,
+                scaleControl: true,
+                streetViewControl: true,
+                overviewMapControl: true,
+                mapTypeControl: true,
+                mapTypeControlOptions: {
+                    position: google.maps.ControlPosition.TOP_LEFT
+                }
+            };
+
+            if (config.getUserParam('x') !== null) {
+                map_options.center = new google.maps.LatLng(parseFloat(config.getUserParam('y')), parseFloat(config.getUserParam('x')));
+                map_options.zoom = config.getParam('zoom_follow');
+                map_options.mapTypeId = google.maps.MapTypeId.SATELLITE;
+            }
+
+            map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
+
+            function map_layers_add(){
+                var edges_layer = new google.maps.FusionTablesLayer({
+                    query: {
+                        select: 'geometry',
+                        from: config.getParam('ft_id_lines')
+                    },
+                    clickable: false,
+                    map: map,
+                    styles: [
+                        {
+                            polylineOptions: {
+                                strokeColor: "#FF0000",
+                                strokeWeight: 2
+                            }
+                        },{
+                            where: "type = 'tunnel'",
+                            polylineOptions: {
+                                strokeColor: "#FAAFBE",
+                                strokeWeight: 1.5
+                            }
                         }
-                    } else {
-                        if (layer.getMap() !== null) {
-                            layer.setMap(null);
+                    ]
+                });
+
+                var stations_layer = new google.maps.FusionTablesLayer({
+                  query: {
+                    select: 'geometry',
+                    from: config.getParam('ft_id_stations')
+                  },
+                  suppressInfoWindows: true,
+                  map: map
+                });
+                google.maps.event.addListener(stations_layer, 'click', function(ev){
+                    var station_id = ev.row.id.value;
+                    simulation_panel.displayStation(station_id);
+                });
+
+                var layer = new google.maps.FusionTablesLayer({
+                  query: {
+                    select: 'geometry',
+                    from: config.getParam('ft_id_mask')
+                  },
+                  clickable: false,
+                  map: map
+                });
+
+                function trigger_toggleLayerVisibility() {
+                    function toggleLayerVisibility(layer, show) {
+                        if (show) {
+                            if (layer.getMap() === null) {
+                                layer.setMap(map);
+                            }
+                        } else {
+                            if (layer.getMap() !== null) {
+                                layer.setMap(null);
+                            }
                         }
                     }
+
+                    var zoom = map.getZoom();
+                    toggleLayerVisibility(stations_layer, zoom >= 12);            
                 }
 
-                var zoom = map.getZoom();
-                toggleLayerVisibility(stations_layer, zoom >= 12);            
+                google.maps.event.addListener(map, 'idle', trigger_toggleLayerVisibility);
+                trigger_toggleLayerVisibility();
             }
 
-            google.maps.event.addListener(map, 'idle', trigger_toggleLayerVisibility);
-            trigger_toggleLayerVisibility();
+            google.maps.event.addListener(map, 'idle', function() {
+                if (map_inited === false) {
+                    // TODO - FIXME later ?
+                    // Kind of a hack, getBounds is ready only after a while since loading, so we hook in the 'idle' event
+                    map_inited = true;
+
+                    map_layers_add();
+                    listener_helpers.notify('map_init');
+                }
+            });
         }
         
-        google.maps.event.addListener(map, 'idle', function() {
-            if (map_inited === false) {
-                // TODO - FIXME later ?
-                // Kind of a hack, getBounds is ready only after a while since loading, so we hook in the 'idle' event
-                map_inited = true;
-                
-                map_layers_add();
-                listener_helpers.notify('map_init');
+        function geolocation_update(x, y) {
+            geolocation_marker.setPosition(new google.maps.LatLng(y, x));
+            if (geolocation_marker.getMap() === null) {
+                geolocation_marker.setMap(map);
             }
-        });
-    }
+        }
 
+        return {
+            init: init,
+            updateGeolocation: geolocation_update
+        };
+    })();
+    
     // Vehicle helpers
     // Roles:
     // - check backend for new vehicles
@@ -819,13 +846,14 @@ var simulation_manager = (function(){
             this.id                 = params.id;
             this.name               = params.name;
             this.stations           = params.sts;
+            this.edges              = params.edges;
             this.depS               = params.deps;
             this.arrS               = params.arrs;
             this.has_multiple_days  = has_multiple_days;
             
-            $.each(params.edges, function(index, edges) {
-                if (index === 0) { return; }
-                linesPool.routeAdd(params.sts[index-1], params.sts[index], edges.split(','));
+            $.each(params.edges, function(k, edges) {
+                if (k === 0) { return; }
+                linesPool.routeAdd(edges);
             });
 
             var marker = new google.maps.Marker({
@@ -888,35 +916,30 @@ var simulation_manager = (function(){
                         var station_b = that.stations[i+1];
 
                         var vehicle_position = null;
+                        var route_percent = 0;
 
                         if (hms > that.depS[i]) {
                             // Vehicle is in motion between two stations
                             vehicle_found = true;
                             if (that.marker.get('speed') === 0) {
-                                var speed = linesPool.lengthGet(station_a, station_b) * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
+                                var speed = linesPool.lengthGet(that.edges[i+1]) * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
                                 that.marker.set('speed', parseInt(speed, 10));
                                 that.marker.set('status', 'Heading to ' + stationsPool.get(station_b) + '(' + time_helpers.s2hm(that.arrS[i]) + ') with ' + that.marker.get('speed') + ' km/h');
                             }
 
-                            var route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
-
-                            vehicle_position = linesPool.positionGet(station_a, station_b, route_percent);
-                            if (vehicle_position === null) {
-                                console.log('Couldn\'t get the position of ' + that.id + ' between stations: ' + [station_a, station_b]);
-                                that.marker.setMap(null);
-                                break;
-                            }
+                            route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
                         } else {
                             // Vehicle is in a station
                             vehicle_found = true;
                             that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + time_helpers.s2hm(that.depS[i]));
                             that.marker.set('speed', 0);
-
-                            vehicle_position = stationsPool.location_get(station_a);
-                            if (vehicle_position === null) {
-                                // Vehicle is in a station without coordinates (like Paris or Milano)
-                                break;
-                            }
+                        }
+                        
+                        vehicle_position = linesPool.positionGet(that.edges[i+1], route_percent);
+                        if (vehicle_position === null) {
+                            console.log('Couldn\'t get the position of ' + that.id + ' between stations: ' + [station_a, station_b]);
+                            that.marker.setMap(null);
+                            break;
                         }
                         
                         if (that.marker.get('follow') === 'yes-init') {
@@ -927,7 +950,7 @@ var simulation_manager = (function(){
                             
                             map.panTo(vehicle_position);
                             map.setZoom(config.getParam('zoom_follow'));
-                            map.setMapTypeId('satellite');
+                            map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
 
                             map.bindTo('center', that.marker, 'position');
                         }
@@ -1007,13 +1030,45 @@ var simulation_manager = (function(){
         });
     });
     
+    function ui_init() {
+        var view_mode = config.getUserParam('view_mode');
+        
+        var panel_display = (ua_is_mobile === false) && (view_mode !== 'iframe');
+        if (panel_display) {
+            $('#panel').removeClass('hidden');
+        }
+    }
+    
+    function geolocation_init() {
+        function location_get(position) {
+            var x = position.coords.longitude;
+            var y = position.coords.latitude;
+            
+            listener_helpers.subscribe('map_init', function(){
+                map_helpers.updateGeolocation(x, y);
+            });
+        }
+        function location_error(error) {
+            var errorMessage = [
+                'Geolocation: we are not quite sure what happened.',
+                'Sorry. Permission to find your location has been denied.',
+                'Sorry. Your position could not be determined.',
+                'Sorry. Geolocation requst timed out.'
+            ];
+            alert(errorMessage[ error.code ]);
+        }
+        
+        navigator.geolocation.getCurrentPosition(location_get, location_error);
+    }
+    
     return {
-        subscribe: listener_helpers.subscribe,
         init: function(){
+            ui_init();
+            geolocation_init();
             // WARNING: in production change '09:00:00' with:
             //      timer.init(config.getUserParam('hms'));
             timer.init('09:00:00');
-            map_init();
+            map_helpers.init();
             simulation_panel.init();
         },
         getMap: function(){
