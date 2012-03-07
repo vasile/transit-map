@@ -722,7 +722,7 @@ var simulation_manager = (function(){
         return {
             init: init,
             updateGeolocation: geolocation_update
-        }
+        };
     })();
     
     // Vehicle helpers
