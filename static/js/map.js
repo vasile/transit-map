@@ -165,9 +165,9 @@ var simulation_manager = (function(){
             return routes[ab_edges].length;
         }
         
-        function routeHighlight(vehicle_edges) {
+        function routeHighlight(vehicle) {
             var points = [];
-            $.each(vehicle_edges, function(k, ab_edges){
+            $.each(vehicle.edges, function(k, ab_edges){
                 if (k === 0) { return; }
                 points = points.concat(routes[ab_edges].points);
             });
@@ -356,7 +356,7 @@ var simulation_manager = (function(){
             function init() {
                 toggler = new Toggler('#route_show_trigger');
                 toggler.subscribe('enable', function(){
-                    linesPool.routeHighlight(selected_vehicle.edges);
+                    linesPool.routeHighlight(selected_vehicle);
                 });
                 toggler.subscribe('disable', function(){
                     linesPool.routeHighlightRemove();
@@ -391,6 +391,7 @@ var simulation_manager = (function(){
             
             vehicle_follow.stop();
             station_info_hide();
+            vehicle_route.hide();
 
             $('.vehicle_name', $('#vehicle_info')).text(vehicle.name);
             
@@ -617,7 +618,11 @@ var simulation_manager = (function(){
                 zoomControl: true,
                 scaleControl: true,
                 streetViewControl: true,
-                overviewMapControl: true
+                overviewMapControl: true,
+                mapTypeControl: true,
+                mapTypeControlOptions: {
+                    position: google.maps.ControlPosition.TOP_LEFT
+                }
             };
 
             if (config.getUserParam('x') !== null) {
@@ -627,13 +632,6 @@ var simulation_manager = (function(){
             }
 
             map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
-
-            map.setOptions({
-                mapTypeControl: true,
-                mapTypeControlOptions: {
-                    position: google.maps.ControlPosition.TOP_LEFT
-                }
-            });
 
             function map_layers_add(){
                 var edges_layer = new google.maps.FusionTablesLayer({
@@ -1061,7 +1059,6 @@ var simulation_manager = (function(){
     }
     
     return {
-        subscribe: listener_helpers.subscribe,
         init: function(){
             ui_init();
             geolocation_init();
