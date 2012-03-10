@@ -13,8 +13,8 @@ var simulation_manager = (function(){
             ft_id_lines: '1497331',
             ft_id_stations: '1497361',
             json_paths: {
-                edges_geojson: 'static/geojson/edges-sbb.json',
-                stations_geojson: 'static/geojson/stations-sbb.json',
+                edges: 'static/geojson/edges-sbb.json',
+                stations: 'static/geojson/stations-sbb.json',
                 vehicles: 'feed/vehicles/sbb/[hhmm]',
                 station_vehicles: 'feed/station_vehicles/sbb/[station_id]/[hhmm]'
             }
@@ -1017,13 +1017,13 @@ var simulation_manager = (function(){
     listener_helpers.subscribe('map_init', function(){
         // LOAD network lines 
         $.ajax({
-            url: config.getParam('json_paths').edges_geojson,
+            url: config.getParam('json_paths').edges,
             dataType: 'json',
             success: function(geojson) {
                 linesPool.loadGeoJSONEdges(geojson.features);
                 // network lines loaded => LOAD stations
                 $.ajax({
-                    url: config.getParam('json_paths').stations_geojson,
+                    url: config.getParam('json_paths').stations,
                     dataType: 'json',
                     success: function(geojson) {
                         $.each(geojson.features, function(index, feature) {
