@@ -69,15 +69,15 @@ Config: [static/js/map.js - simulation_manager > config > params](https://github
     
   	Station description:
         
-      "type":"Feature",
-      "properties": {
-          "station_id": 8503000,
-          "name": "Zürich HB"
-      },
-      "geometry": {
-          "type": "Point",
-          "coordinates": [ 8.53947,47.378777 ]
-      }
+        "type":"Feature",
+        "properties": {
+            "station_id": 8503000,
+            "name": "Zürich HB"
+        },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [ 8.53947,47.378777 ]
+        }
 
     * *properties.station_id:* station unique ID
     * *properties.name:* station name
