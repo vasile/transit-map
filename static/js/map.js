@@ -13,8 +13,8 @@ var simulation_manager = (function(){
             ft_id_lines: '1497331',
             ft_id_stations: '1497361',
             json_paths: {
-                edges: 'static/js/edges_encoded-sbb.js',
-                stations: 'api/stations.json',
+                edges: 'static/geojson/edges-sbb.json',
+                stations: 'static/geojson/stations-sbb.json',
                 // WARNING: in production replace 0900 with [hhmm]
                 //      vehicles: 'api/vehicles/[hhmm]'
                 vehicles: 'api/vehicles/0900.json',
@@ -190,13 +190,26 @@ var simulation_manager = (function(){
             });
         }
         
+        function loadGeoJSONEdges(features) {
+            $.each(features, function(index, feature) {
+                var edge_coords = [];
+                $.each(feature.geometry.coordinates, function(i2, feature_coord){
+                    edge_coords.push(new google.maps.LatLng(feature_coord[1], feature_coord[0]));
+                });
+                
+                var edge_id = feature.properties.edge_id;
+                network_lines[edge_id] = edge_coords;
+            });
+        }
+        
         return {
             positionGet: positionOnRouteAtPercentGet,
             routeAdd: routeAdd,
             lengthGet: lengthGet,
             routeHighlight: routeHighlight,
             routeHighlightRemove: routeHighlightRemove,
-            loadEncodedEdges: loadEncodedEdges
+            loadEncodedEdges: loadEncodedEdges,
+            loadGeoJSONEdges: loadGeoJSONEdges
         };
     })();
     
@@ -1009,16 +1022,20 @@ var simulation_manager = (function(){
         $.ajax({
             url: config.getParam('json_paths').edges,
             dataType: 'json',
-            success: function(edges) {
-                linesPool.loadEncodedEdges(edges);
-                
+            success: function(geojson) {
+                linesPool.loadGeoJSONEdges(geojson.features);
                 // network lines loaded => LOAD stations
                 $.ajax({
                     url: config.getParam('json_paths').stations,
                     dataType: 'json',
-                    success: function(stations_data) {
-                        $.each(stations_data, function(index, station) {
-                            stationsPool.add(parseInt(station.id, 10), station.name, parseFloat(station.x), parseFloat(station.y));
+                    success: function(geojson) {
+                        $.each(geojson.features, function(index, feature) {
+                            stationsPool.add(
+                                parseInt(feature.properties.station_id, 10), 
+                                feature.properties.name, 
+                                parseFloat(feature.geometry.coordinates[0]), 
+                                parseFloat(feature.geometry.coordinates[1])
+                            );
                         });
 
                         // Stations loaded => LOAD vehicles
