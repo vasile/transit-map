@@ -147,10 +147,10 @@ var simulation_manager = (function(){
             var edges = ab_edges.split(',');
             var routePoints = [];
             $.each(edges, function(k, edgeID) {
-                var points = network_lines[Math.abs(edgeID)];
-                if (edgeID < 0) {
-                    // slice() to the rescue, otherwise reverse will alter network_lines
-                    points = points.slice().reverse();
+                if (edgeID.substr(0, 1) === '-') {
+                    var points = network_lines[edgeID.substr(1)].slice().reverse();
+                } else {
+                    var points = network_lines[edgeID];
                 }
                 routePoints = routePoints.concat(points);
             });
