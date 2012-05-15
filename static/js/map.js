@@ -493,7 +493,6 @@ var simulation_manager = (function(){
             
             $('#station_departures tbody tr a').live('click', function(){
                 var vehicle_id = $(this).attr('data-vehicle-id');
-
                 var vehicle = simulation_vehicles[vehicle_id];
                 simulation_panel.displayVehicle(vehicle);
                 simulation_panel.followVehicle(vehicle);
@@ -1028,7 +1027,7 @@ var simulation_manager = (function(){
                     success: function(geojson) {
                         $.each(geojson.features, function(index, feature) {
                             stationsPool.add(
-                                parseInt(feature.properties.station_id, 10), 
+                                feature.properties.station_id, 
                                 feature.properties.name, 
                                 parseFloat(feature.geometry.coordinates[0]), 
                                 parseFloat(feature.geometry.coordinates[1])
