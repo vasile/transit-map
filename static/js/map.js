@@ -1031,7 +1031,7 @@ var simulation_manager = (function(){
                     success: function(geojson) {
                         $.each(geojson.features, function(index, feature) {
                             stationsPool.add(
-                                parseInt(feature.properties.station_id, 10), 
+                                feature.properties.station_id, 
                                 feature.properties.name, 
                                 parseFloat(feature.geometry.coordinates[0]), 
                                 parseFloat(feature.geometry.coordinates[1])
