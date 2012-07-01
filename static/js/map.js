@@ -123,7 +123,7 @@ var simulation_manager = (function(){
                     strokeColor: 'black',
                     strokeOpacity: 1.0,          
                 },
-                repeat: '50px'
+                repeat: '40px'
             }],
             timer: null
         });
@@ -187,14 +187,14 @@ var simulation_manager = (function(){
 
             var icon_offset = 0;
             route_highlight.set('timer', setInterval(function(){
-                if (icon_offset === 99) {
+                if (icon_offset > 39) {
                     icon_offset = 0;
                 } else {
-                    icon_offset += 10;
+                    icon_offset += 2;
                 }
 
                 var icons = route_highlight.get('icons');
-                icons[0].offset = icon_offset + '%';
+                icons[0].offset = icon_offset + 'px';
                 route_highlight.set('icons', icons);
             }, 20));
         }
