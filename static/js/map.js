@@ -113,11 +113,21 @@ var simulation_manager = (function(){
         var routes = {};
         var route_highlight = new google.maps.Polyline({
             path: [],
-            strokeColor: "#FDD017",
+            strokeColor: "white",
             strokeOpacity: 0.8,
-            strokeWeight: 5,
-            map: null
+            strokeWeight: 3,
+            map: null,
+            icons: [{
+                icon: {
+                    path: 'M 0,-2 0,2',
+                    strokeColor: 'black',
+                    strokeOpacity: 1.0,          
+                },
+                repeat: '50px'
+            }],
+            timer: null
         });
+
         
         // TODO - that can be a nice feature request for google.maps.geometry lib
         function positionOnRouteAtPercentGet(ab_edges, perc) {
@@ -174,10 +184,24 @@ var simulation_manager = (function(){
             
             route_highlight.setPath(points);
             route_highlight.setMap(map);
+
+            var icon_offset = 0;
+            route_highlight.set('timer', setInterval(function(){
+                if (icon_offset === 99) {
+                    icon_offset = 0;
+                } else {
+                    icon_offset += 10;
+                }
+
+                var icons = route_highlight.get('icons');
+                icons[0].offset = icon_offset + '%';
+                route_highlight.set('icons', icons);
+            }, 20));
         }
         
         function routeHighlightRemove() {
             route_highlight.setMap(null);
+            clearInterval(route_highlight.get('timer'));
         }
         
         function loadEncodedEdges(edges) {
