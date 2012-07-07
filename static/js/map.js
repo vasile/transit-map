@@ -279,24 +279,23 @@ var simulation_manager = (function(){
     // - 'init' can be used with given hh:mm:ss in order to simulate different timestamps
     var timer = (function(){
         var delay = 0;
-        
-        function getNow() {
-            var now = new Date();
-
-            var hours = now.getHours();
-            var minutes = now.getMinutes();
-            var seconds = now.getSeconds();
-            
-            return hours*3600 + minutes*60 + seconds;
-        }
+        var seconds_now = 0;
+        var seconds_increment = 1;
+        var minute_now = null;
         
         function getDaySeconds() {
-            return getNow() - delay;
+            return seconds_now - delay;
         }
         
         function init(hms) {
+            var now = new Date();
+            var hours = now.getHours();
+            var minutes = now.getMinutes();
+            var seconds = now.getSeconds();
+            seconds_now = hours*3600 + minutes*60 + seconds;
+            
             if (hms !== null) {
-                delay = getNow() - time_helpers.hms2s(hms);
+                delay = seconds_now - time_helpers.hms2s(hms);
             }
             
             var timeContainer = $('#day_time');
@@ -304,8 +303,19 @@ var simulation_manager = (function(){
                 timeContainer.text(time_helpers.s2hms(getDaySeconds()));
             }
             
+            $('#time_multiply').change(function(){
+                seconds_increment = parseInt($(this).val(), 10);
+            });
+
             setInterval(function(){
+                seconds_now += seconds_increment;
                 paintHM();
+                
+                var minute_new = Math.round(seconds_now / 60);
+                if (minute_now !== minute_new) {
+                    minute_now = minute_new;
+                    listener_helpers.notify('minute_changed');
+                }
             }, 1000);
         }
         
@@ -1057,10 +1067,8 @@ var simulation_manager = (function(){
                                 parseFloat(feature.geometry.coordinates[1])
                             );
                         });
-
-                        // Stations loaded => LOAD vehicles
-                        vehicle_helpers.load();
-                        setInterval(vehicle_helpers.load, 5*60*1000);
+                        
+                        listener_helpers.subscribe('minute_changed', vehicle_helpers.load);
                     }
                 });
             }
