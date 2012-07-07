@@ -310,8 +310,8 @@ var simulation_manager = (function(){
         }
         
         function getHM() {
-          var hms = time_helpers.s2hms(getDaySeconds());
-          return hms.substring(0, 2) + hms.substring(3, 5);
+            var hms = time_helpers.s2hms(getDaySeconds());
+            return hms.substring(0, 2) + hms.substring(3, 5);
         }
         
         return {
