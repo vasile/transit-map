@@ -306,7 +306,8 @@ var simulation_manager = (function(){
             $('#time_multiply').change(function(){
                 seconds_increment = parseInt($(this).val(), 10);
             });
-
+            
+            paintHM();
             setInterval(function(){
                 seconds_now += seconds_increment;
                 paintHM();
@@ -835,8 +836,8 @@ var simulation_manager = (function(){
                 };
                 
                 var v = new Vehicle(vehicle_data);
-                v.render();
                 simulation_vehicles[vehicle_data.id] = v;
+                v.render();
                 
                 simulation_panel.displayVehicle(v);
                 simulation_panel.followVehicle(v);
@@ -1014,6 +1015,7 @@ var simulation_manager = (function(){
 
                 if (vehicle_found === false) {
                     that.marker.setMap(null);
+                    delete simulation_vehicles[that.id];
                 }
             }
             
@@ -1068,6 +1070,7 @@ var simulation_manager = (function(){
                             );
                         });
                         
+                        vehicle_helpers.load();
                         listener_helpers.subscribe('minute_changed', vehicle_helpers.load);
                     }
                 });
