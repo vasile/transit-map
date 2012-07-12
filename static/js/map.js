@@ -48,7 +48,7 @@ var simulation_manager = (function(){
         var listeners = {};
         
         function notify(type) {
-            if (listeners[type] === 'undefined') {
+            if (typeof listeners[type] === 'undefined') {
                 return;
             }
             
