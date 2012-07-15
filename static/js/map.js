@@ -48,7 +48,7 @@ var simulation_manager = (function(){
         var listeners = {};
         
         function notify(type) {
-            if (listeners[type] === 'undefined') {
+            if (typeof listeners[type] === 'undefined') {
                 return;
             }
             
@@ -279,24 +279,23 @@ var simulation_manager = (function(){
     // - 'init' can be used with given hh:mm:ss in order to simulate different timestamps
     var timer = (function(){
         var delay = 0;
-        
-        function getNow() {
-            var now = new Date();
-
-            var hours = now.getHours();
-            var minutes = now.getMinutes();
-            var seconds = now.getSeconds();
-            
-            return hours*3600 + minutes*60 + seconds;
-        }
+        var seconds_now = 0;
+        var seconds_increment = 1;
+        var minute_now = null;
         
         function getDaySeconds() {
-            return getNow() - delay;
+            return seconds_now - delay;
         }
         
         function init(hms) {
+            var now = new Date();
+            var hours = now.getHours();
+            var minutes = now.getMinutes();
+            var seconds = now.getSeconds();
+            seconds_now = hours*3600 + minutes*60 + seconds;
+            
             if (hms !== null) {
-                delay = getNow() - time_helpers.hms2s(hms);
+                delay = seconds_now - time_helpers.hms2s(hms);
             }
             
             var timeContainer = $('#day_time');
@@ -304,14 +303,26 @@ var simulation_manager = (function(){
                 timeContainer.text(time_helpers.s2hms(getDaySeconds()));
             }
             
+            $('#time_multiply').change(function(){
+                seconds_increment = parseInt($(this).val(), 10);
+            });
+            
+            paintHM();
             setInterval(function(){
+                seconds_now += seconds_increment;
                 paintHM();
+                
+                var minute_new = Math.round(seconds_now / 60);
+                if (minute_now !== minute_new) {
+                    minute_now = minute_new;
+                    listener_helpers.notify('minute_changed');
+                }
             }, 1000);
         }
         
         function getHM() {
-          var hms = time_helpers.s2hms(getDaySeconds());
-          return hms.substring(0, 2) + hms.substring(3, 5);
+            var hms = time_helpers.s2hms(getDaySeconds());
+            return hms.substring(0, 2) + hms.substring(3, 5);
         }
         
         return {
@@ -825,8 +836,8 @@ var simulation_manager = (function(){
                 };
                 
                 var v = new Vehicle(vehicle_data);
-                v.render();
                 simulation_vehicles[vehicle_data.id] = v;
+                v.render();
                 
                 simulation_panel.displayVehicle(v);
                 simulation_panel.followVehicle(v);
@@ -1004,6 +1015,7 @@ var simulation_manager = (function(){
 
                 if (vehicle_found === false) {
                     that.marker.setMap(null);
+                    delete simulation_vehicles[that.id];
                 }
             }
             
@@ -1057,10 +1069,9 @@ var simulation_manager = (function(){
                                 parseFloat(feature.geometry.coordinates[1])
                             );
                         });
-
-                        // Stations loaded => LOAD vehicles
+                        
                         vehicle_helpers.load();
-                        setInterval(vehicle_helpers.load, 5*60*1000);
+                        listener_helpers.subscribe('minute_changed', vehicle_helpers.load);
                     }
                 });
             }

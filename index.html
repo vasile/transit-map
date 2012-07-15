@@ -22,7 +22,13 @@
                 <p>Project information available on <a href="https://github.com/vasile/vehicle-simulator" target="_blank">Github</a></p>
             </div>
             <div class="section">
-                <b>Time:</b> <span id="day_time"></span>
+                <b>Time:</b> <span id="day_time"></span> 
+                <select id="time_multiply">
+                    <option value="1" selected="selected">1x</option>
+                    <option value="5">5x</option>
+                    <option value="10">10x</option>
+                    <option value="100">100x</option>
+                </select>
                 <br/>
                 <input type="button" id="geolocation_click" />
                 <input type="text" id="user_location" value="Enter your location" / >
