@@ -310,6 +310,9 @@ var simulation_manager = (function(){
             paintHM();
             setInterval(function(){
                 seconds_now += seconds_increment;
+                if (seconds_now > 24*3600) {
+                    seconds_now = 0;
+                }
                 paintHM();
                 
                 var minute_new = Math.round(seconds_now / 60);
