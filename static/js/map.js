@@ -15,8 +15,12 @@ var simulation_manager = (function(){
             json_paths: {
                 edges: 'static/geojson/edges-sbb.json',
                 stations: 'static/geojson/stations-sbb.json',
-                vehicles: 'feed/vehicles/sbb/[hhmm]',
-                station_vehicles: 'feed/station_vehicles/sbb/[station_id]/[hhmm]'
+                // WARNING: in production replace 0900 with [hhmm]
+                //      vehicles: 'api/vehicles/[hhmm]'
+                vehicles: 'api/vehicles/0900.json',
+                // WARNING: in production replace 8507000 with [station_id]
+                //      station_vehicles: 'api/station_vehicles/[station_id]/[hhmm]'
+                station_vehicles: 'api/station_vehicles/8507000/0900.json'
             }
         };
         
@@ -1113,7 +1117,9 @@ var simulation_manager = (function(){
         init: function(){
             ui_init();
             geolocation_init();
-            timer.init(config.getUserParam('hms'));
+            // WARNING: in production change '09:00:00' with:
+            //      timer.init(config.getUserParam('hms'));
+            timer.init('09:00:00');
             map_helpers.init();
             simulation_panel.init();
         },
