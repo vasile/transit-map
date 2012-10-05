@@ -45,7 +45,9 @@ Config: [static/js/map.js - simulation_manager > config > params](https://github
 * *ft_id_mask:* Fusion Table ID containing the simulation mask (optional but cool :) - example [FT #812706](http://www.google.com/fusiontables/DataSource?dsrcid=812706) . Check [this script](https://github.com/vasile/Mask-KML-polygons) if you are not sure how to generate one
 * *ft_id_lines:* Fusion Table ID of the polylines layer - example [FT #1497331](http://www.google.com/fusiontables/DataSource?dsrcid=1497331)
 * *ft_id_stations:* Fusion Table ID of the stations layer - example [FT #1497361](http://www.google.com/fusiontables/DataSource?dsrcid=1497361)
-* *json_paths.edges:* [GeoJSON](http://geojson.org/geojson-spec.html#linestring) file containing the simulation polylines - example: [static/geojson/edges-sbb.json](https://github.com/vasile/vehicle-simulator/blob/master/static/geojson/edges-sbb.json)
+* *json_paths.edges:* [GeoJSON](http://geojson.org/geojson-spec.html#linestring) file containing the simulation polylines. 
+	
+	**Example:** [static/geojson/edges-sbb.json](https://github.com/vasile/vehicle-simulator/blob/master/static/geojson/edges-sbb.json)
   
   	Polyline(edge) description:
     
