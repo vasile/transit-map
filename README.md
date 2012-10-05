@@ -134,6 +134,6 @@ Next steps after you are able to generate these APIs programmatically:
 ## Stay in touch
 - project updates are published [here](http://blog.vasile.ch/tag/swisstrains)
 
-- just contact [me](http://twitter.com/vasile23) in case you need further assistance or have other questions. 
+- just contact [me](http://www.vasile.ch) in case you need further assistance or have other questions. 
 
 ### Have fun !
