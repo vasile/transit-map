@@ -31,8 +31,8 @@ Config: [static/js/map.js - simulation_manager > config > params](https://github
     ft_id_lines: '1497331',
     ft_id_stations: '1497361',
     json_paths: {
-        edges: 'static/js/edges_encoded-sbb.js',
-        stations: 'api/stations.json',
+        edges: 'static/geojson/edges-sbb.json',
+        stations: 'static/geojson/stations-sbb.json',
         vehicles: 'api/vehicles/[hhmm]'
         station_vehicles: 'api/station_vehicles/[station_id]/[hhmm]'
     }
@@ -41,29 +41,48 @@ Config: [static/js/map.js - simulation_manager > config > params](https://github
 * *zoom_start:* initial zoom level
 * *zoom_follow:* zoom level used to follow a vehicle
 * *zoom_station:* zoom level used when clicking on a station
-* *zoom_mouseover_min:* minimum zoom level where mousover vehicles brings a panel
+* *zoom_mouseover_min:* minimum zoom level where mousover vehicles shows an info panel
 * *ft_id_mask:* Fusion Table ID containing the simulation mask (optional but cool :) - example [FT #812706](http://www.google.com/fusiontables/DataSource?dsrcid=812706) . Check [this script](https://github.com/vasile/Mask-KML-polygons) if you are not sure how to generate one
 * *ft_id_lines:* Fusion Table ID of the polylines layer - example [FT #1497331](http://www.google.com/fusiontables/DataSource?dsrcid=1497331)
 * *ft_id_stations:* Fusion Table ID of the stations layer - example [FT #1497361](http://www.google.com/fusiontables/DataSource?dsrcid=1497361)
-* *json_paths.edges:* JSON file containing the simulation polylines. For now only [Encoded Polylines](http://code.google.com/apis/maps/documentation/utilities/polylinealgorithm.html) are supported. **Please note** that the FT layers are used just to render the lines, the actual coordinates for moving the vehicles along are in this JSON file. 
-
-    **Example:** [static/js/edges_encoded-sbb.js](https://github.com/vasile/vehicle-simulator/blob/master/static/js/edges_encoded-sbb.js)
-
-* *json_paths.stations:* JSON file containing the simulation stations.
-
-    **Example:** [api/stations.json](https://github.com/vasile/vehicle-simulator/blob/master/api/stations.json) 
+* *json_paths.edges:* [GeoJSON](http://geojson.org/geojson-spec.html#linestring) file containing the simulation polylines - example: [static/geojson/edges-sbb.json](https://github.com/vasile/vehicle-simulator/blob/master/static/geojson/edges-sbb.json)
+  
+  	Polyline(edge) description:
     
-    Where a station looks like:
+        "type": "Feature",
+        "properties": {
+        	"edge_id": "1731"
+        },
+        "geometry": {
+        	"type": "LineString",
+            "coordinates": [ [9.131931, 47.65992], … ]
+        }
         
-        "id": "8509197",
-        "x": "9.746402",
-        "y": "46.631779",
-        "name": "Bergün/Bravuogn"
+     * *properties.edge_id:* polyline unique ID
+     * *geometry.coordinates:* array of longitude, latitude pairs for each vertex of the polyline
 
-    * *id:* station unique ID
-    * *x:* station longitude (decimal degrees)
-    * *y:* station latitude (decimal degrees)
-    * *name:* station name
+  **Please note** that FT layers are used just for rendering the train lines on the map; to move the vehicles on the map, the json_paths.edges coordinates are used to accomplish this task.
+
+* *json_paths.stations:* GeoJSON file containing the simulation stations.
+
+    **Example:** [static/geojson/stations-sbb.json](https://github.com/vasile/vehicle-simulator/blob/master/static/geojson/stations-sbb.json) 
+    
+  	Station description:
+        
+        "type":"Feature",
+        "properties": {
+            "station_id": 8503000,
+            "name": "Zürich HB"
+        },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [ 8.53947,47.378777 ]
+        }
+
+    * *properties.station_id:* station unique ID
+    * *properties.name:* station name
+    * *geometry.coordinates:* pair for longitude, latitude of the station
+
 
 * *json_paths.vehicles:* JSON file containing the vehicles running at given time (hhmm format)
 
@@ -103,16 +122,16 @@ Config: [static/js/map.js - simulation_manager > config > params](https://github
     * *dep:* vehicle departure from the station computed in seconds from midnight. For example 31680 = 08:48.
     * *st_b:* final destination id
 
-Once you are able to generate these APIs programmatically, you can:
+Next steps after you are able to generate these APIs programmatically:
 
 * change the vehicle API URLs to use [station_id], [hhmm] parameters (see the comments in the config file)
 * change the '09:00:00' custom time
     timer.init(config.getUserParam('hms'));
 
 
-### Stay in touch
+## Stay in touch
 - project updates are published [here](http://blog.vasile.ch/tag/swisstrains)
 
 - just contact [me](http://twitter.com/vasile23) in case you need further assistance or have other questions. 
 
-**Have fun !**
+### Have fun !
