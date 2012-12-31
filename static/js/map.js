@@ -315,11 +315,13 @@ var simulation_manager = (function(){
                 }
                 paintHM();
                 
-                var minute_new = Math.round(seconds_now / 60);
+                var hms_matches = timeContainer.text().match(/([0-9]{2}):[0-9]{2}$/);
+                var minute_new = hms_matches[1];
                 if (minute_now !== minute_new) {
                     minute_now = minute_new;
                     listener_helpers.notify('minute_changed');
                 }
+
             }, 1000);
         }
         
