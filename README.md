@@ -3,9 +3,10 @@ Vehicle simulator creates a Google Maps mashup with animated markers(vehicles) t
 
 Projects that are using this script
 
-* [Swiss Railways(SBB)](http://www.sbb.ch/en/home.html) network simulator - http://simcity.vasile.ch/sbb/
-* [Romanian Railways(CFR)](http://www.infofer.ro/) network simulator - http://cfr.webgis.ro/
-* [Lausanne (TL)](http://www.t-l.ch/) network simulator - http://simcity.vasile.ch/lausanne/
+* **Swiss railways(SBB)** network simulator - http://simcity.vasile.ch/sbb/
+* **Romanian railways(CFR)** network simulator - http://cfr.webgis.ro/
+* **Lausanne (TL)** public transport simulator - http://simcity.vasile.ch/lausanne/
+* **Brașov (RAT)** public transport simulator - http://brasov.webgis.ro/
 
 ## Requirements
 
