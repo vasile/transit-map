@@ -286,11 +286,11 @@ var simulation_manager = (function(){
         var seconds_now = 0;
         var seconds_increment = 1;
         var minute_now = null;
-        
+
         function getDaySeconds() {
             return seconds_now - delay;
         }
-        
+
         function init(hms) {
             var now = new Date();
             var hours = now.getHours();
@@ -314,6 +314,10 @@ var simulation_manager = (function(){
             paintHM();
             setInterval(function(){
                 seconds_now += seconds_increment;
+                if (seconds_now > 24*3600) {
+                    seconds_now = 0;
+                }
+
                 paintHM();
                 
                 var minute_new = Math.round(seconds_now / 60);
@@ -889,14 +893,37 @@ var simulation_manager = (function(){
         var vehicleIDs = [];
 
         function Vehicle(params) {
+            function parseTimes(times) {
+                var time_ar = [];
+                
+                $.each(times, function(k, time){
+                    // 09:07:35
+                    if (time.match(/^[0-9]{2}:[0-9]{2}:[0-9]{2}$/) !== null) {
+                        time_ar.push(time_helpers.hms2s(time));
+                        return;
+                    }
+                    
+                    // 09:07
+                    if (time.match(/^[0-9]{2}:[0-9]{2}$/) !== null) {
+                        var hms = time + ':00';
+                        time_ar.push(time_helpers.hms2s(hms));
+                        return;
+                    }
+                    // 32855 = 9 * 3600 + 7 * 60 + 35
+                    time_ar.push(time);
+                });
+                
+                return time_ar;
+            }
+            
             var has_multiple_days = params.arrs[params.arrs.length - 1] > 24 * 3600;
 
             this.id                 = params.id;
             this.name               = params.name;
             this.stations           = params.sts;
             this.edges              = params.edges;
-            this.depS               = params.deps;
-            this.arrS               = params.arrs;
+            this.depS               = parseTimes(params.deps);
+            this.arrS               = parseTimes(params.arrs);
             this.has_multiple_days  = has_multiple_days;
             
             $.each(params.edges, function(k, edges) {
