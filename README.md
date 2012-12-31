@@ -96,18 +96,21 @@ Config: [static/js/map.js - simulation_manager > config > params](https://github
         "id"    : "7974",
         "name"  : "S1821817",
         "type"  : "s",
-        "sts"   : [8502007, 8502011, 8502008, 8502009, 8502020, 8502012, 8502028, 8502021, 8505000],
-        "deps"  : [31680, 31815, 31935, 32220, 32415, 32595, 32820, 32895],
-        "arrs"  : [31800, 31920, 32160, 32400, 32580, 32760, 32880, 33300],
-        "edges" : ["", "-511", "-510", "-513", "-514", "-515", "-516,-2040", "-518", "-517,-433,-552,-551,160"]
+        "sts"   : ["8502007","8502011","8502008","8502009","8502020","8502012","8502028","8502021","8505000"],
+        "deps"  : ["08:48:00","08:50:00","08:52:00","08:57:00","09:00:00","09:03:00","09:07:00","09:08:00"],
+        "arrs"  : ["08:49:45","08:51:45","08:56:00","08:59:45","09:02:45","09:06:00","09:07:45","09:15:00"],
+        "edges" : ["","-504","-503","-506","-507","-508","-509,-2027","-511","-510,-426,-545,-544,154"]
 
     * *id:* vehicle unique ID
     * *name:* vehicle name
     * *type:* the vehicle type, used later for the vehicle icon, i.e. [images/vehicle-types/r.png](https://github.com/vasile/vehicle-simulator/blob/master/static/images/vehicle-types/r.png)
-    * *sts:* vehicle station IDs
-    * *deps:* vehicle departures computed in seconds from midnight. For example 31680 = 08:48.
-    * *arrs:* vehicle arrivals computed in seconds from midnight
-    * *edges:* the polylines used to reach the previous staton. Negative value means that the polyline is used against its original direction. For example, in the example above from 8502007(Sursee) to 8502007(Oberkirch LU), the polyline 511 is used, but with direction inverted
+    * *sts:* array of station IDs
+    * *deps:* array of departures. Supported formats:
+    	* 31680 - number of seconds from midnight, For example 31680 = 08:48
+    	* 08:48:45 - hh:mm:ss
+    	* 08:48 - hh:mm
+    * *arrs:* array of arrivals
+    * *edges:* the polylines used to reach the previous staton. Negative value means that the polyline is used against its original direction. For example, in the example above from 8502007(Sursee) to 8502007(Oberkirch LU), the polyline 504 is used, but with direction inverted
 
 * *json_paths.station_vehicles:* JSON file containing the vehicles departing from a station given by *station_id* running at the time given by *hhmm*
 
