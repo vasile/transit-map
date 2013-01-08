@@ -671,8 +671,10 @@ var simulation_manager = (function(){
                 scaleControl: true,
                 streetViewControl: true,
                 overviewMapControl: true,
+                rotateControl: true,
                 mapTypeControl: true,
                 mapTypeControlOptions: {
+                    position: google.maps.ControlPosition.TOP_LEFT,
                     mapTypeIds: [google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.SATELLITE, 'stamen']
                 }
             };
