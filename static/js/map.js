@@ -673,7 +673,7 @@ var simulation_manager = (function(){
                 overviewMapControl: true,
                 mapTypeControl: true,
                 mapTypeControlOptions: {
-                    position: google.maps.ControlPosition.TOP_LEFT
+                    mapTypeIds: [google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.SATELLITE, 'stamen']
                 }
             };
 
@@ -684,6 +684,10 @@ var simulation_manager = (function(){
             }
 
             map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
+            
+            var stamen_map = new google.maps.StamenMapType('watercolor');
+            stamen_map.set('name', 'Stamen watercolor');
+            map.mapTypes.set('stamen', stamen_map);
 
             function map_layers_add(){
                 var edges_layer = new google.maps.FusionTablesLayer({
