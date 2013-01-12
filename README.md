@@ -138,13 +138,28 @@ Next steps after you are able to generate these APIs programmatically:
 
 By adding one of multiple querystring parameters below you can customize the starting point of the simulation:
 
-* **hms** - if givev, the simulation will use the given start time in hh:mm:ss format
+* **hms** - if given, the simulation will use the given start time in hh:mm:ss format
 * **x** AND **y** - if given, the simulation will start centered on the giveb center by x = longitude, y = latitude in decimal degrees
 * **zoom** - if given, the simulation will use the value for the initial zoom level. Possible values: 1..21
 * **map_type_id** - if given, the simulation will use the value for the map type. Possible values: roadmap, satellite, hybrid, terrain, stamen .
-* **time_multiply** - if given, the simulation will multiply the time speed with given factor. Example values: 1..100
+* **time_multiply** - if given, the simulation will multiply the time speed with given factor. Possible values: 1, 5, 10, 100
 * **view_mode** - value 'iframe' - will strip all the info panel. Suitable for IFRAME integration with other websites
 * **vehicle_name** or **vehicle_id** - if given, the simulation will try to locate the vehicle given by name or id and follow it
+
+**Examples:**
+
+* Stamen watercolor map, centered on 8.47 longitude with 47.18 latitude, initial zoom level 11 and simulation time set for 10:20:30 with time increasing 10x
+	
+	[?x=8.7&y=47.18&zoom=11&map_type_id=stamen&hms=11:20:30&time_multiply=10](http://simcity.vasile.ch/sbb/?x=8.7&y=47.18&zoom=11&map_type_id=stamen&hms=11:20:30&time_multiply=10)
+
+* Roadmap, swiss-centered, included as an iframe
+	
+	[?x=8.2&y=46.9&zoom=9&map_type_id=roadmap&hms=11:20:30&time_multiply=100&view_mode=iframe](http://simcity.vasile.ch/sbb/?x=8.2&y=46.9&zoom=9&map_type_id=roadmap&hms=11:20:30&time_multiply=100&view_mode=iframe) 
+
+* Track ICN10017 (Zürich HB - Lugano)
+	
+	[?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5](http://simcity.vasile.ch/sbb/?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5) 	
+
 
 ## Stay in touch
 - project updates are published [here](http://blog.vasile.ch/tag/swisstrains)
