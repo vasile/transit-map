@@ -320,11 +320,13 @@ var simulation_manager = (function(){
 
                 paintHM();
                 
-                var minute_new = Math.round(seconds_now / 60);
+                var hms_matches = timeContainer.text().match(/([0-9]{2}):[0-9]{2}$/);
+                var minute_new = hms_matches[1];
                 if (minute_now !== minute_new) {
                     minute_now = minute_new;
                     listener_helpers.notify('minute_changed');
                 }
+
             }, 1000);
         }
         
@@ -674,9 +676,11 @@ var simulation_manager = (function(){
                 scaleControl: true,
                 streetViewControl: true,
                 overviewMapControl: true,
+                rotateControl: true,
                 mapTypeControl: true,
                 mapTypeControlOptions: {
-                    position: google.maps.ControlPosition.TOP_LEFT
+                    position: google.maps.ControlPosition.TOP_LEFT,
+                    mapTypeIds: [google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.SATELLITE, 'stamen']
                 }
             };
 
@@ -687,6 +691,10 @@ var simulation_manager = (function(){
             }
 
             map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
+            
+            var stamen_map = new google.maps.StamenMapType('watercolor');
+            stamen_map.set('name', 'Stamen watercolor');
+            map.mapTypes.set('stamen', stamen_map);
 
             function map_layers_add(){
                 var edges_layer = new google.maps.FusionTablesLayer({
