@@ -7,6 +7,7 @@ Projects that are using this script
 * **Romanian railways(CFR)** network simulator - http://cfr.webgis.ro/
 * **Lausanne (TL)** public transport simulator - http://simcity.vasile.ch/lausanne/
 * **Brașov (RAT)** public transport simulator - http://brasov.webgis.ro/
+* **Grenoble (TAG)** public transport simulator - http://simcity.vasile.ch/grenoble/
 
 ## Requirements
 
