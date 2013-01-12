@@ -132,9 +132,7 @@ Config: [static/js/map.js - simulation_manager > config > params](https://github
 Next steps after you are able to generate these APIs programmatically:
 
 * change the vehicle API URLs to use [station_id], [hhmm] parameters (see the comments in the config file)
-* change the '09:00:00' custom time
-    timer.init(config.getUserParam('hms'));
-
+* remove the the '09:00:00' custom time from timer.init() call in simulation_manager.init()
 
 ## Stay in touch
 - project updates are published [here](http://blog.vasile.ch/tag/swisstrains)
