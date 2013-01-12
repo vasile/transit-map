@@ -134,6 +134,18 @@ Next steps after you are able to generate these APIs programmatically:
 * change the vehicle API URLs to use [station_id], [hhmm] parameters (see the comments in the config file)
 * remove the the '09:00:00' custom time from timer.init() call in simulation_manager.init()
 
+## Custom querystring parameters
+
+By adding one of multiple querystring parameters below you can customize the starting point of the simulation:
+
+* **hms** - if givev, the simulation will use the given start time in hh:mm:ss format
+* **x** AND **y** - if given, the simulation will start centered on the giveb center by x = longitude, y = latitude in decimal degrees
+* **zoom** - if given, the simulation will use the value for the initial zoom level. Possible values: 1..21
+* **map_type_id** - if given, the simulation will use the value for the map type. Possible values: roadmap, satellite, hybrid, terrain, stamen .
+* **time_multiply** - if given, the simulation will multiply the time speed with given factor. Example values: 1..100
+* **view_mode** - value 'iframe' - will strip all the info panel. Suitable for IFRAME integration with other websites
+* **vehicle_name** or **vehicle_id** - if given, the simulation will try to locate the vehicle given by name or id and follow it
+
 ## Stay in touch
 - project updates are published [here](http://blog.vasile.ch/tag/swisstrains)
 
