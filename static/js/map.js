@@ -288,6 +288,8 @@ var simulation_manager = (function(){
         }
         
         function init(hms) {
+            hms = hms || config.getUserParam('hms');
+            
             var now = new Date();
             var hours = now.getHours();
             var minutes = now.getMinutes();
@@ -1147,7 +1149,7 @@ var simulation_manager = (function(){
         init: function(){
             ui_init();
             geolocation_init();
-            timer.init(config.getUserParam('hms'));
+            timer.init();
             map_helpers.init();
             simulation_panel.init();
         },
