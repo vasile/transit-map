@@ -280,7 +280,7 @@ var simulation_manager = (function(){
     var timer = (function(){
         var delay = 0;
         var seconds_now = 0;
-        var seconds_increment = 1;
+        var seconds_increment = null;
         var minute_now = null;
         
         function getDaySeconds() {
@@ -288,6 +288,8 @@ var simulation_manager = (function(){
         }
         
         function init(hms) {
+            seconds_increment = parseInt($('#time_multiply').val(), 10);
+            
             hms = hms || config.getUserParam('hms');
             
             var now = new Date();
@@ -685,6 +687,14 @@ var simulation_manager = (function(){
                 map_options.center = new google.maps.LatLng(parseFloat(config.getUserParam('y')), parseFloat(config.getUserParam('x')));
                 map_options.zoom = config.getParam('zoom_follow');
                 map_options.mapTypeId = google.maps.MapTypeId.SATELLITE;
+            }
+            
+            if (config.getUserParam('zoom') !== null) {
+                map_options.zoom = parseInt(config.getUserParam('zoom'), 10);
+            }
+            
+            if (config.getUserParam('map_type_id') !== null) {
+                map_options.mapTypeId = config.getUserParam('map_type_id');
             }
 
             map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
@@ -1120,6 +1130,10 @@ var simulation_manager = (function(){
         var panel_display = (ua_is_mobile === false) && (view_mode !== 'iframe');
         if (panel_display) {
             $('#panel').removeClass('hidden');
+        }
+        
+        if (config.getUserParam('time_multiply') !== null) {
+            $('#time_multiply').val(config.getUserParam('time_multiply'));
         }
     }
     
