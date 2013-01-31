@@ -917,6 +917,12 @@ var simulation_manager = (function(){
                 var time_ar = [];
                 
                 $.each(times, function(k, time){
+                    // 32855 = 9 * 3600 + 7 * 60 + 35
+                    if ((typeof time) === 'number') {
+                        time_ar.push(time);
+                        return;
+                    }
+                    
                     // 09:07:35
                     if (time.match(/^[0-9]{2}:[0-9]{2}:[0-9]{2}$/) !== null) {
                         time_ar.push(time_helpers.hms2s(time));
@@ -929,8 +935,6 @@ var simulation_manager = (function(){
                         time_ar.push(time_helpers.hms2s(hms));
                         return;
                     }
-                    // 32855 = 9 * 3600 + 7 * 60 + 35
-                    time_ar.push(time);
                 });
                 
                 return time_ar;
