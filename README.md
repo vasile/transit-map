@@ -8,6 +8,7 @@ Projects that are using this script
 * **Lausanne (TL)** public transport simulator - http://simcity.vasile.ch/lausanne/
 * **Brașov (RAT)** public transport simulator - http://brasov.webgis.ro/
 * **Grenoble (TAG)** public transport simulator - http://simcity.vasile.ch/grenoble/
+* **Genève (TPG)** public transport simulator - http://simcity.vasile.ch/geneva/
 
 ## Requirements
 
