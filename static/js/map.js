@@ -284,14 +284,18 @@ var simulation_manager = (function(){
     var timer = (function(){
         var delay = 0;
         var seconds_now = 0;
-        var seconds_increment = 1;
+        var seconds_increment = null;
         var minute_now = null;
-        
+
         function getDaySeconds() {
             return seconds_now - delay;
         }
-        
+
         function init(hms) {
+            seconds_increment = parseInt($('#time_multiply').val(), 10);
+            
+            hms = hms || config.getUserParam('hms');
+            
             var now = new Date();
             var hours = now.getHours();
             var minutes = now.getMinutes();
@@ -314,13 +318,19 @@ var simulation_manager = (function(){
             paintHM();
             setInterval(function(){
                 seconds_now += seconds_increment;
+                if (seconds_now > 24*3600) {
+                    seconds_now = 0;
+                }
+
                 paintHM();
                 
-                var minute_new = Math.round(seconds_now / 60);
+                var hms_matches = timeContainer.text().match(/([0-9]{2}):[0-9]{2}$/);
+                var minute_new = hms_matches[1];
                 if (minute_now !== minute_new) {
                     minute_now = minute_new;
                     listener_helpers.notify('minute_changed');
                 }
+
             }, 1000);
         }
         
@@ -670,9 +680,11 @@ var simulation_manager = (function(){
                 scaleControl: true,
                 streetViewControl: true,
                 overviewMapControl: true,
+                rotateControl: true,
                 mapTypeControl: true,
                 mapTypeControlOptions: {
-                    position: google.maps.ControlPosition.TOP_LEFT
+                    position: google.maps.ControlPosition.TOP_LEFT,
+                    mapTypeIds: [google.maps.MapTypeId.ROADMAP, google.maps.MapTypeId.TERRAIN, google.maps.MapTypeId.SATELLITE, 'stamen']
                 }
             };
 
@@ -681,8 +693,20 @@ var simulation_manager = (function(){
                 map_options.zoom = config.getParam('zoom_follow');
                 map_options.mapTypeId = google.maps.MapTypeId.SATELLITE;
             }
+            
+            if (config.getUserParam('zoom') !== null) {
+                map_options.zoom = parseInt(config.getUserParam('zoom'), 10);
+            }
+            
+            if (config.getUserParam('map_type_id') !== null) {
+                map_options.mapTypeId = config.getUserParam('map_type_id');
+            }
 
             map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
+            
+            var stamen_map = new google.maps.StamenMapType('watercolor');
+            stamen_map.set('name', 'Stamen watercolor');
+            map.mapTypes.set('stamen', stamen_map);
 
             function map_layers_add(){
                 var edges_layer = new google.maps.FusionTablesLayer({
@@ -889,14 +913,41 @@ var simulation_manager = (function(){
         var vehicleIDs = [];
 
         function Vehicle(params) {
+            function parseTimes(times) {
+                var time_ar = [];
+                
+                $.each(times, function(k, time){
+                    // 32855 = 9 * 3600 + 7 * 60 + 35
+                    if ((typeof time) === 'number') {
+                        time_ar.push(time);
+                        return;
+                    }
+                    
+                    // 09:07:35
+                    if (time.match(/^[0-9]{2}:[0-9]{2}:[0-9]{2}$/) !== null) {
+                        time_ar.push(time_helpers.hms2s(time));
+                        return;
+                    }
+                    
+                    // 09:07
+                    if (time.match(/^[0-9]{2}:[0-9]{2}$/) !== null) {
+                        var hms = time + ':00';
+                        time_ar.push(time_helpers.hms2s(hms));
+                        return;
+                    }
+                });
+                
+                return time_ar;
+            }
+            
             var has_multiple_days = params.arrs[params.arrs.length - 1] > 24 * 3600;
 
             this.id                 = params.id;
             this.name               = params.name;
             this.stations           = params.sts;
             this.edges              = params.edges;
-            this.depS               = params.deps;
-            this.arrS               = params.arrs;
+            this.depS               = parseTimes(params.deps);
+            this.arrS               = parseTimes(params.arrs);
             this.has_multiple_days  = has_multiple_days;
             
             $.each(params.edges, function(k, edges) {
@@ -1089,6 +1140,10 @@ var simulation_manager = (function(){
         if (panel_display) {
             $('#panel').removeClass('hidden');
         }
+        
+        if (config.getUserParam('time_multiply') !== null) {
+            $('#time_multiply').val(config.getUserParam('time_multiply'));
+        }
     }
     
     function geolocation_init() {
@@ -1117,8 +1172,8 @@ var simulation_manager = (function(){
         init: function(){
             ui_init();
             geolocation_init();
-            // WARNING: in production change '09:00:00' with:
-            //      timer.init(config.getUserParam('hms'));
+            // WARNING: in production, remove '09:00:00', use
+            //      timer.init();
             timer.init('09:00:00');
             map_helpers.init();
             simulation_panel.init();

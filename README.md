@@ -3,9 +3,12 @@ Vehicle simulator creates a Google Maps mashup with animated markers(vehicles) t
 
 Projects that are using this script
 
-* [Swiss Railways(SBB)](http://www.sbb.ch/en/home.html) network simulator - http://simcity.vasile.ch/sbb/
-* [Romanian Railways(CFR)](http://www.infofer.ro/) network simulator - http://cfr.webgis.ro/
-* [Lausanne (TL)](http://www.t-l.ch/) network simulator - http://simcity.vasile.ch/lausanne/
+* **Swiss railways(SBB)** network simulator - http://simcity.vasile.ch/sbb/
+* **Romanian railways(CFR)** network simulator - http://cfr.webgis.ro/
+* **Lausanne (TL)** public transport simulator - http://simcity.vasile.ch/lausanne/
+* **Brașov (RAT)** public transport simulator - http://brasov.webgis.ro/
+* **Grenoble (TAG)** public transport simulator - http://simcity.vasile.ch/grenoble/
+* **Genève (TPG)** public transport simulator - http://simcity.vasile.ch/geneva/
 
 ## Requirements
 
@@ -95,18 +98,21 @@ Config: [static/js/map.js - simulation_manager > config > params](https://github
         "id"    : "7974",
         "name"  : "S1821817",
         "type"  : "s",
-        "sts"   : [8502007, 8502011, 8502008, 8502009, 8502020, 8502012, 8502028, 8502021, 8505000],
-        "deps"  : [31680, 31815, 31935, 32220, 32415, 32595, 32820, 32895],
-        "arrs"  : [31800, 31920, 32160, 32400, 32580, 32760, 32880, 33300],
-        "edges" : ["", "-511", "-510", "-513", "-514", "-515", "-516,-2040", "-518", "-517,-433,-552,-551,160"]
+        "sts"   : ["8502007","8502011","8502008","8502009","8502020","8502012","8502028","8502021","8505000"],
+        "deps"  : ["08:48:00","08:50:00","08:52:00","08:57:00","09:00:00","09:03:00","09:07:00","09:08:00"],
+        "arrs"  : ["08:49:45","08:51:45","08:56:00","08:59:45","09:02:45","09:06:00","09:07:45","09:15:00"],
+        "edges" : ["","-504","-503","-506","-507","-508","-509,-2027","-511","-510,-426,-545,-544,154"]
 
     * *id:* vehicle unique ID
     * *name:* vehicle name
     * *type:* the vehicle type, used later for the vehicle icon, i.e. [images/vehicle-types/r.png](https://github.com/vasile/vehicle-simulator/blob/master/static/images/vehicle-types/r.png)
-    * *sts:* vehicle station IDs
-    * *deps:* vehicle departures computed in seconds from midnight. For example 31680 = 08:48.
-    * *arrs:* vehicle arrivals computed in seconds from midnight
-    * *edges:* the polylines used to reach the previous staton. Negative value means that the polyline is used against its original direction. For example, in the example above from 8502007(Sursee) to 8502007(Oberkirch LU), the polyline 511 is used, but with direction inverted
+    * *sts:* array of station IDs
+    * *deps:* array of departures. Supported formats:
+    	* 31680 - number of seconds from midnight, For example 31680 = 08:48
+    	* 08:48:45 - hh:mm:ss
+    	* 08:48 - hh:mm
+    * *arrs:* array of arrivals
+    * *edges:* the polylines used to reach the previous staton. Negative value means that the polyline is used against its original direction. For example, in the example above from 8502007(Sursee) to 8502007(Oberkirch LU), the polyline 504 is used, but with direction inverted
 
 * *json_paths.station_vehicles:* JSON file containing the vehicles departing from a station given by *station_id* running at the time given by *hhmm*
 
@@ -127,8 +133,33 @@ Config: [static/js/map.js - simulation_manager > config > params](https://github
 Next steps after you are able to generate these APIs programmatically:
 
 * change the vehicle API URLs to use [station_id], [hhmm] parameters (see the comments in the config file)
-* change the '09:00:00' custom time
-    timer.init(config.getUserParam('hms'));
+* remove the the '09:00:00' custom time from timer.init() call in simulation_manager.init()
+
+## Custom querystring parameters
+
+By adding one of multiple querystring parameters below you can customize the starting point of the simulation:
+
+* **hms** - if given, the simulation will use the given start time in hh:mm:ss format
+* **x** AND **y** - if given, the simulation will start centered on the giveb center by x = longitude, y = latitude in decimal degrees
+* **zoom** - if given, the simulation will use the value for the initial zoom level. Possible values: 1..21
+* **map_type_id** - if given, the simulation will use the value for the map type. Possible values: roadmap, satellite, hybrid, terrain, stamen .
+* **time_multiply** - if given, the simulation will multiply the time speed with given factor. Possible values: 1, 5, 10, 100
+* **view_mode** - value 'iframe' - will strip all the info panel. Suitable for IFRAME integration with other websites
+* **vehicle_name** or **vehicle_id** - if given, the simulation will try to locate the vehicle given by name or id and follow it
+
+**Examples:**
+
+* Stamen watercolor map, centered on 8.47 longitude with 47.18 latitude, initial zoom level 11 and simulation time set for 10:20:30 with time increasing 10x
+	
+	[?x=8.7&y=47.18&zoom=11&map_type_id=stamen&hms=11:20:30&time_multiply=10](http://simcity.vasile.ch/sbb/?x=8.7&y=47.18&zoom=11&map_type_id=stamen&hms=11:20:30&time_multiply=10)
+
+* Roadmap, swiss-centered, included as an iframe
+	
+	[?x=8.2&y=46.9&zoom=9&map_type_id=roadmap&hms=11:20:30&time_multiply=100&view_mode=iframe](http://simcity.vasile.ch/sbb/?x=8.2&y=46.9&zoom=9&map_type_id=roadmap&hms=11:20:30&time_multiply=100&view_mode=iframe) 
+
+* Track ICN10017 (Zürich HB - Lugano)
+	
+	[?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5](http://simcity.vasile.ch/sbb/?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5) 	
 
 
 ## Stay in touch
