@@ -536,7 +536,7 @@ var simulation_manager = (function(){
             vehicle_follow.init();
             vehicle_route.init();
             
-            $('#station_departures tbody tr a').live('click', function(){
+            $(document).on("click", '#station_departures tbody tr a', function(){
                 var vehicle_id = $(this).attr('data-vehicle-id');
                 var vehicle = simulation_vehicles[vehicle_id];
                 simulation_panel.displayVehicle(vehicle);
@@ -545,7 +545,7 @@ var simulation_manager = (function(){
                 return false;
             });
             
-            $('#vehicle_timetable tbody tr a').live('click', function(){
+            $(document).on("click", '#vehicle_timetable tbody tr a', function(){
                 var station_id = $(this).attr('data-station-id');
                 var station_location = stationsPool.location_get(station_id);
                 if (station_location === null) { return; }
