@@ -697,6 +697,10 @@ var simulation_manager = (function(){
             if (config.getUserParam('map_type_id') !== null) {
                 map_options.mapTypeId = config.getUserParam('map_type_id');
             }
+            
+            if (config.getUserParam('tilt') !== null) {
+                map_options.tilt = parseInt(config.getUserParam('tilt'), 10);
+            }
 
             map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
             
