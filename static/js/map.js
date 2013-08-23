@@ -150,6 +150,17 @@ var simulation_manager = (function(){
             return null;
         }
         
+        function routeIsDetailedAtPercent(ab_edges, percent) {
+            var route = routes[ab_edges];
+            for (var k=0; k<route.detailed_parts.length; k++) {
+                if ((percent > route.detailed_parts[k].start) && (percent < route.detailed_parts[k].end)) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
         function routeAdd(ab_edges) {
             if (typeof routes[ab_edges] !== 'undefined') {
                 return;
@@ -159,17 +170,52 @@ var simulation_manager = (function(){
             var routePoints = [];
             $.each(edges, function(k, edgeID) {
                 if (edgeID.substr(0, 1) === '-') {
-                    var points = network_lines[edgeID.substr(1)].slice().reverse();
+                    edgeID = edgeID.substr(1);
+                    var points = network_lines[edgeID].points.slice().reverse();
                 } else {
-                    var points = network_lines[edgeID];
+                    var points = network_lines[edgeID].points;
                 }
                 routePoints = routePoints.concat(points);
             });
+
+            var dAB = parseFloat(google.maps.geometry.spherical.computeLength(routePoints).toFixed(3));
+
+            var routeDetailedParts = [];
+            var routeDetailedParts_i = 0;
+            var is_detailed_last = false;
+            var dAC = 0;
+            $.each(edges, function(k, edgeID) {
+                if (edgeID.substr(0, 1) === '-') {
+                    edgeID = edgeID.substr(1);
+                }
+                
+                var is_detailed = network_lines[edgeID].is_detailed;
+                if (is_detailed === false) {
+                    if (is_detailed_last) {
+                        routeDetailedParts[routeDetailedParts_i].end = dAC / dAB;
+                        routeDetailedParts_i += 1;
+                    }
+                } else {
+                    if (is_detailed_last === false) {
+                        routeDetailedParts[routeDetailedParts_i] = {
+                            start: dAC / dAB,
+                            end: k
+                        };
+                    }
+                }
+                
+                is_detailed_last = is_detailed;
+                
+                dAC += parseFloat(google.maps.geometry.spherical.computeLength(network_lines[edgeID].points).toFixed(3));
+            });
             
-            routes[ab_edges] = {
-                'points': routePoints,
-                'length': google.maps.geometry.spherical.computeLength(routePoints).toFixed(3)
+            var route = {
+                points: routePoints,
+                length: dAB,
+                detailed_parts: routeDetailedParts
             };
+            
+            routes[ab_edges] = route;
         }
         
         function lengthGet(ab_edges) {
@@ -206,8 +252,11 @@ var simulation_manager = (function(){
         }
         
         function loadEncodedEdges(edges) {
-            $.each(edges, function(index, encoded_edge) {
-                network_lines[index] = google.maps.geometry.encoding.decodePath(encoded_edge);
+            $.each(edges, function(edge_id, encoded_edge) {
+                network_lines[edge_id] = {
+                    points: google.maps.geometry.encoding.decodePath(encoded_edge),
+                    is_detailed: false
+                };
             });
         }
         
@@ -219,12 +268,16 @@ var simulation_manager = (function(){
                 });
                 
                 var edge_id = feature.properties.edge_id;
-                network_lines[edge_id] = edge_coords;
+                network_lines[edge_id] = {
+                    points: edge_coords,
+                    is_detailed: feature.properties.detailed === 'yes'
+                };
             });
         }
         
         return {
             positionGet: positionOnRouteAtPercentGet,
+            isDetailed: routeIsDetailedAtPercent,
             routeAdd: routeAdd,
             lengthGet: lengthGet,
             routeHighlight: routeHighlight,
