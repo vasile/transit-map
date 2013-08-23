@@ -1,5 +1,6 @@
 /*global $, google, InfoBox */
 var simulation_manager = (function(){
+    google.maps.visualRefresh = true;
     var ua_is_mobile = navigator.userAgent.indexOf('iPhone') !== -1 || navigator.userAgent.indexOf('Android') !== -1;
     
     var config = (function(){
