@@ -287,111 +287,113 @@ var simulation_manager = (function(){
         };
     })();
     
-    // Time helpers
-    // Roles:
-    // - convert seconds that passed from midnight into nicely formatted hh:mm:ss
-    // and viceversa
-    var time_helpers = (function(){
-        function hms2s(hms) {
-            var parts = hms.split(':');
-            return parseInt(parts[0], 10)*3600 + parseInt(parts[1], 10)*60 + parseInt(parts[2], 10);
-        }
-        function s2hms(dayS) {
-            function pad2Dec(what) {
-                return (what < 10 ? '0' + what : what);
-            }
-            
-            if (dayS >= 3600*24) {
-                dayS -= 3600*24;
-            }
-            
-            // From http://stackoverflow.com/questions/1322732/convert-seconds-to-hh-mm-ss-with-javascript
-            var hours = Math.floor(dayS / 3600);
-            dayS %= 3600;
-            var minutes = Math.floor(dayS / 60);
-            var seconds = dayS % 60;
-            
-            return pad2Dec(hours) + ':' + pad2Dec(minutes) + ':' + pad2Dec(seconds);
-        }
-        function s2hm(dayS) {
-            // TODO - Round seconds to minutes, can be done nicer ?
-            dayS = (dayS/60).toFixed(0)*60;
-            var hms = s2hms(dayS);
-            return hms.substr(0, 5);
-        }
-        
-        return {
-            hms2s: hms2s,
-            s2hms: s2hms,
-            s2hm: s2hm
-        };
-    })();
-
     // Time manager
     // Roles:
     // - manages the current number of seconds that passed since midnight
     // - 'init' can be used with given hh:mm:ss in order to simulate different timestamps
     var timer = (function(){
-        var delay = 0;
-        var seconds_now = 0;
-        var seconds_increment = null;
-        var minute_now = null;
-        
-        function getDaySeconds() {
-            return seconds_now - delay;
-        }
+        var timer_refresh = null;
+        var ts_midnight = null;
+        var ts_now = null;
+        var ts_minute = null;
+
+        var seconds_multiply = null;
         
         function init(hms) {
-            seconds_increment = parseInt($('#time_multiply').val(), 10);
+            (function(){
+                var d = new Date();
+                
+                hms = hms || config.getUserParam('hms');
+                if (hms !== null) {
+                    var hms_parts = hms.split(':');
+                    d.setHours(parseInt(hms_parts[0], 10));
+                    d.setMinutes(parseInt(hms_parts[1], 10));
+                    d.setSeconds(parseInt(hms_parts[2], 10));
+                }
+                
+                ts_now = d.getTime() / 1000;
+
+                d.setHours(0);
+                d.setMinutes(0);
+                d.setSeconds(0);
+                d.setMilliseconds(0);
+                ts_midnight = d.getTime() / 1000;
+            })();
             
-            hms = hms || config.getUserParam('hms');
-            
-            var now = new Date();
-            var hours = now.getHours();
-            var minutes = now.getMinutes();
-            var seconds = now.getSeconds();
-            seconds_now = hours*3600 + minutes*60 + seconds;
-            
-            if (hms !== null) {
-                delay = seconds_now - time_helpers.hms2s(hms);
-            }
-            
-            var timeContainer = $('#day_time');
-            function paintHM() {
-                timeContainer.text(time_helpers.s2hms(getDaySeconds()));
-            }
-            
+            seconds_multiply = parseFloat($('#time_multiply').val());
             $('#time_multiply').change(function(){
-                seconds_increment = parseInt($(this).val(), 10);
+                seconds_multiply = parseInt($(this).val(), 10);
             });
             
-            paintHM();
-            setInterval(function(){
-                seconds_now += seconds_increment;
-                if (seconds_now > 24*3600) {
-                    seconds_now = 0;
+            listener_helpers.subscribe('map_init', function(){
+                function updateTimerRefresh(){
+                    timer_refresh = map.getZoom() > 12 ? 100 : 1000;
                 }
-                paintHM();
+                google.maps.event.addListener(map, 'zoom_changed', updateTimerRefresh);
+                updateTimerRefresh();
+            });
+            
+            var timeContainer = $('#day_time');
+            
+            function timeIncrement() {
+                var d_now = new Date(ts_now * 1000);
                 
-                var hms_matches = timeContainer.text().match(/([0-9]{2}):[0-9]{2}$/);
-                var minute_new = hms_matches[1];
-                if (minute_now !== minute_new) {
-                    minute_now = minute_new;
-                    listener_helpers.notify('minute_changed');
+                var ts_minute_new = d_now.getMinutes();
+                if (ts_minute !== ts_minute_new) {
+                    if (ts_minute !== null) {
+                        listener_helpers.notify('minute_changed');
+                    }
+                    ts_minute = ts_minute_new;
                 }
-
-            }, 1000);
+                
+                timeContainer.text(getHMS());
+                
+                ts_now += (timer_refresh / 1000) * seconds_multiply;
+                setTimeout(timeIncrement, timer_refresh);
+            }
+            timeIncrement();
         }
         
-        function getHM() {
-            var hms = time_helpers.s2hms(getDaySeconds());
-            return hms.substring(0, 2) + hms.substring(3, 5);
+        function pad2Dec(what) {
+            return (what < 10 ? '0' + what : what);
+        }
+        
+        function getHMS(ts) {
+            ts = ts || ts_now;
+
+            var d = new Date(ts * 1000);
+            
+            var hours = pad2Dec(d.getHours());
+            var minutes = pad2Dec(d.getMinutes());
+            var seconds = pad2Dec(d.getSeconds());
+            
+            return hours + ':' + minutes + ':' + seconds;
         }
         
         return {
             init: init,
-            getTime: getDaySeconds,
-            getHM: getHM
+            getTS: function(ts) {
+                return ts_now;
+            },
+            getHM: function(ts) {
+                var hms = getHMS(ts);
+                return hms.substring(0, 2) + ':' + hms.substring(3, 5);
+            },
+            getTSMidnight: function() {
+                return ts_midnight;
+            },
+            getRefreshValue: function() {
+                return timer_refresh;
+            },
+            getHMS2TS: function(hms) {
+                var hms_parts = hms.split(':');
+
+                var hours = parseInt(hms_parts[0], 10);
+                var minutes = parseInt(hms_parts[1], 10);
+                var seconds = parseInt(hms_parts[2], 10);
+                
+                return ts_midnight + hours * 3600 + minutes * 60 + seconds;
+            }
         };
     })();
     
@@ -506,10 +508,7 @@ var simulation_manager = (function(){
 
             $('.vehicle_name', $('#vehicle_info')).text(vehicle.name);
             
-            var hms = timer.getTime();
-            if (vehicle.has_multiple_days && (hms < vehicle.depS[0])) {
-                hms += 24 * 3600;
-            }
+            var ts = timer.getTS();
             
             var html_rows = [];
             $.each(vehicle.stations, function(index, stop_id) {
@@ -523,10 +522,10 @@ var simulation_manager = (function(){
                     html_row += '<td><a href="#station_id=' + stop_id + '" data-station-id="' + stop_id + '">' + stationsPool.get(stop_id) + '</a></td>';
                 }
                 
-                var hm_arr = (typeof vehicle.arrS[index - 1] === 'undefined') ? '' : time_helpers.s2hm(vehicle.arrS[index - 1]);
+                var hm_arr = (typeof vehicle.arrS[index - 1] === 'undefined') ? '' : timer.getHM(vehicle.arrS[index - 1]);
                 html_row += '<td>' + hm_arr + '</td>';
 
-                var hm_dep = (typeof vehicle.depS[index] === 'undefined') ? '' : time_helpers.s2hm(vehicle.depS[index]);
+                var hm_dep = (typeof vehicle.depS[index] === 'undefined') ? '' : timer.getHM(vehicle.depS[index]);
                 html_row += '<td>' + hm_dep + '</td></tr>';
 
                 html_rows.push(html_row);
@@ -538,7 +537,7 @@ var simulation_manager = (function(){
                 if (row_dep_sec === "n/a") {
                     return;
                 }
-                if (row_dep_sec < hms) {
+                if (row_dep_sec < ts) {
                     $(this).addClass('passed');
                 }
             });
@@ -554,9 +553,11 @@ var simulation_manager = (function(){
         }
         
         function station_info_display(station_id) {
+            var hm = timer.getHM();
+            
             var url = config.getParam('json_paths').station_vehicles;
             url = url.replace(/\[station_id\]/, station_id);
-            url = url.replace(/\[hhmm\]/, timer.getHM());
+            url = url.replace(/\[hhmm\]/, hm.replace(':', ''));
             
             $.ajax({
                 url: url,
@@ -574,7 +575,7 @@ var simulation_manager = (function(){
                         }
                         
                         html_row += '<td>' + stationsPool.get(vehicle.st_b) + '</td>';
-                        html_row += '<td>' + time_helpers.s2hm(vehicle.dep) + '</td>';
+                        html_row += '<td>' + timer.getHM(vehicle.dep) + '</td>';
                         html_rows.push(html_row);
                     });
                     $('#station_departures > tbody').html(html_rows.join(''));
@@ -833,7 +834,7 @@ var simulation_manager = (function(){
                     // TODO - FIXME later ?
                     // Kind of a hack, getBounds is ready only after a while since loading, so we hook in the 'idle' event
                     map_inited = true;
-
+                    
                     map_layers_add();
                     listener_helpers.notify('map_init');
                 }
@@ -896,7 +897,7 @@ var simulation_manager = (function(){
                     var sec_ar = [];
                     $.each(str_hhmm.split('_'), function(index, hhmm){
                         var hhmm_matches = hhmm.match(/([0-9]{2})([0-9]{2})/);
-                        sec_ar.push(time_helpers.hms2s(hhmm_matches[1] + ':' + hhmm_matches[2] + ':00'));
+                        sec_ar.push(timer.getHMS2TS(hhmm_matches[1] + ':' + hhmm_matches[2] + ':00'));
                     });
                     return sec_ar;
                 }
@@ -928,7 +929,6 @@ var simulation_manager = (function(){
                 match: match
             };
         })();
-
 
         // Vehicle icons manager. 
         // Roles:
@@ -972,20 +972,29 @@ var simulation_manager = (function(){
                 $.each(times, function(k, time){
                     // 32855 = 9 * 3600 + 7 * 60 + 35
                     if ((typeof time) === 'number') {
+                        if (time < (2 * 24 * 3600)) {
+                            time += timer.getTSMidnight();
+                        }                        
+
                         time_ar.push(time);
                         return;
                     }
                     
                     // 09:07:35
                     if (time.match(/^[0-9]{2}:[0-9]{2}:[0-9]{2}$/) !== null) {
-                        time_ar.push(time_helpers.hms2s(time));
+                        time = timer.getHMS2TS(time);
+                        
+                        time_ar.push(time);
                         return;
                     }
                     
                     // 09:07
                     if (time.match(/^[0-9]{2}:[0-9]{2}$/) !== null) {
                         var hms = time + ':00';
-                        time_ar.push(time_helpers.hms2s(hms));
+
+                        time = timer.getHMS2TS(hms);
+                        
+                        time_ar.push(time);
                         return;
                     }
                 });
@@ -993,15 +1002,12 @@ var simulation_manager = (function(){
                 return time_ar;
             }
             
-            var has_multiple_days = params.arrs[params.arrs.length - 1] > 24 * 3600;
-
             this.id                 = params.id;
             this.name               = params.name;
             this.stations           = params.sts;
             this.edges              = params.edges;
             this.depS               = parseTimes(params.deps);
             this.arrS               = parseTimes(params.arrs);
-            this.has_multiple_days  = has_multiple_days;
             
             $.each(params.edges, function(k, edges) {
                 if (k === 0) { return; }
@@ -1056,34 +1062,31 @@ var simulation_manager = (function(){
             var that = this;
             
             function animate() {
-                var hms = timer.getTime();
-                if (that.has_multiple_days && (hms < that.depS[0])) {
-                    hms += 24 * 3600;
-                }
+                var ts = timer.getTS();
 
                 var vehicle_found = false;
                 for (var i=0; i<that.arrS.length; i++) {
-                    if (hms < that.arrS[i]) {
+                    if (ts < that.arrS[i]) {
                         var station_a = that.stations[i];
                         var station_b = that.stations[i+1];
 
                         var vehicle_position = null;
                         var route_percent = 0;
 
-                        if (hms > that.depS[i]) {
+                        if (ts > that.depS[i]) {
                             // Vehicle is in motion between two stations
                             vehicle_found = true;
                             if (that.marker.get('speed') === 0) {
                                 var speed = linesPool.lengthGet(that.edges[i+1]) * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
                                 that.marker.set('speed', parseInt(speed, 10));
-                                that.marker.set('status', 'Heading to ' + stationsPool.get(station_b) + '(' + time_helpers.s2hm(that.arrS[i]) + ') with ' + that.marker.get('speed') + ' km/h');
+                                that.marker.set('status', 'Heading to ' + stationsPool.get(station_b) + '(' + timer.getHM(that.arrS[i]) + ') with ' + that.marker.get('speed') + ' km/h');
                             }
 
-                            route_percent = (hms - that.depS[i])/(that.arrS[i] - that.depS[i]);
+                            route_percent = (ts - that.depS[i])/(that.arrS[i] - that.depS[i]);
                         } else {
                             // Vehicle is in a station
                             vehicle_found = true;
-                            that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + time_helpers.s2hm(that.depS[i]));
+                            that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + timer.getHM(that.depS[i]));
                             that.marker.set('speed', 0);
                         }
                         
@@ -1112,11 +1115,13 @@ var simulation_manager = (function(){
                                 that.marker.setMap(map);
                             }
                             that.marker.setPosition(vehicle_position);
+                            
+                            var is_detailed = linesPool.isDetailed(that.edges[i+1], route_percent);
                         } else {
                             that.marker.setMap(null);
                         }
-
-                        setTimeout(animate, 1000);
+                        
+                        setTimeout(animate, timer.getRefreshValue());
                         break;
                     }
                 } // end arrivals loop
@@ -1132,8 +1137,10 @@ var simulation_manager = (function(){
 
         return {
             load: function() {
+                var hm = timer.getHM();
+                
                 var url = config.getParam('json_paths').vehicles;
-                url = url.replace(/\[hhmm\]/, timer.getHM());
+                url = url.replace(/\[hhmm\]/, hm.replace(':', ''));
                 
                 $.ajax({
                     url: url,
