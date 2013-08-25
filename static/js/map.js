@@ -292,7 +292,7 @@ var simulation_manager = (function(){
     // - manages the current number of seconds that passed since midnight
     // - 'init' can be used with given hh:mm:ss in order to simulate different timestamps
     var timer = (function(){
-        var timer_refresh = null;
+        var timer_refresh = 100;
         var ts_midnight = null;
         var ts_now = null;
         var ts_minute = null;
@@ -323,14 +323,6 @@ var simulation_manager = (function(){
             seconds_multiply = parseFloat($('#time_multiply').val());
             $('#time_multiply').change(function(){
                 seconds_multiply = parseInt($(this).val(), 10);
-            });
-            
-            listener_helpers.subscribe('map_init', function(){
-                function updateTimerRefresh(){
-                    timer_refresh = map.getZoom() > 12 ? 100 : 1000;
-                }
-                google.maps.event.addListener(map, 'zoom_changed', updateTimerRefresh);
-                updateTimerRefresh();
             });
             
             var timeContainer = $('#day_time');
