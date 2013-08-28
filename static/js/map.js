@@ -142,7 +142,10 @@ var simulation_manager = (function(){
                 var pB = route.points[i];
                 var d12 = google.maps.geometry.spherical.computeDistanceBetween(pA, pB);
                 if ((dC + d12) > dAC) {
-                    return google.maps.geometry.spherical.interpolate(pA, pB, (dAC - dC)/d12);
+                    return {
+                        heading: google.maps.geometry.spherical.computeHeading(pA, pB),
+                        position: google.maps.geometry.spherical.interpolate(pA, pB, (dAC - dC)/d12)
+                    };
                 }
                 dC += d12;
             }
@@ -1056,18 +1059,17 @@ var simulation_manager = (function(){
             function animate() {
                 var ts = timer.getTS();
 
-                var vehicle_found = false;
+                var vehicle_position = null;
+                var route_percent = 0;
+                var animation_timeout = 1000;
+
                 for (var i=0; i<that.arrS.length; i++) {
                     if (ts < that.arrS[i]) {
                         var station_a = that.stations[i];
                         var station_b = that.stations[i+1];
 
-                        var vehicle_position = null;
-                        var route_percent = 0;
-
                         if (ts > that.depS[i]) {
                             // Vehicle is in motion between two stations
-                            vehicle_found = true;
                             if (that.marker.get('speed') === 0) {
                                 var speed = linesPool.lengthGet(that.edges[i+1]) * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
                                 that.marker.set('speed', parseInt(speed, 10));
@@ -1076,16 +1078,17 @@ var simulation_manager = (function(){
 
                             route_percent = (ts - that.depS[i])/(that.arrS[i] - that.depS[i]);
                         } else {
-                            // Vehicle is in a station
-                            vehicle_found = true;
-                            that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + timer.getHM(that.depS[i]));
-                            that.marker.set('speed', 0);
+                            if (that.marker.get('speed') !== 0) {
+                                // Vehicle is in a station
+                                that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + timer.getHM(that.depS[i]));
+                                that.marker.set('speed', 0);                                
+                            }
                         }
                         
-                        vehicle_position = linesPool.positionGet(that.edges[i+1], route_percent);
-                        if (vehicle_position === null) {
+                        var vehicle_position_data = linesPool.positionGet(that.edges[i+1], route_percent);
+                        vehicle_position = vehicle_position_data.position;
+                        if (vehicle_position_data === null) {
                             console.log('Couldn\'t get the position of ' + that.id + ' between stations: ' + [station_a, station_b]);
-                            that.marker.setMap(null);
                             break;
                         }
                         
@@ -1106,19 +1109,26 @@ var simulation_manager = (function(){
                             if (that.marker.getMap() === null) {
                                 that.marker.setMap(map);
                             }
-                            that.marker.setPosition(vehicle_position);
                             
-                            var is_detailed = linesPool.isDetailed(that.edges[i+1], route_percent);
+                            var latlng = vehicle_position.toUrlValue();
+                            if (that.marker.get('latlng') !== latlng) {
+                                that.marker.set('latlng', latlng);
+                                that.marker.setPosition(vehicle_position);
+                                
+                                animation_timeout = timer.getRefreshValue();
+                                
+                                var is_detailed = linesPool.isDetailed(that.edges[i+1], route_percent);
+                            }
                         } else {
                             that.marker.setMap(null);
                         }
                         
-                        setTimeout(animate, timer.getRefreshValue());
+                        setTimeout(animate, animation_timeout);
                         break;
                     }
                 } // end arrivals loop
 
-                if (vehicle_found === false) {
+                if (vehicle_position === null) {
                     that.marker.setMap(null);
                     delete simulation_vehicles[that.id];
                 }
