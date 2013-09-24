@@ -131,37 +131,28 @@ var simulation_manager = (function(){
 
         
         // TODO - that can be a nice feature request for google.maps.geometry lib
-        function positionOnRouteAtPercentGet(ab_edges, perc) {
-            var route = routes[ab_edges];
-            
-            var dC = 0;
-            var dAC = route.length*perc;
-            
-            for (var i=1; i<route.points.length; i++) {
-                var pA = route.points[i-1];
-                var pB = route.points[i];
-                var d12 = google.maps.geometry.spherical.computeDistanceBetween(pA, pB);
-                if ((dC + d12) > dAC) {
-                    return {
-                        heading: google.maps.geometry.spherical.computeHeading(pA, pB),
-                        position: google.maps.geometry.spherical.interpolate(pA, pB, (dAC - dC)/d12)
-                    };
+        function positionOnRouteAtPercentGet(ab_edges, percent) {
+            function routeIsDetailedAtPercent() {
+                for (var k=0; k<route.detailed_parts.length; k++) {
+                    if ((percent >= route.detailed_parts[k].start) && (percent < route.detailed_parts[k].end)) {
+                        return true;
+                    }
                 }
-                dC += d12;
+
+                return false;
             }
             
-            return null;
-        }
-        
-        function routeIsDetailedAtPercent(ab_edges, percent) {
             var route = routes[ab_edges];
-            for (var k=0; k<route.detailed_parts.length; k++) {
-                if ((percent > route.detailed_parts[k].start) && (percent < route.detailed_parts[k].end)) {
-                    return true;
-                }
+
+            var dAC = route.length*percent;
+            
+            var is_detailed = map_helpers.isDetailView() ? routeIsDetailedAtPercent() : false;
+            var position_data = positionDataGet(route, dAC, is_detailed);
+            if (position_data !== null) {
+                position_data.is_detailed = is_detailed;
             }
             
-            return false;
+            return position_data;
         }
         
         function routeAdd(ab_edges) {
@@ -202,7 +193,7 @@ var simulation_manager = (function(){
                     if (is_detailed_last === false) {
                         routeDetailedParts[routeDetailedParts_i] = {
                             start: dAC / dAB,
-                            end: k
+                            end: 1
                         };
                     }
                 }
@@ -277,16 +268,44 @@ var simulation_manager = (function(){
                 };
             });
         }
+
+        function positionDataGet(route, dAC, is_detailed) {
+            var dC = 0;
+            
+            for (var i=1; i<route.points.length; i++) {
+                var pA = route.points[i-1];
+                var pB = route.points[i];
+                var d12 = google.maps.geometry.spherical.computeDistanceBetween(pA, pB);
+                if ((dC + d12) > dAC) {
+                    var data = {
+                        position: google.maps.geometry.spherical.interpolate(pA, pB, (dAC - dC)/d12)
+                    };
+                    if (is_detailed) {
+                        data.heading = google.maps.geometry.spherical.computeHeading(pA, pB);
+                    }
+                    
+                    return data;
+                }
+                dC += d12;
+            }
+            
+            return null;
+        }
+
+        function projectDistanceAlongRoute(ab_edges, dAC) {
+            var route = routes[ab_edges];
+            return positionDataGet(route, dAC, true);
+        }
         
         return {
             positionGet: positionOnRouteAtPercentGet,
-            isDetailed: routeIsDetailedAtPercent,
             routeAdd: routeAdd,
             lengthGet: lengthGet,
             routeHighlight: routeHighlight,
             routeHighlightRemove: routeHighlightRemove,
             loadEncodedEdges: loadEncodedEdges,
-            loadGeoJSONEdges: loadGeoJSONEdges
+            loadGeoJSONEdges: loadGeoJSONEdges,
+            projectDistanceAlongRoute: projectDistanceAlongRoute
         };
     })();
     
@@ -663,6 +682,8 @@ var simulation_manager = (function(){
     
     var map_helpers = (function(){
         var geolocation_marker = null;
+        var has_detail_view = false;
+        var extended_bounds = null;
         
         function init(){
             var mapStyles = [
@@ -704,12 +725,12 @@ var simulation_manager = (function(){
             ];
             
             geolocation_marker = new google.maps.Marker({
-                icon: new google.maps.MarkerImage(
-                    'static/images/geolocation-bluedot.png',
-                    new google.maps.Size(17, 17),
-                    new google.maps.Point(0, 0),
-                    new google.maps.Point(8, 8)
-                ),
+                icon: {
+                    url: 'static/images/geolocation-bluedot.png',
+                    size: new google.maps.Size(17, 17),
+                    origin: new google.maps.Point(0, 0),
+                    anchor: new google.maps.Point(8, 8)
+                },
                 map: null,
                 position: new google.maps.LatLng(0, 0)
             });
@@ -817,10 +838,14 @@ var simulation_manager = (function(){
                     }
 
                     var zoom = map.getZoom();
-                    toggleLayerVisibility(stations_layer, zoom >= 12);            
+                    var map_type_id = map.getMapTypeId();
+
+                    toggleLayerVisibility(stations_layer, (zoom >= 12) && (map_type_id !== google.maps.MapTypeId.SATELLITE));
+                    toggleLayerVisibility(edges_layer, map_type_id !== google.maps.MapTypeId.SATELLITE);
                 }
 
                 google.maps.event.addListener(map, 'idle', trigger_toggleLayerVisibility);
+                google.maps.event.addListener(map, 'maptypeid_changed', trigger_toggleLayerVisibility);
                 trigger_toggleLayerVisibility();
             }
 
@@ -832,6 +857,43 @@ var simulation_manager = (function(){
                     
                     map_layers_add();
                     listener_helpers.notify('map_init');
+                    
+                    function update_detail_view_state() {
+                        if (map.getMapTypeId() !== google.maps.MapTypeId.SATELLITE) {
+                            has_detail_view = false;
+                            return;
+                        }
+
+                        if (map.getZoom() < 17) {
+                            has_detail_view = false;
+                            return;
+                        }
+                        
+                        if (map.getTilt() !== 0) {
+                            has_detail_view = false;
+                            return;
+                        }
+                        
+                        has_detail_view = true;
+                    }
+                    google.maps.event.addListener(map, 'zoom_changed', update_detail_view_state);
+                    google.maps.event.addListener(map, 'tilt_changed', update_detail_view_state);
+                    google.maps.event.addListener(map, 'maptypeid_changed', update_detail_view_state);
+                    update_detail_view_state();
+                    
+                    function update_extended_bounds() {
+                        var map_bounds = map.getBounds();
+
+                        var bounds_point = map_bounds.getSouthWest();
+                        var new_bounds_sw = new google.maps.LatLng(bounds_point.lat() - map_bounds.toSpan().lat(), bounds_point.lng() - map_bounds.toSpan().lng());
+
+                        var bounds_point = map_bounds.getNorthEast();
+                        var new_bounds_ne = new google.maps.LatLng(bounds_point.lat() + map_bounds.toSpan().lat(), bounds_point.lng() + map_bounds.toSpan().lng());
+
+                        extended_bounds = new google.maps.LatLngBounds(new_bounds_sw, new_bounds_ne);
+                    }
+                    google.maps.event.addListener(map, 'idle', update_extended_bounds);
+                    update_extended_bounds();
                 }
             });
         }
@@ -845,7 +907,13 @@ var simulation_manager = (function(){
 
         return {
             init: init,
-            updateGeolocation: geolocation_update
+            updateGeolocation: geolocation_update,
+            isDetailView: function() {
+                return has_detail_view;
+            },
+            getExtendedBounds: function() {
+                return extended_bounds;
+            }
         };
     })();
     
@@ -930,24 +998,64 @@ var simulation_manager = (function(){
         // - keep a reference for each vehicle type (IC, ICE, etc..)
         var imagesPool = (function(){
             var icons = {};
+
             function iconGet(type) {
                 if (typeof icons[type] !== 'undefined') {
                     return icons[type];
                 }
 
-                var icon = new google.maps.MarkerImage(
-                    'static/images/vehicle-types/' + type + '.png',
-                     new google.maps.Size(20, 20),
-                     new google.maps.Point(0, 0),
-                     new google.maps.Point(10, 10)
-                );
+                var icon = {
+                    url: 'static/images/vehicle-types/' + type + '.png',
+                    size: new google.maps.Size(20, 20),
+                    origin: new google.maps.Point(0, 0),
+                    anchor: new google.maps.Point(10, 10)
+                };
                 icons[type] = icon;
 
                 return icon;
             }
 
+            var vehicle_detail_base_zoom = 17;            
+            var vehicle_detail_config = {
+                sbahn_locomotive: {
+                    base_zoom_width: 35,
+                    width: 246
+                }
+            };
+            var vehicle_detail_icons = {};
+            
+            var service_parts = {
+                s: {
+                    offsets: [-28, 0, 28],
+                    vehicles: ['sbahn_locomotive', 'sbahn_locomotive', 'sbahn_locomotive']
+                }
+            };
+            
+            function getVehicleIcon(zoom, type, heading) {
+                var key = zoom + '_' + type + '_' + heading;
+                if (typeof vehicle_detail_icons[key] === 'undefined') {
+                    var original_width = vehicle_detail_config[type].width;
+                    var icon_width = vehicle_detail_config[type].base_zoom_width * Math.pow(2, parseInt(zoom - vehicle_detail_base_zoom, 10));
+                    
+                    var icon = {
+                        url: 'static/images/vehicle-detail/' + type + '/' + heading + '.png',
+                        size: new google.maps.Size(original_width, original_width),
+                        origin: new google.maps.Point(0, 0),
+                        scaledSize: new google.maps.Size(icon_width, icon_width),
+                        anchor: new google.maps.Point(parseInt(icon_width/2, 10), parseInt(icon_width/2, 10))
+                    };
+                    vehicle_detail_icons[key] = icon;
+                }
+                
+                return vehicle_detail_icons[key];
+            }
+
             return {
-                iconGet: iconGet
+                iconGet: iconGet,
+                getServicePartsConfig: function(key) {
+                    return service_parts[key] || null;
+                },
+                getVehicleIcon: getVehicleIcon
             };
         })();
 
@@ -1003,6 +1111,7 @@ var simulation_manager = (function(){
             this.edges              = params.edges;
             this.depS               = parseTimes(params.deps);
             this.arrS               = parseTimes(params.arrs);
+            this.service_type       = params.service_type;
             
             $.each(params.edges, function(k, edges) {
                 if (k === 0) { return; }
@@ -1011,12 +1120,17 @@ var simulation_manager = (function(){
 
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(0, 0),
-                icon: imagesPool.iconGet(params.type),
                 map: null,
                 speed: 0,
                 status: 'not on map'
             });
+            var icon = imagesPool.iconGet(params.type);
+            if (icon !== null) {
+                marker.setIcon(icon);
+            }
+            
             this.marker = marker;
+            this.detail_markers = [];
             
             // TODO - FIXME .apply
             var that = this;
@@ -1025,7 +1139,7 @@ var simulation_manager = (function(){
                 simulation_panel.displayVehicle(that);
             });
 
-            google.maps.event.addListener(marker, 'mouseover', function(){
+            this.mouseOverMarker = function() {
                 if (map.getZoom() < config.getParam('zoom_mouseover_min')) {
                     return;
                 }
@@ -1040,12 +1154,14 @@ var simulation_manager = (function(){
                 $('.status', popup_div).text(marker.get('status'));
 
                 vehicle_ib.setContent($('#vehicle_popup_container').html());
-                vehicle_ib.open(map, marker);
-            });
-            google.maps.event.addListener(marker, 'mouseout', function(){
+                vehicle_ib.open(map, this);
+            }
+            this.mouseOutMarker = function() {
                 vehicle_ib.set('vehicle_id', null);
                 vehicle_ib.close();
-            });
+            }
+            google.maps.event.addListener(marker, 'mouseover', this.mouseOverMarker);
+            google.maps.event.addListener(marker, 'mouseout', this.mouseOutMarker);
             
             if (vehicle_detect.match(this.name, this.id)) {
                 simulation_panel.displayVehicle(this);
@@ -1061,6 +1177,7 @@ var simulation_manager = (function(){
 
                 var vehicle_position = null;
                 var route_percent = 0;
+                var d_AC = 0;
                 var animation_timeout = 1000;
 
                 for (var i=0; i<that.arrS.length; i++) {
@@ -1069,58 +1186,52 @@ var simulation_manager = (function(){
                         var station_b = that.stations[i+1];
 
                         if (ts > that.depS[i]) {
+                            var routeLength = linesPool.lengthGet(that.edges[i+1]);
+                            
                             // Vehicle is in motion between two stations
                             if (that.marker.get('speed') === 0) {
-                                var speed = linesPool.lengthGet(that.edges[i+1]) * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
+                                var speed = routeLength * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
                                 that.marker.set('speed', parseInt(speed, 10));
                                 that.marker.set('status', 'Heading to ' + stationsPool.get(station_b) + '(' + timer.getHM(that.arrS[i]) + ') with ' + that.marker.get('speed') + ' km/h');
                             }
-
+                            
                             route_percent = (ts - that.depS[i])/(that.arrS[i] - that.depS[i]);
+                            
+                            d_AC = routeLength * route_percent;
                         } else {
+                            // Vehicle is in a station
                             if (that.marker.get('speed') !== 0) {
-                                // Vehicle is in a station
                                 that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + timer.getHM(that.depS[i]));
-                                that.marker.set('speed', 0);                                
+                                that.marker.set('speed', 0);
                             }
                         }
                         
                         var vehicle_position_data = linesPool.positionGet(that.edges[i+1], route_percent);
-                        vehicle_position = vehicle_position_data.position;
                         if (vehicle_position_data === null) {
-                            console.log('Couldn\'t get the position of ' + that.id + ' between stations: ' + [station_a, station_b]);
                             break;
                         }
+
+                        var vehicle_position = vehicle_position_data.position;
                         
                         if (that.marker.get('follow') === 'yes-init') {
                             that.marker.set('follow', 'yes');
                             
-                            that.marker.setMap(map);
-                            that.marker.setPosition(vehicle_position);
-                            
                             map.panTo(vehicle_position);
-                            map.setZoom(config.getParam('zoom_follow'));
+                            if (map.getZoom() < config.getParam('zoom_follow')) {
+                                map.setZoom(config.getParam('zoom_follow'));
+                            }
                             map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
 
                             map.bindTo('center', that.marker, 'position');
                         }
                         
-                        if (map.getBounds().contains(vehicle_position)) {
-                            if (that.marker.getMap() === null) {
-                                that.marker.setMap(map);
-                            }
+                        var latlng = vehicle_position.toUrlValue();
+                        if (that.marker.get('latlng') !== latlng) {
+                            that.marker.set('latlng', latlng);
                             
-                            var latlng = vehicle_position.toUrlValue();
-                            if (that.marker.get('latlng') !== latlng) {
-                                that.marker.set('latlng', latlng);
-                                that.marker.setPosition(vehicle_position);
-                                
-                                animation_timeout = timer.getRefreshValue();
-                                
-                                var is_detailed = linesPool.isDetailed(that.edges[i+1], route_percent);
-                            }
-                        } else {
-                            that.marker.setMap(null);
+                            that.updateIcon(vehicle_position_data, d_AC, i);
+                            
+                            animation_timeout = timer.getRefreshValue();
                         }
                         
                         setTimeout(animate, animation_timeout);
@@ -1129,12 +1240,100 @@ var simulation_manager = (function(){
                 } // end arrivals loop
 
                 if (vehicle_position === null) {
-                    that.marker.setMap(null);
                     delete simulation_vehicles[that.id];
                 }
             }
             
             animate();
+        };
+        Vehicle.prototype.updateIcon = function(data, d_AC, i) {
+            var service_parts = imagesPool.getServicePartsConfig(this.service_type);
+            var render_in_detail = data.is_detailed && (service_parts !== null);
+            var vehicle_position = data.position;
+            this.marker.setPosition(data.position);
+            
+            if (render_in_detail) {
+                if (this.marker.getMap() !== null) {
+                    this.marker.setMap(null);
+                }
+                
+                if (map_helpers.getExtendedBounds().contains(vehicle_position)) {
+                    var that = this;
+                    $.each(service_parts.offsets, function(k, offset){
+                        if ((typeof that.detail_markers[k]) === 'undefined') {
+                            that.detail_markers[k] = new google.maps.Marker({
+                                map: null
+                            });
+
+                            var marker = that.detail_markers[k];
+                            google.maps.event.addListener(marker, 'mouseover', that.mouseOverMarker);
+                            google.maps.event.addListener(marker, 'mouseout', that.mouseOutMarker);
+                            google.maps.event.addListener(marker, 'click', function(){
+                                simulation_panel.displayVehicle(that);
+                            });
+                        }
+
+                        var marker = that.detail_markers[k];
+
+                        var route = that.edges[i+1];
+                        var route_length = linesPool.lengthGet(route);
+                        var d_AC_new = d_AC + offset;
+
+                        if ((d_AC + offset) > route_length) {
+                            d_AC_new -= route_length;
+                            route = that.edges[i+2];
+                        }
+                        var position_data = linesPool.projectDistanceAlongRoute(route, d_AC_new);
+
+                        if (position_data === null) {
+                            marker.setMap(null);
+                            return;
+                        }
+
+                        var heading = parseInt(position_data.heading, 10);
+                        if (heading < 0) {
+                            heading += 360;
+                        }
+                        heading = ('00' + heading).slice(-3);
+
+                        var zoom = map.getZoom();
+                        var icon = imagesPool.getVehicleIcon(zoom, service_parts.vehicles[k], heading);
+                        if (((typeof marker.getIcon()) === 'undefined') || (marker.getIcon().url !== icon.url) || (marker.get('zoom') !== zoom)) {
+                            marker.setIcon(icon);
+                            marker.set('zoom', map.getZoom());
+                        }
+
+                        marker.setPosition(position_data.position);
+                        if (marker.getMap() === null) {
+                            marker.setMap(map);
+                        }
+                    });
+                } else {
+                    if (this.detail_markers.length > 0) {
+                        $.each(this.detail_markers, function(k, marker){
+                            marker.setMap(null);
+                        });
+                        this.detail_markers = [];                    
+                    }
+                }
+            } else {
+                if (this.detail_markers.length > 0) {
+                    $.each(this.detail_markers, function(k, marker){
+                        marker.setMap(null);
+                    });
+                    this.detail_markers = [];                    
+                }
+                
+                if (map.getBounds().contains(vehicle_position)) {
+                    if (this.marker.getMap() === null) {
+                        this.marker.setMap(map);
+                    }
+                } else {
+                    if (this.marker.getMap() !== null) {
+                        this.marker.setMap(null);
+                    }
+                }
+            }
         };
 
         return {
