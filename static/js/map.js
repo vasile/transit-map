@@ -1292,7 +1292,7 @@ var simulation_manager = (function(){
                         }
                         
                         that.updateIcon(vehicle_position_data, d_AC, i);
-                        if (map.getZoom() >= 17) {
+                        if (map.getZoom() >= 12) {
                             animation_timeout = timer.getRefreshValue();
                         }
                         
