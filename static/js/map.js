@@ -1017,17 +1017,76 @@ var simulation_manager = (function(){
 
             var vehicle_detail_base_zoom = 17;            
             var vehicle_detail_config = {
-                sbahn_locomotive: {
+                "s-bahn-rear": {
+                    base_zoom_width: 33,
+                    width: 228
+                },
+                "s-bahn-middle": {
+                    base_zoom_width: 33,
+                    width: 247
+                },
+                "s-bahn-front": {
+                    base_zoom_width: 33,
+                    width: 239
+                },
+
+                "s-bahn_old-rear": {
                     base_zoom_width: 35,
-                    width: 246
+                    width: 228
+                },
+                "s-bahn_old-middle": {
+                    base_zoom_width: 35,
+                    width: 247
+                },
+                "s-bahn_old-front": {
+                    base_zoom_width: 35,
+                    width: 239
+                },
+
+                "ic-loco-c2": {
+                    base_zoom_width: 36,
+                    width: 225
+                },
+                "ic-coach": {
+                    base_zoom_width: 36,
+                    width: 254
+                },
+                "ic-loco": {
+                    base_zoom_width: 19,
+                    width: 126
+                },
+
+                "icn-rear": {
+                    base_zoom_width: 32,
+                    width: 207
+                },
+                "icn-middle": {
+                    base_zoom_width: 32,
+                    width: 218
+                },
+                "icn-front": {
+                    base_zoom_width: 32,
+                    width: 207
                 }
             };
             var vehicle_detail_icons = {};
             
             var service_parts = {
                 s: {
-                    offsets: [-28, 0, 28],
-                    vehicles: ['sbahn_locomotive', 'sbahn_locomotive', 'sbahn_locomotive']
+                    offsets: [-40, -13, 14, 41],
+                    vehicles: ['s-bahn-rear', 's-bahn-middle', 's-bahn-middle', 's-bahn-front']
+                },
+                sbahn_old: {
+                    offsets: [-42, -14, 14, 42],
+                    vehicles: ['s-bahn_old-rear', 's-bahn_old-middle', 's-bahn_old-middle', 's-bahn_old-front']
+                },
+                ic: {
+                    offsets: [-110, -87, -58, -29, 0, 29, 58, 87],
+                    vehicles: ['ic-loco', 'ic-coach', 'ic-coach', 'ic-coach', 'ic-coach', 'ic-coach', 'ic-coach', 'ic-loco-c2']
+                },
+                icn: {
+                    offsets: [-78, -52, -26, 0, 26, 52, 78],
+                    vehicles: ['icn-rear', 'icn-middle', 'icn-middle', 'icn-middle', 'icn-middle', 'icn-middle', 'icn-front']
                 }
             };
             
@@ -1053,6 +1112,11 @@ var simulation_manager = (function(){
             return {
                 iconGet: iconGet,
                 getServicePartsConfig: function(key) {
+                    // TODO Check me before merging
+                    if ((typeof service_parts[key]) === 'undefined') {
+                        key = 's';
+                    }
+                    return service_parts[key];
                     return service_parts[key] || null;
                 },
                 getVehicleIcon: getVehicleIcon
@@ -1113,7 +1177,7 @@ var simulation_manager = (function(){
             this.arrS               = parseTimes(params.arrs);
             this.service_type       = params.service_type;
             // TODO - remove me before merge
-            this.service_type       = 's';
+            // this.service_type       = 's';
             
             $.each(params.edges, function(k, edges) {
                 if (k === 0) { return; }
