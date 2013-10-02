@@ -1121,12 +1121,10 @@ var simulation_manager = (function(){
             return {
                 iconGet: iconGet,
                 getServicePartsConfig: function(key) {
-                    // TODO Check me before merging
                     if ((typeof service_parts[key]) === 'undefined') {
                         key = 's';
                     }
                     return service_parts[key];
-                    return service_parts[key] || null;
                 },
                 getVehicleIcon: getVehicleIcon
             };
