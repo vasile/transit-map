@@ -1031,16 +1031,16 @@ var simulation_manager = (function(){
                 },
 
                 "s-bahn_old-rear": {
-                    base_zoom_width: 35,
-                    width: 228
+                    base_zoom_width: 26,
+                    width: 153
                 },
                 "s-bahn_old-middle": {
                     base_zoom_width: 35,
-                    width: 247
+                    width: 228
                 },
                 "s-bahn_old-front": {
                     base_zoom_width: 35,
-                    width: 239
+                    width: 224
                 },
 
                 "ic-loco-c2": {
@@ -1067,7 +1067,12 @@ var simulation_manager = (function(){
                 "icn-front": {
                     base_zoom_width: 32,
                     width: 207
-                }
+                },
+                
+                "ir-coach": {
+                    base_zoom_width: 32,
+                    width: 223
+                },
             };
             var vehicle_detail_icons = {};
             
@@ -1077,7 +1082,7 @@ var simulation_manager = (function(){
                     vehicles: ['s-bahn-rear', 's-bahn-middle', 's-bahn-middle', 's-bahn-front']
                 },
                 sbahn_old: {
-                    offsets: [-42, -14, 14, 42],
+                    offsets: [-39, -14, 15, 44],
                     vehicles: ['s-bahn_old-rear', 's-bahn_old-middle', 's-bahn_old-middle', 's-bahn_old-front']
                 },
                 ic: {
@@ -1087,6 +1092,10 @@ var simulation_manager = (function(){
                 icn: {
                     offsets: [-78, -52, -26, 0, 26, 52, 78],
                     vehicles: ['icn-rear', 'icn-middle', 'icn-middle', 'icn-middle', 'icn-middle', 'icn-middle', 'icn-front']
+                },
+                ir: {
+                    offsets: [-93, -67, -41, -15, 11, 37, 63, 84],
+                    vehicles: ['ir-coach', 'ir-coach', 'ir-coach', 'ir-coach', 'ir-coach', 'ir-coach', 'ir-coach', 'ic-loco']
                 }
             };
             
