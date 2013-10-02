@@ -1318,15 +1318,6 @@ var simulation_manager = (function(){
             animate();
         };
         Vehicle.prototype.updateIcon = function(data, d_AC, i) {
-            function removeDetailMarkers(markers) {
-                if (markers.length > 0) {
-                    $.each(markers, function(k, marker){
-                        marker.setMap(null);
-                    });
-                    markers = [];                    
-                }
-            }
-            
             var service_parts = imagesPool.getServicePartsConfig(this.service_type);
             var render_in_detail = data.is_detailed && (service_parts !== null);
             var vehicle_position = data.position;
@@ -1389,10 +1380,16 @@ var simulation_manager = (function(){
                         }
                     });
                 } else {
-                    removeDetailMarkers(this.detail_markers);
+                    $.each(this.detail_markers, function(k, marker){
+                        marker.setMap(null);
+                    });
+                    this.detail_markers = [];
                 }
             } else {
-                removeDetailMarkers(this.detail_markers);
+                $.each(this.detail_markers, function(k, marker){
+                    marker.setMap(null);
+                });
+                this.detail_markers = [];
                 
                 if (map.getBounds().contains(vehicle_position)) {
                     if (this.marker.getMap() === null) {
