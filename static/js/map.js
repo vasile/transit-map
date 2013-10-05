@@ -1182,9 +1182,7 @@ var simulation_manager = (function(){
             this.edges              = params.edges;
             this.depS               = parseTimes(params.deps);
             this.arrS               = parseTimes(params.arrs);
-            // TODO - remove me before merge            
-            // this.service_type       = params.service_type;            
-            this.service_type       = params.type;
+            this.service_type       = params.service_type;
             
             $.each(params.edges, function(k, edges) {
                 if (k === 0) { return; }
