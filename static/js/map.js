@@ -839,9 +839,16 @@ var simulation_manager = (function(){
 
                     var zoom = map.getZoom();
                     var map_type_id = map.getMapTypeId();
-
-                    toggleLayerVisibility(stations_layer, (zoom >= 12) && (map_type_id !== google.maps.MapTypeId.SATELLITE));
-                    toggleLayerVisibility(edges_layer, map_type_id !== google.maps.MapTypeId.SATELLITE);
+                    
+                    var show_layer = true;
+                    if (map_type_id === google.maps.MapTypeId.SATELLITE) {
+                        if (zoom >= 15) {
+                            show_layer = false;
+                        }
+                    }
+                    
+                    toggleLayerVisibility(stations_layer, show_layer);
+                    toggleLayerVisibility(edges_layer, show_layer);
                 }
 
                 google.maps.event.addListener(map, 'idle', trigger_toggleLayerVisibility);
