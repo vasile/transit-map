@@ -1229,7 +1229,7 @@ var simulation_manager = (function(){
 
                 var popup_div = $('#vehicle_popup');
                 $('span.vehicle_name', popup_div).text(params.name);
-                $('.status', popup_div).text(marker.get('status'));
+                $('.status', popup_div).html(marker.get('status'));
 
                 vehicle_ib.setContent($('#vehicle_popup_container').html());
                 vehicle_ib.open(map, this);
@@ -1270,7 +1270,7 @@ var simulation_manager = (function(){
                             if (that.marker.get('speed') === 0) {
                                 var speed = routeLength * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
                                 that.marker.set('speed', parseInt(speed, 10));
-                                that.marker.set('status', 'Heading to ' + stationsPool.get(station_b) + '(' + timer.getHM(that.arrS[i]) + ') at ' + that.marker.get('speed') + ' km/h');
+                                that.marker.set('status', 'Heading to ' + stationsPool.get(station_b) + '(' + timer.getHM(that.arrS[i]) + ')<br/>Speed: ' + that.marker.get('speed') + ' km/h');
                             }
                             
                             route_percent = (ts - that.depS[i])/(that.arrS[i] - that.depS[i]);
