@@ -841,7 +841,7 @@ var simulation_manager = (function(){
                     var map_type_id = map.getMapTypeId();
                     
                     var show_layer = true;
-                    if (map_type_id === google.maps.MapTypeId.SATELLITE) {
+                    if ((map_type_id === google.maps.MapTypeId.SATELLITE) && (map.getTilt() === 0)) {
                         if (zoom >= 15) {
                             show_layer = false;
                         }
