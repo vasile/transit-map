@@ -1020,7 +1020,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8504056",
-"name":"Le Crêt"
+"name":"Le Crêt",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -1040,7 +1042,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8502207",
-"name":"Sihlbrugg"
+"name":"Sihlbrugg",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -1330,7 +1334,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8503411",
-"name":"Koblenz Dorf"
+"name":"Koblenz Dorf",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -1940,7 +1946,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8501575",
-"name":"Bovernier"
+"name":"Bovernier",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -3070,7 +3078,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8501576",
-"name":"Sembrancher"
+"name":"Sembrancher",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -3590,7 +3600,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8504055",
-"name":"Prayoud"
+"name":"Prayoud",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -3980,7 +3992,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8504052",
-"name":"Au Moulin"
+"name":"Au Moulin",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -4272,7 +4286,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8504051",
-"name":"Tatroz"
+"name":"Tatroz",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -4612,7 +4628,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8500182",
-"name":"Le Seignat"
+"name":"Le Seignat",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -4702,7 +4720,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8501573",
-"name":"Martigny-Croix"
+"name":"Martigny-Croix",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -4922,7 +4942,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8501579",
-"name":"Le Châble"
+"name":"Le Châble",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -5404,7 +5426,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8500163",
-"name":"Tramelan-Collège"
+"name":"Tramelan-Collège",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -5694,9 +5718,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8102352",
-"name":"",
-"type":"disabled",
-"rules":""
+"name":"Lustenau"
 },
 "geometry":{
 "type":"Point",
@@ -5876,9 +5898,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8505373",
-"name":"",
-"type":"disabled",
-"rules":""
+"name":"Bellavista"
 },
 "geometry":{
 "type":"Point",
@@ -7598,7 +7618,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8501578",
-"name":"Orsières"
+"name":"Orsières",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -8138,9 +8160,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8507387",
-"name":"",
-"type":"disabled",
-"rules":""
+"name":"Schynige Platte"
 },
 "geometry":{
 "type":"Point",
@@ -8790,9 +8810,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8505372",
-"name":"",
-"type":"disabled",
-"rules":""
+"name":"S. Nicolao"
 },
 "geometry":{
 "type":"Point",
@@ -9232,7 +9250,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8504057",
-"name":"Les Ponts"
+"name":"Les Ponts",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -9332,9 +9352,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8505367",
-"name":"",
-"type":"disabled",
-"rules":""
+"name":"Capolago Lago"
 },
 "geometry":{
 "type":"Point",
@@ -9434,9 +9452,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8507386",
-"name":"",
-"type":"disabled",
-"rules":""
+"name":"Breitlauenen"
 },
 "geometry":{
 "type":"Point",
@@ -9836,7 +9852,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8501572",
-"name":"Martigny-Bourg"
+"name":"Martigny-Bourg",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -10166,7 +10184,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8500183",
-"name":"Bellevue NE"
+"name":"Bellevue NE",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -10186,9 +10206,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8508350",
-"name":"",
-"type":"disabled",
-"rules":""
+"name":"Brienz BRB"
 },
 "geometry":{
 "type":"Point",
@@ -10428,9 +10446,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8508449",
-"name":"",
-"type":"disabled",
-"rules":""
+"name":"Aemsigen"
 },
 "geometry":{
 "type":"Point",
@@ -10530,7 +10546,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8504058",
-"name":"Planchy"
+"name":"Planchy",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -11051,18 +11069,6 @@
 },{
 "type":"Feature",
 "properties":{
-"station_id":"8069220",
-"name":"",
-"type":"disabled",
-"rules":""
-},
-"geometry":{
-"type":"Point",
-"coordinates":[7.651481,47.597574]
-}
-},{
-"type":"Feature",
-"properties":{
 "station_id":"8500172",
 "name":"La Chaux-des-Breuleux"
 },
@@ -11554,9 +11560,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8505374",
-"name":"",
-"type":"disabled",
-"rules":""
+"name":"Generoso Vetta"
 },
 "geometry":{
 "type":"Point",
@@ -12086,7 +12090,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8504059",
-"name":"Les Colombettes"
+"name":"Les Colombettes",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -12096,9 +12102,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8508458",
-"name":"",
-"type":"disabled",
-"rules":""
+"name":"Alpnachstad PB"
 },
 "geometry":{
 "type":"Point",
@@ -12828,7 +12832,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8501577",
-"name":"La Douay"
+"name":"La Douay",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -12958,7 +12964,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8504050",
-"name":"Granges (Veveyse)"
+"name":"Granges (Veveyse)",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -13038,9 +13046,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8508351",
-"name":"",
-"type":"disabled",
-"rules":""
+"name":"Planalp"
 },
 "geometry":{
 "type":"Point",
@@ -14170,7 +14176,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8503410",
-"name":"Rietheim"
+"name":"Rietheim",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -14590,7 +14598,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8501580",
-"name":"Etiez"
+"name":"Etiez",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -14890,7 +14900,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8508385",
-"name":"Meiringen MIB"
+"name":"Meiringen MIB",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -15080,9 +15092,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8508456",
-"name":"",
-"type":"disabled",
-"rules":""
+"name":"Pilatus Kulm"
 },
 "geometry":{
 "type":"Point",
@@ -15282,9 +15292,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8508352",
-"name":"",
-"type":"disabled",
-"rules":""
+"name":"Brienzer Rothorn"
 },
 "geometry":{
 "type":"Point",
@@ -15964,7 +15972,7 @@
 "type":"Feature",
 "properties":{
 "station_id":"8014428",
-"name":"",
+"name":"Weil am Rhein",
 "type":"disabled",
 "rules":""
 },
@@ -16896,7 +16904,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8503409",
-"name":"Bad Zurzach"
+"name":"Bad Zurzach",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -17376,7 +17386,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8500284",
-"name":"Hinteres Riedholz"
+"name":"Hinteres Riedholz",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -17466,7 +17478,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8508192",
-"name":"Bannwil Kleben"
+"name":"Bannwil Kleben",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -17556,7 +17570,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8774203",
-"name":"Ambilly"
+"name":"Ambilly",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -17566,7 +17582,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8774543",
-"name":"Saint-Julien-en-Genevois"
+"name":"Saint-Julien-en-Genevois",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -17576,7 +17594,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8774549",
-"name":"Annemasse"
+"name":"Annemasse",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -17598,7 +17618,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8014472",
-"name":"Dogern (D)"
+"name":"Dogern (D)",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -17632,7 +17654,9 @@
 "type":"Feature",
 "properties":{
 "station_id":"8014427",
-"name":"Weil am Rhein"
+"name":"Weil am Rhein",
+"type":"disabled",
+"rules":""
 },
 "geometry":{
 "type":"Point",
@@ -17641,7 +17665,7 @@
 },{
 "type":"Feature",
 "properties":{
-"station_id":"8060814",
+"station_id":"8060978",
 "name":"Weil am Rhein-Gartenstadt"
 },
 "geometry":{
@@ -17651,7 +17675,7 @@
 },{
 "type":"Feature",
 "properties":{
-"station_id":"8060818",
+"station_id":"8060979",
 "name":"Weil am Rhein-Pfädlistrasse"
 },
 "geometry":{
@@ -17661,7 +17685,7 @@
 },{
 "type":"Feature",
 "properties":{
-"station_id":"8080354",
+"station_id":"8069220",
 "name":"Lörrach-Dammstrasse"
 },
 "geometry":{
@@ -18067,6 +18091,276 @@
 "geometry":{
 "type":"Point",
 "coordinates":[8.544043,47.418623]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8014429",
+"name":"Weil am Rhein-Ost"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[7.63479,47.590628]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8014465",
+"name":"Wehr-Brennet"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[7.910074,47.581873]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8069221",
+"name":"Lörrach Museum/Burghof"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[7.66135,47.608192]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8501306",
+"name":"Chamby-Musée"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.912399,46.453825]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8503083",
+"name":"Zürich Römerhof"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[8.560697,47.368307]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8503084",
+"name":"Zürich Dolder"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[8.574531,47.373197]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8504325",
+"name":"Colombier NE Littorail"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.86543,46.965877]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8504398",
+"name":"Neuchâtel,Place Pury Littorail"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.928193,46.989411]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8504509",
+"name":"Neuchâtel, Port-de-Serrières"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.904884,46.980916]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8504510",
+"name":"Auvernier Littorail"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.878923,46.974237]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8504511",
+"name":"Boudry TN"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.838957,46.949589]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8506351",
+"name":"Ruderbach"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[9.595436,47.461111]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8508321",
+"name":"Luzern Allmend/Messe"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[8.303309,47.035076]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8516174",
+"name":"Genève-Stade"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.126058,46.176732]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8518459",
+"name":"Steinhausen Rigiblick"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[8.479695,47.187893]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8518690",
+"name":"Niederbipp Industrie"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[7.703171,47.278639]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8530708",
+"name":"Neuchâtel, Evole"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.923383,46.989681]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8530709",
+"name":"Neuchâtel, Champ-Bougin"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.912282,46.984557]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8530710",
+"name":"Neuchâtel, Serrières Ruau"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.897099,46.980089]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8530711",
+"name":"Colombier NE Allées Littorail"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.869511,46.968071]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8530712",
+"name":"Colombier NE, Les Chézards"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.863956,46.960843]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8530713",
+"name":"Boudry, Tuilière"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.842867,46.951468]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8578590",
+"name":"Ebnat, Kappel"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[9.120465,47.263927]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8591394",
+"name":"Zürich, Titlisstrasse"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[8.564598,47.370886]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8591421",
+"name":"Zürich, Waldhaus Dolder"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[8.568895,47.373457]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8594231",
+"name":"Areuse Les Isles Littorail"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.848521,46.954227]
+}
+},{
+"type":"Feature",
+"properties":{
+"station_id":"8595245",
+"name":"Areuse Littorail"
+},
+"geometry":{
+"type":"Point",
+"coordinates":[6.852818,46.954551]
 }
 }]
 }
