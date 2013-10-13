@@ -12,7 +12,7 @@ var simulation_manager = (function(){
             zoom_mouseover_min: 7,
             ft_id_mask: '1tDHsjdz7uhhAmWlmmwjR1P2Huf2LKMMiICPVdw',
             ft_id_lines: '1-1B2tYIO2JSnaacEHO8sfWVjm1S387lMEkHkjc4',
-            ft_id_stations: '1IkKgANy2PuxnzDZoWljfdILAjTrtv2-SrbxF9Vc',
+            ft_id_stations: '1YppDCNud7566oK_VwHsuUhGJqnm_CLDStMS3IuM',
             json_paths: {
                 edges: 'static/geojson/edges-sbb.json',
                 stations: 'static/geojson/stations-sbb.json',
@@ -846,7 +846,7 @@ var simulation_manager = (function(){
                     
                     var show_layer = true;
                     if ((map_type_id === google.maps.MapTypeId.SATELLITE) && (map.getTilt() === 0)) {
-                        if (zoom >= 15) {
+                        if (zoom >= 17) {
                             show_layer = false;
                         }
                     }
