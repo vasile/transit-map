@@ -1112,8 +1112,16 @@ var simulation_manager = (function(){
                     var original_width = vehicle_detail_config[type].width;
                     var icon_width = vehicle_detail_config[type].base_zoom_width * Math.pow(2, parseInt(zoom - vehicle_detail_base_zoom, 10));
                     
+                    var base_url;
+                    if (document.location.host.match(/simcity2\.ch/)) {
+                        base_url = 'http://static.vasile2.ch';
+                    } else {
+                        base_url = 'http://static.vasile.ch';
+                    }
+                    base_url += '/simcity/service-vehicle-detail';
+                    
                     var icon = {
-                        url: 'static/images/vehicle-detail/' + type + '/' + heading + '.png',
+                        url: base_url + '/' + type + '/' + heading + '.png',
                         size: new google.maps.Size(original_width, original_width),
                         origin: new google.maps.Point(0, 0),
                         scaledSize: new google.maps.Size(icon_width, icon_width),
