@@ -1,7 +1,9 @@
 ## About
 Vehicle simulator creates a Google Maps mashup with animated markers(vehicles) that are moving according with given timetables along polylines(vehicle tracks). 
 
-Projects that are using this script
+![Swiss railways(SBB)](static/images/github_badge_800px.png "Swiss railways(SBB)")
+
+### Projects using this script
 
 * **Swiss railways(SBB)** network simulator - http://simcity.vasile.ch/sbb/
 * **Romanian railways(CFR)** network simulator - http://cfr.webgis.ro/
@@ -9,6 +11,8 @@ Projects that are using this script
 * **Brașov (RAT)** public transport simulator - http://brasov.webgis.ro/
 * **Grenoble (TAG)** public transport simulator - http://simcity.vasile.ch/grenoble/
 * **Genève (TPG)** public transport simulator - http://simcity.vasile.ch/geneva/
+
+![Swiss railways(SBB)](http://simcity.vasile.ch/sbb/static/images/embed_social_200px.png "Swiss railways(SBB)") ![Romanian railways(CFR)](http://cfr.webgis.ro/static/images/embed_social_200px.png "Romanian railways(CFR)") ![Lausanne (TL)](http://simcity.vasile.ch/lausanne/static/images/embed_social_200px.png "Lausanne (TL)") ![Brașov (RAT)](http://brasov.webgis.ro/static/images/embed_social_200px.png "Brașov (RAT)") ![Grenoble (TAG)](http://simcity.vasile.ch/grenoble/static/images/embed_social_200px.png "Grenoble (TAG)") ![Genève (TPG)](http://simcity.vasile.ch/geneva/static/images/embed_social_200px.png "Genève (TPG)")
 
 ## Requirements
 
