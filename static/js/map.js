@@ -842,7 +842,7 @@ var simulation_manager = (function(){
                     
                     var show_layer = true;
                     if ((map_type_id === google.maps.MapTypeId.SATELLITE) && (map.getTilt() === 0)) {
-                        if (zoom >= 15) {
+                        if (zoom >= 17) {
                             show_layer = false;
                         }
                     }
