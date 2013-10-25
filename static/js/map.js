@@ -7,6 +7,8 @@ var simulation_manager = (function(){
         var params = {
             center_start: new google.maps.LatLng(47.378, 8.540),
             zoom_start: 13,
+            zoom_min: 13, //The minimum zoom level which will be displayed on the map
+            zoom_max: 18, //The maximum zoom level which will be displayed on the map
             zoom_follow: 17,
             zoom_station: 15,
             zoom_mouseover_min: 7,
@@ -742,6 +744,8 @@ var simulation_manager = (function(){
             var map_inited = false;
             var map_options = {
                 zoom: config.getParam('zoom_start'),
+                zoom_min: config.getParam('zoom_min'),
+                zoom_max: config.getParam('zoom_max'),
                 center: config.getParam('center_start'),
                 mapTypeId: google.maps.MapTypeId.ROADMAP,
                 styles: mapStyles,
