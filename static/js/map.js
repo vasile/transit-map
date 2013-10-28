@@ -899,7 +899,7 @@ var simulation_manager = (function(){
 
                         extended_bounds = new google.maps.LatLngBounds(new_bounds_sw, new_bounds_ne);
                     }
-                    google.maps.event.addListener(map, 'idle', update_extended_bounds);
+                    google.maps.event.addListener(map, 'bounds_changed', update_extended_bounds);
                     update_extended_bounds();
                 }
             });
