@@ -1,3 +1,9 @@
 .DS_Store
 feed
 TODO
+
+api/gtfs-data
+api/tmp
+
+scripts/gtfs-importer/gtfs-data
+scripts/gtfs-importer/tmp
