@@ -7,3 +7,4 @@ api/tmp
 
 scripts/gtfs-importer/gtfs-data
 scripts/gtfs-importer/tmp
+ft_login.rb
