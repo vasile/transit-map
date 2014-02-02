@@ -280,8 +280,13 @@ var simulation_manager = (function(){
                 $.each(feature.geometry.coordinates, function(i2, feature_coord){
                     edge_coords.push(new google.maps.LatLng(feature_coord[1], feature_coord[0]));
                 });
-                
-                var edge_id = feature.properties.edge_id;
+
+                if (typeof(feature.properties.shape_id) === 'undefined') {
+                    var edge_id = feature.properties.edge_id;
+                } else {
+                    var edge_id = feature.properties.shape_id;
+                }
+
                 network_lines[edge_id] = {
                     points: edge_coords,
                     is_detailed: feature.properties.detailed === 'yes'
