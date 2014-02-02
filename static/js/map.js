@@ -218,10 +218,14 @@ var simulation_manager = (function(){
         
         function routeHighlight(vehicle) {
             var points = [];
-            $.each(vehicle.edges, function(k, ab_edges){
-                if (k === 0) { return; }
-                points = points.concat(routes[ab_edges].points);
-            });
+            if (vehicle.source === 'gtfs') {
+                points = routes[vehicle.shape_id].points;
+            } else {
+                $.each(vehicle.edges, function(k, ab_edges){
+                    if (k === 0) { return; }
+                    points = points.concat(routes[ab_edges].points);
+                });
+            }
             
             route_highlight.setPath(points);
             route_highlight.setMap(map);
