@@ -97,8 +97,15 @@ input.toggled {
 /* END */
 
 /* PANEL TABLES */
+#vehicle_timetable_container {
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: 500px;
+}
+
 table.panel_table {
-    width: 275px;
+    width: 265px;
+    font-size: 11px;
 }
 
 table.panel_table thead td {

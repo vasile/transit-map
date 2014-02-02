@@ -43,19 +43,21 @@
                         <input id="follow_trigger" type="button" value="Follow" data-value-toggle="STOP" />
                         <input id="route_show_trigger" type="button" value="Draw route" data-value-toggle="HIDE route" />
                     </div>
-                
-                    <table id="vehicle_timetable" class="panel_table">
-                        <thead>
-                            <tr>
-                                <td>#</td>
-                                <td class="station">Station</td>
-                                <td>Arr.</td>
-                                <td>Dep.</td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
+
+                    <div id="vehicle_timetable_container">
+                        <table id="vehicle_timetable" class="panel_table">
+                            <thead>
+                                <tr>
+                                    <td>#</td>
+                                    <td class="station">Station</td>
+                                    <td>Arr.</td>
+                                    <td>Dep.</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div id="station_info" class="hidden section" data-type="panel">
