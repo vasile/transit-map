@@ -1,42 +1,55 @@
 /*global $, google, InfoBox */
 var simulation_manager = (function(){
     google.maps.visualRefresh = true;
+
     var ua_is_mobile = navigator.userAgent.indexOf('iPhone') !== -1 || navigator.userAgent.indexOf('Android') !== -1;
-    
+
     var config = (function(){
-        var params = {
-            center_start: new google.maps.LatLng(47.378, 8.540),
-            zoom_start: 13,
-            zoom_follow: 17,
-            zoom_station: 15,
-            zoom_mouseover_min: 7,
-            ft_id_mask: '1tDHsjdz7uhhAmWlmmwjR1P2Huf2LKMMiICPVdw',
-            ft_id_lines: '1-1B2tYIO2JSnaacEHO8sfWVjm1S387lMEkHkjc4',
-            ft_id_stations: '1YppDCNud7566oK_VwHsuUhGJqnm_CLDStMS3IuM',
-            json_paths: {
-                edges: 'static/geojson/edges-sbb.json',
-                stations: 'static/geojson/stations-sbb.json',
-                vehicles: 'feed/vehicles/sbb/[hhmm]',
-                station_vehicles: 'feed/station_vehicles/sbb/[station_id]/[hhmm]'
-            }
-        };
-        
-        var user_params = {};
-        var url_parts = window.location.href.split('?');
-        if (url_parts.length === 2) {
-            var queryparam_groups = url_parts[1].split('&');
-            $.each(queryparam_groups, function(index, queryparams_group){
-                var queryparam_parts = queryparams_group.split('=');
-                user_params[queryparam_parts[0]] = decodeURIComponent(queryparam_parts[1]);
-            });
-        }
+        var params = {};
         
         return {
-            getParam: function(p) {
-                return params[p];
+            init: function() {
+                $.ajax({
+                    url: 'static/js/config.js',
+                    dataType: 'json',
+                    async: false,
+                    success: function(config_params) {
+                        params = config_params;
+
+                        // Override config with the QS params
+                        var url_parts = window.location.href.split('?');
+                        if (url_parts.length === 2) {
+                            var qs_groups = url_parts[1].split('&');
+                            $.each(qs_groups, function(index, qs_group){
+                                var qs_parts = qs_group.split('=');
+                                var key = qs_parts[0];
+
+                                // Backwards compatibility
+                                switch (key) {
+                                    case 'zoom':
+                                        key = 'zoom.start';
+                                        break;
+                                    case 'x':
+                                        key = 'center.x';
+                                        break;
+                                    case 'y':
+                                        key = 'center.y';
+                                        break;
+                                }
+                                
+                                var param_value = decodeURIComponent(qs_parts[1]);
+
+                                params[key] = param_value;
+                            });
+                        }
+                    },
+                    error: function(a) {
+                        alert('Broken JSON in static/js/config.js');
+                    }
+                });
             },
-            getUserParam: function(p) {
-                return typeof user_params[p] === 'undefined' ? null : user_params[p];
+            getParam: function(key) {
+                return (typeof params[key] === 'undefined') ? null : params[key];
             }
         };
     })();
@@ -351,7 +364,7 @@ var simulation_manager = (function(){
             (function(){
                 var d = new Date();
                 
-                hms = hms || config.getUserParam('hms');
+                hms = hms || config.getParam('hms');
                 if (hms !== null) {
                     var hms_matches = hms.match(/^([0-9]{2}):([0-9]{2}):([0-9]{2})$/);
                     if (hms_matches) {
@@ -597,7 +610,11 @@ var simulation_manager = (function(){
         function station_info_display(station_id) {
             var hm = timer.getHM();
             
-            var url = config.getParam('json_paths').station_vehicles;
+            var url = config.getParam('api_paths.station_vehicles');
+            if (url === null) {
+                return;
+            }
+
             url = url.replace(/\[station_id\]/, station_id);
             url = url.replace(/\[hhmm\]/, hm.replace(':', ''));
             
@@ -647,7 +664,9 @@ var simulation_manager = (function(){
                 if (station_location === null) { return; }
                 
                 map.setCenter(station_location);
-                map.setZoom(config.getParam('zoom_station'));
+                if (map.getZoom() < config.getParam('zoom.to_stops')) {
+                    map.setZoom(config.getParam('zoom.to_stops'));    
+                }
                 
                 vehicle_info_hide();
                 station_info_display(station_id);
@@ -765,9 +784,9 @@ var simulation_manager = (function(){
 
             var map_inited = false;
             var map_options = {
-                zoom: config.getParam('zoom_start'),
-                center: config.getParam('center_start'),
-                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                zoom: parseInt(config.getParam('zoom.start'), 10),
+                center: new google.maps.LatLng(parseFloat(config.getParam('center.y')), parseFloat(config.getParam('center.x'))),
+                mapTypeId: config.getParam('map_type_id'),
                 styles: mapStyles,
                 disableDefaultUI: true,
                 zoomControl: true,
@@ -782,22 +801,16 @@ var simulation_manager = (function(){
                 }
             };
 
-            if (config.getUserParam('x') !== null) {
-                map_options.center = new google.maps.LatLng(parseFloat(config.getUserParam('y')), parseFloat(config.getUserParam('x')));
-                map_options.zoom = config.getParam('zoom_follow');
-                map_options.mapTypeId = google.maps.MapTypeId.SATELLITE;
+            if (config.getParam('tilt') !== null) {
+                map_options.tilt = parseInt(config.getParam('tilt'), 10);
             }
-            
-            if (config.getUserParam('zoom') !== null) {
-                map_options.zoom = parseInt(config.getUserParam('zoom'), 10);
+
+            if (config.getParam('zoom.min') !== null) {
+                map_options.minZoom = parseInt(config.getParam('zoom.min'), 10);
             }
-            
-            if (config.getUserParam('map_type_id') !== null) {
-                map_options.mapTypeId = config.getUserParam('map_type_id');
-            }
-            
-            if (config.getUserParam('tilt') !== null) {
-                map_options.tilt = parseInt(config.getUserParam('tilt'), 10);
+
+            if (config.getParam('zoom.max') !== null) {
+                map_options.maxZoom = parseInt(config.getParam('zoom.max'), 10);
             }
 
             map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
@@ -1020,13 +1033,9 @@ var simulation_manager = (function(){
     // - manages vehicle objects(class Vehicle) and animates them (see Vehicle.render method)
     var vehicle_helpers = (function(){
         var vehicle_detect = (function(){
-            var track_vehicle_name = config.getUserParam('vehicle_name');
-            if (track_vehicle_name !== null) {
-                track_vehicle_name = track_vehicle_name.replace(/[^A-Z0-9]/i, '');
-            }
-            
-            var track_vehicle_id = config.getUserParam('vehicle_id');
-            
+            var track_vehicle_name = null;
+            var track_vehicle_id = null;
+
             function match_by_name(vehicle_name) {
                 if (track_vehicle_name === null) {
                     return false;
@@ -1041,6 +1050,15 @@ var simulation_manager = (function(){
             }
             
             function match(vehicle_name, vehicle_id) {
+                if (track_vehicle_id === null) {
+                    track_vehicle_name = config.getParam('vehicle_name');
+                    if (track_vehicle_name !== null) {
+                        track_vehicle_name = track_vehicle_name.replace(/[^A-Z0-9]/i, '');
+                    }
+            
+                    track_vehicle_id = config.getParam('vehicle_id');
+                }
+
                 if (track_vehicle_id === vehicle_id) {
                     return true;
                 }
@@ -1049,7 +1067,7 @@ var simulation_manager = (function(){
             }
             
             listener_helpers.subscribe('vehicles_load', function(){
-                if (config.getUserParam('action') !== 'vehicle_add') {
+                if (config.getParam('action') !== 'vehicle_add') {
                     return;
                 }
                 
@@ -1062,18 +1080,18 @@ var simulation_manager = (function(){
                     return sec_ar;
                 }
                 
-                var station_ids = config.getUserParam('station_ids').split('_');
+                var station_ids = config.getParam('station_ids').split('_');
                 $.each(station_ids, function(index, station_id_s){
                     station_ids[index] = station_id_s;
                 });
                 
                 var vehicle_data = {
-                    arrs: str_hhmm_2_sec_ar(config.getUserParam('arrs')),
-                    deps: str_hhmm_2_sec_ar(config.getUserParam('deps')),
+                    arrs: str_hhmm_2_sec_ar(config.getParam('arrs')),
+                    deps: str_hhmm_2_sec_ar(config.getParam('deps')),
                     id: 'custom_vehicle',
-                    name: decodeURIComponent(config.getUserParam('vehicle_name')),
+                    name: decodeURIComponent(config.getParam('vehicle_name')),
                     sts: station_ids,
-                    type: config.getUserParam('vehicle_type'),
+                    type: config.getParam('vehicle_type'),
                     edges: []
                 };
                 
@@ -1097,12 +1115,23 @@ var simulation_manager = (function(){
             var icons = {};
 
             function iconGet(type) {
-                if (typeof icons[type] !== 'undefined') {
+                if (icons[type]) {
                     return icons[type];
                 }
 
+                var routes_config = config.getParam('routes');
+                if ((typeof routes_config[type]) === 'undefined') {
+                    return null;
+                }
+
+                if (routes_config[type].icon === false) {
+                    return null;
+                }
+
+                var url = routes_config[type].icon;
+
                 var icon = {
-                    url: 'static/images/vehicle-types/' + type + '.png',
+                    url: url,
                     size: new google.maps.Size(20, 20),
                     origin: new google.maps.Point(0, 0),
                     anchor: new google.maps.Point(10, 10)
@@ -1316,7 +1345,7 @@ var simulation_manager = (function(){
             });
 
             this.mouseOverMarker = function() {
-                if (map.getZoom() < config.getParam('zoom_mouseover_min')) {
+                if (map.getZoom() < config.getParam('zoom.vehicle_mouseover_min')) {
                     return;
                 }
 
@@ -1393,8 +1422,8 @@ var simulation_manager = (function(){
                             that.marker.set('follow', 'yes');
                             
                             map.panTo(vehicle_position);
-                            if (map.getZoom() < config.getParam('zoom_follow')) {
-                                map.setZoom(config.getParam('zoom_follow'));
+                            if (map.getZoom() < config.getParam('zoom.vehicle_follow')) {
+                                map.setZoom(config.getParam('zoom.vehicle_follow'));
                             }
                             map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
 
@@ -1508,7 +1537,7 @@ var simulation_manager = (function(){
             load: function() {
                 var hm = timer.getHM();
                 
-                var url = config.getParam('json_paths').vehicles;
+                var url = config.getParam('api_paths.trips');
                 url = url.replace(/\[hhmm\]/, hm.replace(':', ''));
                 
                 $.ajax({
@@ -1534,44 +1563,54 @@ var simulation_manager = (function(){
     })();
     
     listener_helpers.subscribe('map_init', function(){
-        // LOAD network lines 
         $.ajax({
-            url: config.getParam('json_paths').edges,
+            url: config.getParam('api_paths.gtfs_shapes'),
             dataType: 'json',
+            async: false,
             success: function(geojson) {
                 linesPool.loadGeoJSONEdges(geojson.features);
-                // network lines loaded => LOAD stations
-                $.ajax({
-                    url: config.getParam('json_paths').stations,
-                    dataType: 'json',
-                    success: function(geojson) {
-                        $.each(geojson.features, function(index, feature) {
-                            stationsPool.add(
-                                feature.properties.station_id, 
-                                feature.properties.name, 
-                                parseFloat(feature.geometry.coordinates[0]), 
-                                parseFloat(feature.geometry.coordinates[1])
-                            );
-                        });
-                        
-                        vehicle_helpers.load();
-                        listener_helpers.subscribe('minute_changed', vehicle_helpers.load);
+            }
+        });
+
+        $.ajax({
+            url: config.getParam('api_paths.gtfs_stops'),
+            dataType: 'json',
+            success: function(geojson) {
+                $.each(geojson.features, function(index, feature) {
+                    var station_id, station_name;
+                    if (typeof(feature.properties.stop_id) === 'undefined') {
+                        station_id = feature.properties.station_id;
+                        station_name = feature.properties.name;
+                    } else {
+                        station_id = feature.properties.stop_id;
+                        station_name = feature.properties.stop_name;
                     }
+                    
+                    stationsPool.add(
+                        station_id, 
+                        station_name, 
+                        parseFloat(feature.geometry.coordinates[0]), 
+                        parseFloat(feature.geometry.coordinates[1])
+                    );
                 });
+
+                vehicle_helpers.load();
+                listener_helpers.subscribe('minute_changed', vehicle_helpers.load);
             }
         });
     });
     
     function ui_init() {
-        var view_mode = config.getUserParam('view_mode');
+        var view_mode = config.getParam('view_mode');
         
         var panel_display = (ua_is_mobile === false) && (view_mode !== 'iframe');
         if (panel_display) {
             $('#panel').removeClass('hidden');
         }
         
-        if (config.getUserParam('time_multiply') !== null) {
-            $('#time_multiply').val(config.getUserParam('time_multiply'));
+        var time_multiply = config.getParam('time_multiply');
+        if (time_multiply !== null) {
+            $('#time_multiply').val(time_multiply);
         }
     }
     
@@ -1599,6 +1638,7 @@ var simulation_manager = (function(){
     
     return {
         init: function(){
+            config.init();
             ui_init();
             geolocation_init();
             timer.init();
