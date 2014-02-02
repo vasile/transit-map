@@ -1349,13 +1349,13 @@ var simulation_manager = (function(){
                     return;
                 }
 
-                if (vehicle_ib.get('vehicle_id') === params.id) { return; }
-                vehicle_ib.set('vehicle_id', params.id);
+                if (vehicle_ib.get('vehicle_id') === that.id) { return; }
+                vehicle_ib.set('vehicle_id', that.id);
 
                 vehicle_ib.close();
 
                 var popup_div = $('#vehicle_popup');
-                $('span.vehicle_name', popup_div).text(params.name);
+                $('span.vehicle_name', popup_div).text(that.name);
                 $('.status', popup_div).html(marker.get('status'));
 
                 vehicle_ib.setContent($('#vehicle_popup_container').html());
