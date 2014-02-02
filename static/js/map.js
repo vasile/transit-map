@@ -212,6 +212,22 @@ var simulation_manager = (function(){
             routes[ab_edges] = route;
         }
         
+        function addShape(shape_id) {
+            if (typeof routes[shape_id] !== 'undefined') {
+                return;
+            }
+            
+            var feature = network_lines[shape_id];
+            var dAB = parseFloat(google.maps.geometry.spherical.computeLength(feature.points).toFixed(3));
+            var route = {
+                points: feature.points,
+                length: dAB,
+                detailed_parts: []
+            };
+            
+            routes[shape_id] = route;
+        }
+        
         function lengthGet(ab_edges) {
             return routes[ab_edges].length;
         }
@@ -309,7 +325,8 @@ var simulation_manager = (function(){
             routeHighlightRemove: routeHighlightRemove,
             loadEncodedEdges: loadEncodedEdges,
             loadGeoJSONEdges: loadGeoJSONEdges,
-            projectDistanceAlongRoute: projectDistanceAlongRoute
+            projectDistanceAlongRoute: projectDistanceAlongRoute,
+            addShape: addShape
         };
     })();
     
