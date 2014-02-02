@@ -454,7 +454,7 @@ var simulation_manager = (function(){
     
     var simulation_panel = (function(){
         var selected_vehicle = null;
-        
+
         function Toggler(el_id) {
             var el = $(el_id);
             el.attr('data-value-original', el.val());
@@ -488,6 +488,20 @@ var simulation_manager = (function(){
         };
         
         var vehicle_follow = (function(){
+            listener_helpers.subscribe('map_init', function(){
+                function stop_following() {
+                    if (selected_vehicle === null) {
+                        return;
+                    }
+
+                    stop();
+                }
+
+                google.maps.event.addListener(map, 'dragstart', stop_following);
+                google.maps.event.addListener(map, 'click', stop_following);
+                google.maps.event.addListener(map, 'dblclick', stop_following);
+            });
+
             var toggler;
             function init() {
                 toggler = new Toggler('#follow_trigger');
@@ -1270,7 +1284,7 @@ var simulation_manager = (function(){
             vehicle_id: 0,
             closeBoxURL: ''
         });
-        
+
         var vehicleIDs = [];
 
         function Vehicle(params) {
