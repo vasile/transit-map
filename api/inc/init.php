@@ -8,6 +8,7 @@ $api_config_file = dirname(__FILE__) . '/config.json';
 $api_config = json_decode(file_get_contents($api_config_file), 1);
 
 define('PROJECT_NAME', $api_config['PROJECT_NAME']);
+ini_set('date.timezone', $api_config['SERVER_TIMEZONE']);
 
 include(APP_FOLDER_PATH . '/inc/models/db.php');
 include(APP_FOLDER_PATH . '/inc/models/gtfs.php');
