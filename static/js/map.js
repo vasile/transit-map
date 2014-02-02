@@ -1309,27 +1309,69 @@ var simulation_manager = (function(){
                 
                 return time_ar;
             }
-            
-            this.id                 = params.id;
-            this.name               = params.name;
-            this.stations           = params.sts;
-            this.edges              = params.edges;
-            this.depS               = parseTimes(params.deps);
-            this.arrS               = parseTimes(params.arrs);
-            this.service_type       = params.service_type;
-            
-            $.each(params.edges, function(k, edges) {
-                if (k === 0) { return; }
-                linesPool.routeAdd(edges);
-            });
 
+            if ((typeof params.trip_id) === 'undefined') {
+                this.source             = 'custom';
+
+                this.id                 = params.id;
+                this.name               = params.name;
+                this.stations           = params.sts;
+                this.edges              = params.edges;
+                this.depS               = parseTimes(params.deps);
+                this.arrS               = parseTimes(params.arrs);
+                this.route_icon         = params.type;
+                this.service_type       = params.service_type;
+                
+                $.each(params.edges, function(k, edges) {
+                    if (k === 0) { return; }
+                    linesPool.routeAdd(edges);
+                });
+            } else {
+                // GTFS approach
+                this.source             = 'gtfs';
+
+                this.id                 = params.trip_id;
+                this.name               = params.route_short_name;
+
+                this.service_type       = '';
+
+                this.edges              = [];
+                this.shape_id           = params.shape_id;
+
+                linesPool.addShape(params.shape_id);
+                
+                var departures = [];
+                var arrivals = [];
+                var stations = [];
+                var shape_percent = [];
+                $.each(params.stops, function(k, stop){
+                    if (k < (params.stops.length - 1)) {
+                        departures.push(stop.departure_time);
+                    }
+                    
+                    if (k > 0) {
+                        arrivals.push(stop.arrival_time);
+                    }
+                    
+                    stations.push(stop.stop_id);
+                    shape_percent.push(stop.stop_shape_percent);
+                });
+                
+                this.stations           = stations;
+                this.depS               = parseTimes(departures);
+                this.arrS               = parseTimes(arrivals);
+                this.shape_percent      = shape_percent;
+
+                this.route_icon         = params.route_short_name;
+            }
+            
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(0, 0),
                 map: null,
                 speed: 0,
                 status: 'not on map'
             });
-            var icon = imagesPool.iconGet(params.type);
+            var icon = imagesPool.iconGet(this.route_icon);
             if (icon !== null) {
                 marker.setIcon(icon);
             }
@@ -1390,17 +1432,26 @@ var simulation_manager = (function(){
                         var station_a = that.stations[i];
                         var station_b = that.stations[i+1];
 
+                        var route_id = (that.source === 'gtfs') ? that.shape_id : that.edges[i+1];
                         if (ts > that.depS[i]) {
-                            var routeLength = linesPool.lengthGet(that.edges[i+1]);
+                            var routeLength = linesPool.lengthGet(route_id);
                             
                             // Vehicle is in motion between two stations
                             if (that.marker.get('speed') === 0) {
-                                var speed = routeLength * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
+                                var trackLength = routeLength;
+                                if (that.source === 'gtfs') {
+                                    trackLength = routeLength * (that.shape_percent[i+1] - that.shape_percent[i]) / 100;
+                                }
+                                
+                                var speed = trackLength * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
                                 that.marker.set('speed', parseInt(speed, 10));
                                 that.marker.set('status', 'Heading to ' + stationsPool.get(station_b) + '(' + timer.getHM(that.arrS[i]) + ')<br/>Speed: ' + that.marker.get('speed') + ' km/h');
                             }
                             
                             route_percent = (ts - that.depS[i])/(that.arrS[i] - that.depS[i]);
+                            if (that.source === 'gtfs') {
+                                route_percent = (that.shape_percent[i] + route_percent * (that.shape_percent[i+1] - that.shape_percent[i])) / 100;
+                            }
                             
                             d_AC = routeLength * route_percent;
                         } else {
@@ -1411,7 +1462,7 @@ var simulation_manager = (function(){
                             }
                         }
                         
-                        var vehicle_position_data = linesPool.positionGet(that.edges[i+1], route_percent);
+                        var vehicle_position_data = linesPool.positionGet(route_id, route_percent);
                         if (vehicle_position_data === null) {
                             break;
                         }
@@ -1545,14 +1596,16 @@ var simulation_manager = (function(){
                     dataType: 'json',
                     success: function(vehicles) {
                         $.each(vehicles, function(index, data) {
-                            if (typeof simulation_vehicles[data.id] !== 'undefined') {
+                            var vehicle_id = ((typeof data.trip_id) === 'undefined') ? data.id : data.trip_id;
+                            
+                            if ((typeof simulation_vehicles[vehicle_id]) !== 'undefined') {
                                 return;
                             }
                             
                             var v = new Vehicle(data);
                             v.render();
 
-                            simulation_vehicles[data.id] = v;
+                            simulation_vehicles[vehicle_id] = v;
                         });
                         
                         listener_helpers.notify('vehicles_load');
