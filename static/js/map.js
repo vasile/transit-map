@@ -807,76 +807,138 @@ var simulation_manager = (function(){
             map.mapTypes.set('stamen', stamen_map);
 
             function map_layers_add(){
-                var edges_layer = new google.maps.FusionTablesLayer({
-                    query: {
+                var edges_layer;
+                var stations_layer;
+                var ft_id;
+
+                // Graph topology layers - EDGES
+                ft_id = config.getParam('ft_layer_ids.topology_edges');
+                if (ft_id !== null) {
+                    edges_layer = new google.maps.FusionTablesLayer({
+                        query: {
+                            select: 'geometry',
+                            from: ft_id
+                        },
+                        clickable: false,
+                        map: map,
+                        styles: [
+                            {
+                                polylineOptions: {
+                                    strokeColor: "#FF0000",
+                                    strokeWeight: 2
+                                }
+                            },{
+                                where: "type = 'tunnel'",
+                                polylineOptions: {
+                                    strokeColor: "#FAAFBE",
+                                    strokeWeight: 1.5
+                                }
+                            }
+                        ]
+                    });
+                }
+
+                // Graph topology layers - STATIONS
+                ft_id = config.getParam('ft_layer_ids.topology_stations');
+                if (ft_id !== null) {
+                    stations_layer = new google.maps.FusionTablesLayer({
+                        query: {
+                            select: 'geometry',
+                            from: ft_id
+                        },
+                        suppressInfoWindows: true,
+                        map: map
+                    });
+
+                    google.maps.event.addListener(stations_layer, 'click', function(ev){
+                        var station_id = ev.row.id.value;
+                        simulation_panel.displayStation(station_id);
+                    });
+                }
+
+                // GTFS layers - shapes.txt
+                ft_id = config.getParam('ft_layer_ids.gtfs_shapes');
+                if (ft_id !== null) {
+                    edges_layer = new google.maps.FusionTablesLayer({
+                        query: {
+                            select: 'geometry',
+                            from: ft_id
+                        },
+                        clickable: false,
+                        map: map
+                    });
+                }
+
+                // GTFS layers - stops.txt
+                ft_id = config.getParam('ft_layer_ids.gtfs_stops');
+                if (ft_id !== null) {
+                    stations_layer = new google.maps.FusionTablesLayer({
+                        query: {
+                            select: 'geometry',
+                            from: ft_id
+                        },
+                        suppressInfoWindows: true,
+                        map: map
+                    });
+
+                    google.maps.event.addListener(stations_layer, 'click', function(ev){
+                        var station_id = ev.row.stop_id.value;
+                        simulation_panel.displayStation(station_id);
+                    });
+                }
+
+                // Area mask
+                ft_id = config.getParam('ft_layer_ids.mask');
+                if (ft_id !== null) {
+                    var layer = new google.maps.FusionTablesLayer({
+                      query: {
                         select: 'geometry',
-                        from: config.getParam('ft_id_lines')
-                    },
-                    clickable: false,
-                    map: map,
-                    styles: [
-                        {
-                            polylineOptions: {
-                                strokeColor: "#FF0000",
-                                strokeWeight: 2
-                            }
-                        },{
-                            where: "type = 'tunnel'",
-                            polylineOptions: {
-                                strokeColor: "#FAAFBE",
-                                strokeWeight: 1.5
-                            }
-                        }
-                    ]
-                });
-
-                var stations_layer = new google.maps.FusionTablesLayer({
-                  query: {
-                    select: 'geometry',
-                    from: config.getParam('ft_id_stations')
-                  },
-                  suppressInfoWindows: true,
-                  map: map
-                });
-                google.maps.event.addListener(stations_layer, 'click', function(ev){
-                    var station_id = ev.row.id.value;
-                    simulation_panel.displayStation(station_id);
-                });
-
-                var layer = new google.maps.FusionTablesLayer({
-                  query: {
-                    select: 'geometry',
-                    from: config.getParam('ft_id_mask')
-                  },
-                  clickable: false,
-                  map: map
-                });
+                        from: ft_id
+                      },
+                      clickable: false,
+                      map: map
+                    });                    
+                }
 
                 function trigger_toggleLayerVisibility() {
-                    function toggleLayerVisibility(layer, show) {
-                        if (show) {
-                            if (layer.getMap() === null) {
-                                layer.setMap(map);
-                            }
-                        } else {
+                    function toggleLayerVisibility(layer, hide) {
+                        if (hide) {
                             if (layer.getMap() !== null) {
                                 layer.setMap(null);
                             }
+                        } else {
+                            if (layer.getMap() === null) {
+                                layer.setMap(map);
+                            }
                         }
                     }
 
-                    var zoom = map.getZoom();
                     var map_type_id = map.getMapTypeId();
-                    
-                    var show_layer = true;
-                    if ((map_type_id === google.maps.MapTypeId.SATELLITE) && (map.getTilt() === 0)) {
-                        if (zoom >= 17) {
-                            show_layer = false;
+                    var is_satellite = (map_type_id === google.maps.MapTypeId.SATELLITE) && (map.getTilt() === 0);
+                    var config_preffix = is_satellite ? 'zoom.satellite' : 'zoom.roadmap';
+
+                    var zoom = map.getZoom();
+
+                    $.each(['stops', 'shapes'], function(k, layer_type){
+                        var zoom_min = config.getParam(config_preffix + '.' + layer_type + '_min');
+                        if (zoom_min === null) {
+                            zoom_min = 0;
                         }
-                    }
-                    
-                    toggleLayerVisibility(stations_layer, show_layer);
-                    toggleLayerVisibility(edges_layer, show_layer);
+
+                        var zoom_max = config.getParam(config_preffix + '.' + layer_type + '_max');
+                        if (zoom_max === null) {
+                            zoom_max = 30;
+                        }
+
+                        var hide_layer = (zoom < zoom_min) || (zoom > zoom_max);
+                        if (layer_type === 'stops') {
+                            toggleLayerVisibility(stations_layer, hide_layer);
+                        }
+
+                        if (layer_type === 'shapes') {
+                            toggleLayerVisibility(edges_layer, hide_layer);
+                        }
+                    });
                 }
 
                 google.maps.event.addListener(map, 'idle', trigger_toggleLayerVisibility);
