@@ -548,7 +548,7 @@ var simulation_manager = (function(){
             station_info_hide();
             vehicle_route.hide();
 
-            $('.vehicle_name', $('#vehicle_info')).text(vehicle.name);
+            $('.vehicle_name', $('#vehicle_info')).text(vehicle.name + ' (' + vehicle.id + ')');
             
             var ts = timer.getTS();
             
