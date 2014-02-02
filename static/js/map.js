@@ -353,10 +353,12 @@ var simulation_manager = (function(){
                 
                 hms = hms || config.getUserParam('hms');
                 if (hms !== null) {
-                    var hms_parts = hms.split(':');
-                    d.setHours(parseInt(hms_parts[0], 10));
-                    d.setMinutes(parseInt(hms_parts[1], 10));
-                    d.setSeconds(parseInt(hms_parts[2], 10));
+                    var hms_matches = hms.match(/^([0-9]{2}):([0-9]{2}):([0-9]{2})$/);
+                    if (hms_matches) {
+                        d.setHours(parseInt(hms_matches[1], 10));
+                        d.setMinutes(parseInt(hms_matches[2], 10));
+                        d.setSeconds(parseInt(hms_matches[3], 10));
+                    }
                 }
                 
                 ts_now = d.getTime() / 1000;
