@@ -1,4 +1,19 @@
 This folder should be populated by the scripts/gtfs-importer GTFS script. 
 See rake project:update_settings_routes task
 
-If you want to craft the icons by hand, for each _distinct_ route_short_name field in routes.txt file create a .PNG icon, 20px x 20px with the vehicle icon
+If you want to edit / save the route icons by hand, for each _distinct_ route_short_name field in the GTFS routes.txt file do the following
+- create a .PNG icon, 20px x 20px with the vehicle icon and save it here
+- make sure the route is present in static/js/config.js "routes" object
+
+i.e. for a service route that has route_short_name "38" 
+- a file named 38.png, 20x20 px should be present in this folder
+- following definition should be present in config.js
+
+    "s": {
+      "icon": "static/images/route_icons/38.png",
+      "route_short_name": "38",
+      "route_color": "0178BC",
+      "route_text_color": "FFFFFF"
+    },
+
+- use false for "icon" if you want the default Google Marker to be displayed
