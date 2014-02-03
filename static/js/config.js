@@ -21,13 +21,12 @@
   "ft_layer_ids.gtfs_stops": "1Md8PkM899quqFiCnfv4bpaGOKbVWMn4u9HBiQiY",
   "ft_layer_ids.topology_edges": null,
   "ft_layer_ids.topology_stations": null,
-  "api_paths.gtfs_shapes": "api/geojson/gtfs_shapes.geojson",
-  "api_paths.gtfs_stops": "api/geojson/gtfs_stops.geojson",
   "api_paths.trips": "api/getTrips/[hhmm]",
-  "api_paths.topology_edges": null,
-  "api_paths.topology_stations": null,
-  "api_paths.vehicles": null,
-  "api_paths.station_vehicles": null,
+  "api_paths.departures": null,
+  "geojson.gtfs_shapes": "api/geojson/gtfs_shapes.geojson",
+  "geojson.gtfs_stops": "api/geojson/gtfs_stops.geojson",
+  "geojson.topology_edges": null,
+  "geojson.topology_stations": null,
   "routes": {
     "1": {
       "icon": "static/images/route_icons/1.png",

@@ -95,23 +95,34 @@ var simulation_manager = (function(){
         function location_get(id) {
             return (typeof stations[id]) === 'undefined' ? '' : stations[id].get('location');
         }
-        
-        function add(id, name, x, y) {
-            var station = new google.maps.MVCObject();
-            station.set('name', name);
 
-            if (parseInt(x, 10) === 0) {
-                station.set('location', null);
-            } else {
-                station.set('location', new google.maps.LatLng(parseFloat(y), parseFloat(x)));
-            }
-            
-            stations[id] = station;
+        function addFeatures(features) {
+            $.each(features, function(index, feature) {
+                var station_id, station_name;
+                if (typeof(feature.properties.stop_id) === 'undefined') {
+                    // Custom GeoJSON support
+                    station_id = feature.properties.station_id;
+                    station_name = feature.properties.name;
+                } else {
+                    // GTFS support
+                    station_id = feature.properties.stop_id;
+                    station_name = feature.properties.stop_name;
+                }
+
+                var station = new google.maps.MVCObject();
+                station.set('name', station_name);
+
+                var station_x = parseFloat(feature.geometry.coordinates[0]);
+                var station_y = parseFloat(feature.geometry.coordinates[1]);
+                station.set('location', new google.maps.LatLng(station_y, station_x));
+
+                stations[station_id] = station;
+            });
         }
         
         return {
             get: get,
-            add: add,
+            addFeatures: addFeatures,
             location_get: location_get
         };
     })();
@@ -224,23 +235,7 @@ var simulation_manager = (function(){
             
             routes[ab_edges] = route;
         }
-        
-        function addShape(shape_id) {
-            if (typeof routes[shape_id] !== 'undefined') {
-                return;
-            }
-            
-            var feature = network_lines[shape_id];
-            var dAB = parseFloat(google.maps.geometry.spherical.computeLength(feature.points).toFixed(3));
-            var route = {
-                points: feature.points,
-                length: dAB,
-                detailed_parts: []
-            };
-            
-            routes[shape_id] = route;
-        }
-        
+
         function lengthGet(ab_edges) {
             return routes[ab_edges].length;
         }
@@ -294,16 +289,33 @@ var simulation_manager = (function(){
                     edge_coords.push(new google.maps.LatLng(feature_coord[1], feature_coord[0]));
                 });
 
-                if (typeof(feature.properties.shape_id) === 'undefined') {
-                    var edge_id = feature.properties.edge_id;
-                } else {
-                    var edge_id = feature.properties.shape_id;
-                }
+                var edge_id = feature.properties.edge_id;
 
                 network_lines[edge_id] = {
                     points: edge_coords,
                     is_detailed: feature.properties.detailed === 'yes'
                 };
+            });
+        }
+
+        function loadGeoJSONShapes(features) {
+            $.each(features, function(index, feature) {
+                var shape_id = feature.properties.shape_id;
+
+                var points = [];
+                $.each(feature.geometry.coordinates, function(i2, feature_coord){
+                    points.push(new google.maps.LatLng(feature_coord[1], feature_coord[0]));
+                });
+
+                var dAB = parseFloat(google.maps.geometry.spherical.computeLength(points).toFixed(3));
+
+                var route = {
+                    points: points,
+                    length: dAB,
+                    detailed_parts: []
+                };
+
+                routes[shape_id] = route;
             });
         }
 
@@ -343,8 +355,8 @@ var simulation_manager = (function(){
             routeHighlightRemove: routeHighlightRemove,
             loadEncodedEdges: loadEncodedEdges,
             loadGeoJSONEdges: loadGeoJSONEdges,
-            projectDistanceAlongRoute: projectDistanceAlongRoute,
-            addShape: addShape
+            loadGeoJSONShapes: loadGeoJSONShapes,
+            projectDistanceAlongRoute: projectDistanceAlongRoute
         };
     })();
     
@@ -1352,8 +1364,6 @@ var simulation_manager = (function(){
                 this.edges              = [];
                 this.shape_id           = params.shape_id;
 
-                linesPool.addShape(params.shape_id);
-                
                 var departures = [];
                 var arrivals = [];
                 var stations = [];
@@ -1630,41 +1640,49 @@ var simulation_manager = (function(){
     })();
     
     listener_helpers.subscribe('map_init', function(){
-        $.ajax({
-            url: config.getParam('api_paths.gtfs_shapes'),
-            dataType: 'json',
-            async: false,
-            success: function(geojson) {
-                linesPool.loadGeoJSONEdges(geojson.features);
+        function loadStations(url) {
+            if (url === null) {
+                return;
             }
-        });
 
-        $.ajax({
-            url: config.getParam('api_paths.gtfs_stops'),
-            dataType: 'json',
-            success: function(geojson) {
-                $.each(geojson.features, function(index, feature) {
-                    var station_id, station_name;
-                    if (typeof(feature.properties.stop_id) === 'undefined') {
-                        station_id = feature.properties.station_id;
-                        station_name = feature.properties.name;
-                    } else {
-                        station_id = feature.properties.stop_id;
-                        station_name = feature.properties.stop_name;
-                    }
-                    
-                    stationsPool.add(
-                        station_id, 
-                        station_name, 
-                        parseFloat(feature.geometry.coordinates[0]), 
-                        parseFloat(feature.geometry.coordinates[1])
-                    );
-                });
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                success: function(geojson) {
+                    stationsPool.addFeatures(geojson.features);
+                    vehicle_helpers.load();
+                    listener_helpers.subscribe('minute_changed', vehicle_helpers.load);
+                }
+            });
+        }
 
-                vehicle_helpers.load();
-                listener_helpers.subscribe('minute_changed', vehicle_helpers.load);
-            }
-        });
+        // GTFS approach
+        var url = config.getParam('geojson.gtfs_shapes');
+        if (url !== null) {
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                async: false,
+                success: function(geojson) {
+                    linesPool.loadGeoJSONShapes(geojson.features);
+                }
+            });
+        }
+        loadStations(config.getParam('geojson.gtfs_stops'));
+
+        // Custom topology approach
+        var url = config.getParam('geojson.topology_edges');
+        if (url !== null) {
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                async: false,
+                success: function(geojson) {
+                    linesPool.loadGeoJSONEdges(geojson.features);
+                }
+            });
+        }
+        loadStations(config.getParam('geojson.topology_stations'));
     });
     
     function ui_init() {
