@@ -1,0 +1,4 @@
+This folder should be populated by the scripts/gtfs-importer GTFS script. 
+See rake project:update_settings_routes task
+
+If you want to craft the icons by hand, for each _distinct_ route_short_name field in routes.txt file create a .PNG icon, 20px x 20px with the vehicle icon
