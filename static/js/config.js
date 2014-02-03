@@ -29,97 +29,97 @@
   "geojson.topology_stations": "static/geojson/stations-sbb.json",
   "routes": {
     "cnl": {
-      "icon": "static/images/route_icons-demo/cnl.png",
+      "icon": "static/images/route_icons/demo/cnl.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "d": {
-      "icon": "static/images/route_icons-demo/d.png",
+      "icon": "static/images/route_icons/demo/d.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "ec": {
-      "icon": "static/images/route_icons-demo/ec.png",
+      "icon": "static/images/route_icons/demo/ec.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "en": {
-      "icon": "static/images/route_icons-demo/en.png",
+      "icon": "static/images/route_icons/demo/en.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "ext": {
-      "icon": "static/images/route_icons-demo/ext.png",
+      "icon": "static/images/route_icons/demo/ext.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "ic": {
-      "icon": "static/images/route_icons-demo/ic.png",
+      "icon": "static/images/route_icons/demo/ic.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "ice": {
-      "icon": "static/images/route_icons-demo/ice.png",
+      "icon": "static/images/route_icons/demo/ice.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "icn": {
-      "icon": "static/images/route_icons-demo/icn.png",
+      "icon": "static/images/route_icons/demo/icn.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "ir": {
-      "icon": "static/images/route_icons-demo/ir.png",
+      "icon": "static/images/route_icons/demo/ir.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "ire": {
-      "icon": "static/images/route_icons-demo/ire.png",
+      "icon": "static/images/route_icons/demo/ire.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "r": {
-      "icon": "static/images/route_icons-demo/r.png",
+      "icon": "static/images/route_icons/demo/r.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "re": {
-      "icon": "static/images/route_icons-demo/re.png",
+      "icon": "static/images/route_icons/demo/re.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "rj": {
-      "icon": "static/images/route_icons-demo/rj.png",
+      "icon": "static/images/route_icons/demo/rj.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "s": {
-      "icon": "static/images/route_icons-demo/s.png",
+      "icon": "static/images/route_icons/demo/s.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "tgv": {
-      "icon": "static/images/route_icons-demo/tgv.png",
+      "icon": "static/images/route_icons/demo/tgv.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
     },
     "zug": {
-      "icon": "static/images/route_icons-demo/zug.png",
+      "icon": "static/images/route_icons/demo/zug.png",
       "route_short_name": "",
       "route_color": "0178BC",
       "route_text_color": "FFFFFF"
