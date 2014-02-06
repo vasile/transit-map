@@ -363,7 +363,6 @@ var simulation_manager = (function(){
     // Time manager
     // Roles:
     // - manages the current number of seconds that passed since midnight
-    // - 'init' can be used with given hh:mm:ss in order to simulate different timestamps
     var timer = (function(){
         var timer_refresh = 100;
         var ts_midnight = null;
@@ -372,11 +371,11 @@ var simulation_manager = (function(){
 
         var seconds_multiply = null;
         
-        function init(hms) {
+        function init() {
             (function(){
                 var d = new Date();
                 
-                hms = hms || config.getParam('hms');
+                hms = config.getParam('hms');
                 if (hms !== null) {
                     var hms_matches = hms.match(/^([0-9]{2}):([0-9]{2}):([0-9]{2})$/);
                     if (hms_matches) {
