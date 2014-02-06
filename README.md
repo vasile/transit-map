@@ -61,13 +61,13 @@ File [static/js/config.js](https://github.com/vasile/transit-simulator/blob/mast
 | ft_layer_ids.gtfs_stops |  | *string* | Fusion Table ID of the GTFS stops. Example: [SF Muni stops](https://www.google.com/fusiontables/DataSource?docid=1Md8PkM899quqFiCnfv4bpaGOKbVWMn4u9HBiQiY) |
 | ft_layer_ids.topology_edges |  | *string* | Fusion Table ID of the custom network edges. Example: [SBB edges](https://www.google.com/fusiontables/DataSource?docid=1-1B2tYIO2JSnaacEHO8sfWVjm1S387lMEkHkjc4) . **Use this for non-GTFS projects** |
 | ft_layer_ids.topology_stations |  | *string* | Fusion Table ID of the custom network stations. Example: [SBB edges](https://www.google.com/fusiontables/DataSource?docid=1YppDCNud7566oK_VwHsuUhGJqnm_CLDStMS3IuM) . **Use this for non-GTFS projects** |
-| api_paths.trips | **YES** | api/getTrips/[hhmm] | Vehicles (or GTFS trips) API with all vehicles that run at given hhmm - hour minutes. **TODO - add detailed specifications** |
-| api_paths.departures |  | api/getDepartures/[stop_id]/[hhmm] | Departures API of the vehicles that stop in [stop_id] station at given [hhmm] time. **TODO - add detailed specifications** |
-| geojson.gtfs_shapes | **YES** | api/geojson/gtfs_shapes.json | GeoJSON FeatureCollection with the GTFS shapes. **This key is not required if geojson.topology_* are used. TODO - add link and sample feature** |
-| geojson.gtfs_stops | **YES** | api/geojson/gtfs_shapes.json | GeoJSON FeatureCollection with the GTFS stops. **This key is not required if geojson.topology_* are used. TODO - add link and sample feature** |
-| geojson.topology_edges |  | static/geojson/edges-sbb.json | GeoJSON FeatureCollection with the network edges. **This key is required if the project is NOT GTFS based. TODO - add link and sample feature** |
-| geojson.topology_stations |  | static/geojson/edges-sbb.json | GeoJSON FeatureCollection with the network stations. **This key is required if the project is NOT GTFS based. TODO - add link and sample feature** |
-| routes |  | Hash | JS Hash containing the route defintions. **TODO - add link and sample feature** |
+| api_paths.trips | **YES** | api/getTrips/[hhmm] | Vehicles (or GTFS trips) API with all vehicles that run at given hhmm - hour minutes. |
+| api_paths.departures |  | api/getDepartures/[stop_id]/[hhmm] | Departures API of the vehicles that stop in [stop_id] station at given [hhmm] time. |
+| geojson.gtfs_shapes | **YES** | api/geojson/gtfs_shapes.json | GeoJSON FeatureCollection with the GTFS shapes. **This key is not required if geojson.topology_* are used. |
+| geojson.gtfs_stops | **YES** | api/geojson/gtfs_shapes.json | GeoJSON FeatureCollection with the GTFS stops. **This key is not required if geojson.topology_* are used.** |
+| geojson.topology_edges |  | static/geojson/edges-sbb.json | GeoJSON FeatureCollection with the network edges. **This key is required if the project is NOT GTFS based.** |
+| geojson.topology_stations |  | static/geojson/edges-sbb.json | GeoJSON FeatureCollection with the network stations. **This key is required if the project is NOT GTFS based.** |
+| routes |  | Hash | JS Hash containing the route defintions.** |
 
 **Notes:**
 
