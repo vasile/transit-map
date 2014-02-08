@@ -5,7 +5,7 @@ class DB {
     
     private static function getDB() {
         if (is_null(self::$db)) {
-            $db_path = APP_FOLDER_PATH . '/gtfs-data/' . PROJECT_NAME .  '/gtfs.db';
+            $db_path = APP_FOLDER_PATH . '/gtfs-data/gtfs.db';
             $db = new SQLite3($db_path, SQLITE3_OPEN_READONLY);
             self::$db = $db;
         }
@@ -72,7 +72,7 @@ class DB {
     }
     
     public static function getCalendarRows() {
-        $cache_file = APP_FOLDER_PATH . '/tmp/' . PROJECT_NAME .  '/cache/db/calendar.json';
+        $cache_file = APP_FOLDER_PATH . '/tmp/cache/db/calendar.json';
         $cached_results = self::getCachedResults(array(
             'cache_file' => $cache_file
         ));
@@ -87,7 +87,7 @@ class DB {
     }
     
     public static function getTripsByMinute($hhmm, $service_id) {
-        $cache_file = APP_FOLDER_PATH . '/tmp/' . PROJECT_NAME .  '/cache/db/trips_' . $service_id . '_' . $hhmm . '.json';
+        $cache_file = APP_FOLDER_PATH . '/tmp/cache/db/trips_' . $service_id . '_' . $hhmm . '.json';
         $cached_results = self::getCachedResults(array(
             'cache_file' => $cache_file
         ));
@@ -112,7 +112,7 @@ class DB {
     }
     
     public static function getStopsByTripId($trip_id) {
-        $cache_file = APP_FOLDER_PATH . '/tmp/' . PROJECT_NAME .  '/cache/db/trip_' . $trip_id . '.json';
+        $cache_file = APP_FOLDER_PATH . '/tmp/cache/db/trip_' . $trip_id . '.json';
         $cached_results = self::getCachedResults(array(
             'cache_file' => $cache_file
         ));
