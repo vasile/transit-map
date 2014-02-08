@@ -371,11 +371,17 @@ var simulation_manager = (function(){
 
         var seconds_multiply = null;
         
-        function init(hms) {
+        function init() {
             (function(){
                 var d = new Date();
                 
-                hms = hms || config.getParam('hms');
+                var hms = config.getParam('hms');
+
+                // Demo data is set for 9 AM
+                if (config.getParam('api_paths.trips') === 'api/demo/trips.json') {
+                    hms = '09:00:00';
+                }
+
                 if (hms !== null) {
                     var hms_matches = hms.match(/^([0-9]{2}):([0-9]{2}):([0-9]{2})$/);
                     if (hms_matches) {
@@ -1719,9 +1725,7 @@ var simulation_manager = (function(){
             config.init();
             ui_init();
             geolocation_init();
-            // WARNING: in production, remove '09:00:00', use
-            //      timer.init();
-            timer.init('09:00:00');
+            timer.init();
             map_helpers.init();
             simulation_panel.init();
         },
