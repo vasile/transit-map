@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <html>
     <head>
-        <title>Vehicle simulator</title>
+        <title>Swiss Railways Transit Map</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
         <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 
@@ -19,8 +19,8 @@
         <div id="map_canvas"></div>
         <div id="panel" class="hidden">
             <div>
-                <h3>Vehicle simulator</h3>
-                <p>Project information available on <a href="https://github.com/vasile/vehicle-simulator" target="_blank">Github</a></p>
+                <h3>Swiss Railways Map</h3>
+                <p>Project information available on <a href="https://github.com/vasile/transit-map" target="_blank">Github</a></p>
             </div>
             <div class="section">
                 <b>Time:</b> <span id="day_time"></span> 
@@ -43,19 +43,21 @@
                         <input id="follow_trigger" type="button" value="Follow" data-value-toggle="STOP" />
                         <input id="route_show_trigger" type="button" value="Draw route" data-value-toggle="HIDE route" />
                     </div>
-                
-                    <table id="vehicle_timetable" class="panel_table">
-                        <thead>
-                            <tr>
-                                <td>#</td>
-                                <td class="station">Station</td>
-                                <td>Arr.</td>
-                                <td>Dep.</td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
+
+                    <div id="vehicle_timetable_container">
+                        <table id="vehicle_timetable" class="panel_table">
+                            <thead>
+                                <tr>
+                                    <td>#</td>
+                                    <td class="station">Station</td>
+                                    <td>Arr.</td>
+                                    <td>Dep.</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div id="station_info" class="hidden section" data-type="panel">

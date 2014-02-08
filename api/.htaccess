@@ -1,0 +1,3 @@
+RewriteEngine On
+RewriteRule getTrips/([0-9]{4})$ inc/controllers/trips.php?hhmm=$1 [L]
+RewriteRule geojson/([^\.]+?.geojson)$ inc/controllers/geojson.php?file=$1 [L]

@@ -1,174 +1,122 @@
 ## About
-Vehicle simulator creates a Google Maps mashup with animated markers(vehicles) that are moving according with given timetables along polylines(vehicle tracks). 
 
-![Swiss railways(SBB)](static/images/github_badge_800px.png "Swiss railways(SBB)")
+This project animates vehicles (markers) on a map using the public transport timetables to interpolate their positions along the routes (polylines).
 
-### Projects using this script
+**NEW: Plug and play your GTFS files !**
 
-* **Swiss railways(SBB)** network simulator - http://simcity.vasile.ch/sbb/
-* **Romanian railways(CFR)** network simulator - http://cfr.webgis.ro/
-* **Lausanne (TL)** public transport simulator - http://simcity.vasile.ch/lausanne/
-* **Brașov (RAT)** public transport simulator - http://brasov.webgis.ro/
-* **Grenoble (TAG)** public transport simulator - http://simcity.vasile.ch/grenoble/
-* **Genève (TPG)** public transport simulator - http://simcity.vasile.ch/geneva/
+Check the [GTFS importer](https://github.com/vasile/transit-map/blob/master/scripts/gtfs-importer/README.md) for more information.
+
+![Swiss railways(SBB)](https://raw.github.com/vasile/transit-map/master/static/images/github_badge_800px.png "Swiss railways(SBB)")
+SBB network - http://simcity.vasile.ch/sbb/
+
+### Live applications using this project
+
+* **Swiss National Railways (SBB)** network - http://simcity.vasile.ch/sbb/
+* **Romanian Railways (CFR)** network - http://cfr.webgis.ro/
+* **Lausanne (TL)** public transport - http://simcity.vasile.ch/lausanne/
+* **Brașov (RAT)** public transport - http://brasov.webgis.ro/
+* **Grenoble (TAG)** public transport - http://simcity.vasile.ch/grenoble/
+* **Genève (TPG)** public transport - http://simcity.vasile.ch/geneva/
 
 ![Swiss railways(SBB)](http://simcity.vasile.ch/sbb/static/images/embed_social_200px.png "Swiss railways(SBB)") ![Romanian railways(CFR)](http://cfr.webgis.ro/static/images/embed_social_200px.png "Romanian railways(CFR)") ![Lausanne (TL)](http://simcity.vasile.ch/lausanne/static/images/embed_social_200px.png "Lausanne (TL)") ![Brașov (RAT)](http://brasov.webgis.ro/static/images/embed_social_200px.png "Brașov (RAT)") ![Grenoble (TAG)](http://simcity.vasile.ch/grenoble/static/images/embed_social_200px.png "Grenoble (TAG)") ![Genève (TPG)](http://simcity.vasile.ch/geneva/static/images/embed_social_200px.png "Genève (TPG)")
 
-## Requirements
+## Install
 
-* a webserver(i.e. Apache)
+You need is a webserver(i.e. Apache) and a (modern) browser.
 
-## Usage
+Steps:
 
-* clone the project in a location that can be accessible via your webserver
-* access the project in your browser (i.e. [http://localhost/vehicle-simulator/](http://localhost/vehicle-simulator/) ). 
+* clone / download the project in a location that can be accessible via your webserver
+* access the project in the browser (i.e. [http://localhost/transit-map/](http://localhost/transit-map/) ). 
 
 You should already see some action on the map !
 
-## Customize the project with your area
+## Customize
 
-Config: [static/js/map.js - simulation_manager > config > params](https://github.com/vasile/vehicle-simulator/blob/master/static/js/map.js)
+### Parameters in config.js
 
-    center_start: new google.maps.LatLng(47.378, 8.540),
-    zoom_start: 13,
-    zoom_follow: 17,
-    zoom_station: 15,
-    zoom_mouseover_min: 7,
-    ft_id_mask: '812706',
-    ft_id_lines: '1497331',
-    ft_id_stations: '1497361',
-    json_paths: {
-        edges: 'static/geojson/edges-sbb.json',
-        stations: 'static/geojson/stations-sbb.json',
-        vehicles: 'api/vehicles/[hhmm]'
-        station_vehicles: 'api/station_vehicles/[station_id]/[hhmm]'
-    }
+File [static/js/config.js](https://github.com/vasile/transit-map/blob/master/static/js/config.js)
 
-* *center_start:* initial coordinates
-* *zoom_start:* initial zoom level
-* *zoom_follow:* zoom level used to follow a vehicle
-* *zoom_station:* zoom level used when clicking on a station
-* *zoom_mouseover_min:* minimum zoom level where mousover vehicles shows an info panel
-* *ft_id_mask:* Fusion Table ID containing the simulation mask (optional but cool :) - example [FT #812706](http://www.google.com/fusiontables/DataSource?dsrcid=812706) . Check [this script](https://github.com/vasile/Mask-KML-polygons) if you are not sure how to generate one
-* *ft_id_lines:* Fusion Table ID of the polylines layer - example [FT #1497331](http://www.google.com/fusiontables/DataSource?dsrcid=1497331)
-* *ft_id_stations:* Fusion Table ID of the stations layer - example [FT #1497361](http://www.google.com/fusiontables/DataSource?dsrcid=1497361)
-* *json_paths.edges:* [GeoJSON](http://geojson.org/geojson-spec.html#linestring) file containing the simulation polylines. 
-	
-	**Example:** [static/geojson/edges-sbb.json](https://github.com/vasile/vehicle-simulator/blob/master/static/geojson/edges-sbb.json)
-  
-  	Polyline(edge) description:
-    
-        "type": "Feature",
-        "properties": {
-        	"edge_id": "1731"
-        },
-        "geometry": {
-        	"type": "LineString",
-            "coordinates": [ [9.131931, 47.65992], … ]
-        }
-        
-     * *properties.edge_id:* polyline unique ID
-     * *geometry.coordinates:* array of longitude, latitude pairs for each vertex of the polyline
+| Key | Required | Sample Value | Description |
+| ------------ | ------------- | ------------ |
+| center.x | **YES** | 8.540 | Longitude of the map center. Values in decimal degrees. |
+| center.x | **YES** | 47.378 | Latitude of the map center. Values in decimal degrees. |
+| map_type_id | **YES** | roadmap | Initial map type. Values: **roadmap**, **satellite**, **terrain**, **stamen** |
+| zoom.start | **YES** | 13 | Initial map zoom level. Values from 1 to 21. |
+| zoom.min |  | 7 | Minimum map zoo level. |
+| zoom.max |  | 7 | Maximum map zoo level. |
+| zoom.to_stops | **YES** | 17 | Zoom to this value when a stop(station) is clicked / selected |
+| zoom.roadmap.stops_min |  | 15 | Minimum zoom level for which the stops(stations) layer is visible when the roadmap view is rendered |
+| zoom.roadmap.stops_max |  | 20 | Maximum zoom level ... |
+| zoom.roadmap.shapes_min |  | 7 | Minimum zoom level for which the shapes(tracks) ... |
+| zoom.roadmap.shapes_min |  | 20 | Maximum zoom level ... |
+| zoom.satellite.stops_min |  | 15 | Minimum zoom level for which the stops(stations) layer is visible when the satellite view is rendered |
+| zoom.satellite.stops_max |  | 20 | Maximum zoom level ... |
+| zoom.satellite.shapes_min |  | 7 | Minimum zoom level for which the shapes(tracks) ... |
+| zoom.satellite.shapes_min |  | 18 | Maximum zoom level ... |
+| zoom.vehicle_follow | **YES** | 17 | Zoom to this value when a vehicle is "followed" |
+| zoom.vehicle_mouseover_min | **YES** | 7 | Prohibit vehicle popups when hovering under this zoom value |
+| ft_layer_ids.mask |  | *string* | Fusion Table ID of the area mask. Example: [SBB network mask](https://www.google.com/fusiontables/DataSource?docid=1tDHsjdz7uhhAmWlmmwjR1P2Huf2LKMMiICPVdw) |
+| ft_layer_ids.gtfs_shapes |  | *string* | Fusion Table ID of the GTFS shapes. Example: [SF Muni shapes](https://www.google.com/fusiontables/DataSource?docid=1P8sj1Nte_-84dNqcdeKhVeIhVFZ3PGJsNHShVBE) |
+| ft_layer_ids.gtfs_stops |  | *string* | Fusion Table ID of the GTFS stops. Example: [SF Muni stops](https://www.google.com/fusiontables/DataSource?docid=1Md8PkM899quqFiCnfv4bpaGOKbVWMn4u9HBiQiY) |
+| ft_layer_ids.topology_edges |  | *string* | Fusion Table ID of the custom network edges. Example: [SBB edges](https://www.google.com/fusiontables/DataSource?docid=1-1B2tYIO2JSnaacEHO8sfWVjm1S387lMEkHkjc4) . **Use this for non-GTFS projects** |
+| ft_layer_ids.topology_stations |  | *string* | Fusion Table ID of the custom network stations. Example: [SBB edges](https://www.google.com/fusiontables/DataSource?docid=1YppDCNud7566oK_VwHsuUhGJqnm_CLDStMS3IuM) . **Use this for non-GTFS projects** |
+| api_paths.trips | **YES** | api/getTrips/[hhmm] | Vehicles (or GTFS trips) API with all vehicles that run at given hhmm - hour minutes. |
+| api_paths.departures |  | api/getDepartures/[stop_id]/[hhmm] | Departures API of the vehicles that stop in [stop_id] station at given [hhmm] time. |
+| geojson.gtfs_shapes | **YES** | api/geojson/gtfs_shapes.json | GeoJSON FeatureCollection with the GTFS shapes. **This param is not required if geojson.topology_* are used. |
+| geojson.gtfs_stops | **YES** | api/geojson/gtfs_shapes.json | GeoJSON FeatureCollection with the GTFS stops. **This param is not required if geojson.topology_* are used.** |
+| geojson.topology_edges |  | static/geojson/edges-sbb.json | GeoJSON FeatureCollection with the network edges. **This param is required if the project is NOT GTFS based.** |
+| geojson.topology_stations |  | static/geojson/edges-sbb.json | GeoJSON FeatureCollection with the network stations. **This param is required if the project is NOT GTFS based.** |
+| routes |  | Hash | JS Hash containing the route defintions.** |
 
-  **Please note** that FT layers are used just for rendering the train lines on the map; to move the vehicles on the map, the json_paths.edges coordinates are used to accomplish this task.
+**Notes:**
 
-* *json_paths.stations:* GeoJSON file containing the simulation stations.
-
-    **Example:** [static/geojson/stations-sbb.json](https://github.com/vasile/vehicle-simulator/blob/master/static/geojson/stations-sbb.json) 
-    
-  	Station description:
-        
-        "type":"Feature",
-        "properties": {
-            "station_id": 8503000,
-            "name": "Zürich HB"
-        },
-        "geometry": {
-            "type": "Point",
-            "coordinates": [ 8.53947,47.378777 ]
-        }
-
-    * *properties.station_id:* station unique ID
-    * *properties.name:* station name
-    * *geometry.coordinates:* pair for longitude, latitude of the station
+- no one of the FT Layers are needed, they are just used for displaying the network stations and lines on the map.
+- ft_layer_ids.gtfs\_\* and ft_layer_ids.topology\_\* are mutually exclusive, the first one  should be used if the project is GTFS-based . Same for geojson.gtfs\_\* vs geojson.topology\_\* keys
 
 
-* *json_paths.vehicles:* JSON file containing the vehicles running at given time (hhmm format)
+### Override parameters
 
-    **Example:** [api/vehicles/[hhmm]](https://github.com/vasile/vehicle-simulator/blob/master/api/vehicles/0900.json) 
-    
-    Where a vehicle looks like:
-        
-        "id"    : "7974",
-        "name"  : "S1821817",
-        "type"  : "s",
-        "sts"   : ["8502007","8502011","8502008","8502009","8502020","8502012","8502028","8502021","8505000"],
-        "deps"  : ["08:48:00","08:50:00","08:52:00","08:57:00","09:00:00","09:03:00","09:07:00","09:08:00"],
-        "arrs"  : ["08:49:45","08:51:45","08:56:00","08:59:45","09:02:45","09:06:00","09:07:45","09:15:00"],
-        "edges" : ["","-504","-503","-506","-507","-508","-509,-2027","-511","-510,-426,-545,-544,154"]
+All the config parameters above can be overriden using query string parameters, for instance add **?center.x=8.2&center.y=46.9** to override the map center.
 
-    * *id:* vehicle unique ID
-    * *name:* vehicle name
-    * *type:* the vehicle type, used later for the vehicle icon, i.e. [images/vehicle-types/r.png](https://github.com/vasile/vehicle-simulator/blob/master/static/images/vehicle-types/r.png)
-    * *sts:* array of station IDs
-    * *deps:* array of departures. Supported formats:
-    	* 31680 - number of seconds from midnight, For example 31680 = 08:48
-    	* 08:48:45 - hh:mm:ss
-    	* 08:48 - hh:mm
-    * *arrs:* array of arrivals
-    * *edges:* the polylines used to reach the previous staton. Negative value means that the polyline is used against its original direction. For example, in the example above from 8502007(Sursee) to 8502007(Oberkirch LU), the polyline 504 is used, but with direction inverted
+### Other parameters
 
-* *json_paths.station_vehicles:* JSON file containing the vehicles departing from a station given by *station_id* running at the time given by *hhmm*
+In addition to these, other optional parameters can be used as querystring parameters or in the config.js
 
-    **Example:** [api/station_vehicles/[station_id]/[hhmm]](https://github.com/vasile/vehicle-simulator/blob/master/api/station_vehicles/8507000/0900.json) 
-    
-    Where a vehicle looks like:
-        
-        "id": "1015",
-        "name": "IR 2517",
-        "dep": "32400",
-        "st_b": "8505000"
+| Key | Sample Value | Description |
+| ------------ | ------------- | ------------ |
+| hms | 10:20:30 | Override time of day, using hh:mm:vv format |
+| time_multiply | 10 | Accelerate the simulation :) Possible values: 1, 5, 10, 100 |
+| view_mode | iframe | Will remove the info panel; suitable for IFRAME integrations |
+| vehicle_name | ICN10017 | The application will try to locate the vehicle by name and follow it |
+| vehicle_id | *string* | Same as above for vehicle_id |
 
-    * *id:* vehicle unique ID
-    * *name:* vehicle name
-    * *dep:* vehicle departure from the station computed in seconds from midnight. For example 31680 = 08:48.
-    * *st_b:* final destination id
-
-Next steps after you are able to generate these APIs programmatically:
-
-* change the vehicle API URLs to use [station_id], [hhmm] parameters (see the comments in the config file)
-* remove the the '09:00:00' custom time from timer.init() call in simulation_manager.init()
-
-## Custom querystring parameters
-
-By adding one of multiple querystring parameters below you can customize the starting point of the simulation:
-
-* **hms** - if given, the simulation will use the given start time in hh:mm:ss format
-* **x** AND **y** - if given, the simulation will start centered on the giveb center by x = longitude, y = latitude in decimal degrees
-* **zoom** - if given, the simulation will use the value for the initial zoom level. Possible values: 1..21
-* **map_type_id** - if given, the simulation will use the value for the map type. Possible values: roadmap, satellite, hybrid, terrain, stamen .
-* **time_multiply** - if given, the simulation will multiply the time speed with given factor. Possible values: 1, 5, 10, 100
-* **view_mode** - value 'iframe' - will strip all the info panel. Suitable for IFRAME integration with other websites
-* **vehicle_name** or **vehicle_id** - if given, the simulation will try to locate the vehicle given by name or id and follow it
 
 **Examples:**
 
 * Stamen watercolor map, centered on 8.47 longitude with 47.18 latitude, initial zoom level 11 and simulation time set for 10:20:30 with time increasing 10x
-	
-	[?x=8.7&y=47.18&zoom=11&map_type_id=stamen&hms=11:20:30&time_multiply=10](http://simcity.vasile.ch/sbb/?x=8.7&y=47.18&zoom=11&map_type_id=stamen&hms=11:20:30&time_multiply=10)
+    
+    [?center.x=8.7&center.y=47.18&zoom.start=11&map_type_id=stamen&hms=11:20:30&time_multiply=10](http://simcity.vasile.ch/sbb/?center.x=8.7&center.y=47.18&zoom.start=11&map_type_id=stamen&hms=11:20:30&time_multiply=10)
 
 * Roadmap, swiss-centered, included as an iframe
-	
-	[?x=8.2&y=46.9&zoom=9&map_type_id=roadmap&hms=11:20:30&time_multiply=100&view_mode=iframe](http://simcity.vasile.ch/sbb/?x=8.2&y=46.9&zoom=9&map_type_id=roadmap&hms=11:20:30&time_multiply=100&view_mode=iframe) 
+    
+    [?center.x=8.2&center.y=46.9&zoom.start=9&map_type_id=roadmap&hms=11:20:30&time_multiply=100&view_mode=iframe](http://simcity.vasile.ch/sbb/?center.x=8.2&center.y=46.9&zoom.start=9&map_type_id=roadmap&hms=11:20:30&time_multiply=100&view_mode=iframe) 
 
 * Track ICN10017 (Zürich HB - Lugano)
-	
-	[?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5](http://simcity.vasile.ch/sbb/?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5) 	
+    
+    [?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5](http://simcity.vasile.ch/sbb/?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5)     
 
+## Contact ?
+Have other questions or do you want to use this application for your area and got stuck ? 
 
-## Stay in touch
-- project updates are published [here](http://blog.vasile.ch/tag/swisstrains)
+Then ping me on [Twitter](https://twitter.com/vasile23) or drop [me](http://www.vasile.ch) a line. 
+ 
+## License
 
-- just contact [me](http://www.vasile.ch) in case you need further assistance or have other questions. 
-
-### Have fun !
+**Copyright (c) 2014 Vasile Coțovanu** - http://www.vasile.ch
+ 
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the **following conditions:**
+ 
+* **The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.**
+ 
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

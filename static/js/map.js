@@ -1,46 +1,55 @@
 /*global $, google, InfoBox */
 var simulation_manager = (function(){
     google.maps.visualRefresh = true;
+
     var ua_is_mobile = navigator.userAgent.indexOf('iPhone') !== -1 || navigator.userAgent.indexOf('Android') !== -1;
-    
+
     var config = (function(){
-        var params = {
-            center_start: new google.maps.LatLng(47.378, 8.540),
-            zoom_start: 13,
-            zoom_follow: 17,
-            zoom_station: 15,
-            zoom_mouseover_min: 7,
-            ft_id_mask: '1tDHsjdz7uhhAmWlmmwjR1P2Huf2LKMMiICPVdw',
-            ft_id_lines: '1-1B2tYIO2JSnaacEHO8sfWVjm1S387lMEkHkjc4',
-            ft_id_stations: '1YppDCNud7566oK_VwHsuUhGJqnm_CLDStMS3IuM',
-            json_paths: {
-                edges: 'static/geojson/edges-sbb.json',
-                stations: 'static/geojson/stations-sbb.json',
-                // WARNING: in production replace 0900 with [hhmm]
-                //      vehicles: 'api/vehicles/[hhmm]'
-                vehicles: 'api/vehicles/0900.json',
-                // WARNING: in production replace 8507000 with [station_id]
-                //      station_vehicles: 'api/station_vehicles/[station_id]/[hhmm]'
-                station_vehicles: 'api/station_vehicles/8507000/0900.json'
-            }
-        };
-        
-        var user_params = {};
-        var url_parts = window.location.href.split('?');
-        if (url_parts.length === 2) {
-            var queryparam_groups = url_parts[1].split('&');
-            $.each(queryparam_groups, function(index, queryparams_group){
-                var queryparam_parts = queryparams_group.split('=');
-                user_params[queryparam_parts[0]] = decodeURIComponent(queryparam_parts[1]);
-            });
-        }
+        var params = {};
         
         return {
-            getParam: function(p) {
-                return params[p];
+            init: function() {
+                $.ajax({
+                    url: 'static/js/config.js',
+                    dataType: 'json',
+                    async: false,
+                    success: function(config_params) {
+                        params = config_params;
+
+                        // Override config with the QS params
+                        var url_parts = window.location.href.split('?');
+                        if (url_parts.length === 2) {
+                            var qs_groups = url_parts[1].split('&');
+                            $.each(qs_groups, function(index, qs_group){
+                                var qs_parts = qs_group.split('=');
+                                var key = qs_parts[0];
+
+                                // Backwards compatibility
+                                switch (key) {
+                                    case 'zoom':
+                                        key = 'zoom.start';
+                                        break;
+                                    case 'x':
+                                        key = 'center.x';
+                                        break;
+                                    case 'y':
+                                        key = 'center.y';
+                                        break;
+                                }
+                                
+                                var param_value = decodeURIComponent(qs_parts[1]);
+
+                                params[key] = param_value;
+                            });
+                        }
+                    },
+                    error: function(a) {
+                        alert('Broken JSON in static/js/config.js');
+                    }
+                });
             },
-            getUserParam: function(p) {
-                return typeof user_params[p] === 'undefined' ? null : user_params[p];
+            getParam: function(key) {
+                return (typeof params[key] === 'undefined') ? null : params[key];
             }
         };
     })();
@@ -86,23 +95,34 @@ var simulation_manager = (function(){
         function location_get(id) {
             return (typeof stations[id]) === 'undefined' ? '' : stations[id].get('location');
         }
-        
-        function add(id, name, x, y) {
-            var station = new google.maps.MVCObject();
-            station.set('name', name);
 
-            if (parseInt(x, 10) === 0) {
-                station.set('location', null);
-            } else {
-                station.set('location', new google.maps.LatLng(parseFloat(y), parseFloat(x)));
-            }
-            
-            stations[id] = station;
+        function addFeatures(features) {
+            $.each(features, function(index, feature) {
+                var station_id, station_name;
+                if (typeof(feature.properties.stop_id) === 'undefined') {
+                    // Custom GeoJSON support
+                    station_id = feature.properties.station_id;
+                    station_name = feature.properties.name;
+                } else {
+                    // GTFS support
+                    station_id = feature.properties.stop_id;
+                    station_name = feature.properties.stop_name;
+                }
+
+                var station = new google.maps.MVCObject();
+                station.set('name', station_name);
+
+                var station_x = parseFloat(feature.geometry.coordinates[0]);
+                var station_y = parseFloat(feature.geometry.coordinates[1]);
+                station.set('location', new google.maps.LatLng(station_y, station_x));
+
+                stations[station_id] = station;
+            });
         }
         
         return {
             get: get,
-            add: add,
+            addFeatures: addFeatures,
             location_get: location_get
         };
     })();
@@ -215,17 +235,21 @@ var simulation_manager = (function(){
             
             routes[ab_edges] = route;
         }
-        
+
         function lengthGet(ab_edges) {
             return routes[ab_edges].length;
         }
         
         function routeHighlight(vehicle) {
             var points = [];
-            $.each(vehicle.edges, function(k, ab_edges){
-                if (k === 0) { return; }
-                points = points.concat(routes[ab_edges].points);
-            });
+            if (vehicle.source === 'gtfs') {
+                points = routes[vehicle.shape_id].points;
+            } else {
+                $.each(vehicle.edges, function(k, ab_edges){
+                    if (k === 0) { return; }
+                    points = points.concat(routes[ab_edges].points);
+                });
+            }
             
             route_highlight.setPath(points);
             route_highlight.setMap(map);
@@ -264,12 +288,34 @@ var simulation_manager = (function(){
                 $.each(feature.geometry.coordinates, function(i2, feature_coord){
                     edge_coords.push(new google.maps.LatLng(feature_coord[1], feature_coord[0]));
                 });
-                
+
                 var edge_id = feature.properties.edge_id;
+
                 network_lines[edge_id] = {
                     points: edge_coords,
                     is_detailed: feature.properties.detailed === 'yes'
                 };
+            });
+        }
+
+        function loadGeoJSONShapes(features) {
+            $.each(features, function(index, feature) {
+                var shape_id = feature.properties.shape_id;
+
+                var points = [];
+                $.each(feature.geometry.coordinates, function(i2, feature_coord){
+                    points.push(new google.maps.LatLng(feature_coord[1], feature_coord[0]));
+                });
+
+                var dAB = parseFloat(google.maps.geometry.spherical.computeLength(points).toFixed(3));
+
+                var route = {
+                    points: points,
+                    length: dAB,
+                    detailed_parts: []
+                };
+
+                routes[shape_id] = route;
             });
         }
 
@@ -309,6 +355,7 @@ var simulation_manager = (function(){
             routeHighlightRemove: routeHighlightRemove,
             loadEncodedEdges: loadEncodedEdges,
             loadGeoJSONEdges: loadGeoJSONEdges,
+            loadGeoJSONShapes: loadGeoJSONShapes,
             projectDistanceAlongRoute: projectDistanceAlongRoute
         };
     })();
@@ -316,7 +363,6 @@ var simulation_manager = (function(){
     // Time manager
     // Roles:
     // - manages the current number of seconds that passed since midnight
-    // - 'init' can be used with given hh:mm:ss in order to simulate different timestamps
     var timer = (function(){
         var timer_refresh = 100;
         var ts_midnight = null;
@@ -329,12 +375,14 @@ var simulation_manager = (function(){
             (function(){
                 var d = new Date();
                 
-                hms = hms || config.getUserParam('hms');
+                hms = hms || config.getParam('hms');
                 if (hms !== null) {
-                    var hms_parts = hms.split(':');
-                    d.setHours(parseInt(hms_parts[0], 10));
-                    d.setMinutes(parseInt(hms_parts[1], 10));
-                    d.setSeconds(parseInt(hms_parts[2], 10));
+                    var hms_matches = hms.match(/^([0-9]{2}):([0-9]{2}):([0-9]{2})$/);
+                    if (hms_matches) {
+                        d.setHours(parseInt(hms_matches[1], 10));
+                        d.setMinutes(parseInt(hms_matches[2], 10));
+                        d.setSeconds(parseInt(hms_matches[3], 10));
+                    }
                 }
                 
                 ts_now = d.getTime() / 1000;
@@ -417,7 +465,7 @@ var simulation_manager = (function(){
     
     var simulation_panel = (function(){
         var selected_vehicle = null;
-        
+
         function Toggler(el_id) {
             var el = $(el_id);
             el.attr('data-value-original', el.val());
@@ -451,6 +499,20 @@ var simulation_manager = (function(){
         };
         
         var vehicle_follow = (function(){
+            listener_helpers.subscribe('map_init', function(){
+                function stop_following() {
+                    if (selected_vehicle === null) {
+                        return;
+                    }
+
+                    stop();
+                }
+
+                google.maps.event.addListener(map, 'dragstart', stop_following);
+                google.maps.event.addListener(map, 'click', stop_following);
+                google.maps.event.addListener(map, 'dblclick', stop_following);
+            });
+
             var toggler;
             function init() {
                 toggler = new Toggler('#follow_trigger');
@@ -524,7 +586,7 @@ var simulation_manager = (function(){
             station_info_hide();
             vehicle_route.hide();
 
-            $('.vehicle_name', $('#vehicle_info')).text(vehicle.name);
+            $('.vehicle_name', $('#vehicle_info')).text(vehicle.name + ' (' + vehicle.id + ')');
             
             var ts = timer.getTS();
             
@@ -573,7 +635,11 @@ var simulation_manager = (function(){
         function station_info_display(station_id) {
             var hm = timer.getHM();
             
-            var url = config.getParam('json_paths').station_vehicles;
+            var url = config.getParam('api_paths.station_vehicles');
+            if (url === null) {
+                return;
+            }
+
             url = url.replace(/\[station_id\]/, station_id);
             url = url.replace(/\[hhmm\]/, hm.replace(':', ''));
             
@@ -623,7 +689,9 @@ var simulation_manager = (function(){
                 if (station_location === null) { return; }
                 
                 map.setCenter(station_location);
-                map.setZoom(config.getParam('zoom_station'));
+                if (map.getZoom() < config.getParam('zoom.to_stops')) {
+                    map.setZoom(config.getParam('zoom.to_stops'));    
+                }
                 
                 vehicle_info_hide();
                 station_info_display(station_id);
@@ -741,9 +809,9 @@ var simulation_manager = (function(){
 
             var map_inited = false;
             var map_options = {
-                zoom: config.getParam('zoom_start'),
-                center: config.getParam('center_start'),
-                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                zoom: parseInt(config.getParam('zoom.start'), 10),
+                center: new google.maps.LatLng(parseFloat(config.getParam('center.y')), parseFloat(config.getParam('center.x'))),
+                mapTypeId: config.getParam('map_type_id'),
                 styles: mapStyles,
                 disableDefaultUI: true,
                 zoomControl: true,
@@ -758,22 +826,16 @@ var simulation_manager = (function(){
                 }
             };
 
-            if (config.getUserParam('x') !== null) {
-                map_options.center = new google.maps.LatLng(parseFloat(config.getUserParam('y')), parseFloat(config.getUserParam('x')));
-                map_options.zoom = config.getParam('zoom_follow');
-                map_options.mapTypeId = google.maps.MapTypeId.SATELLITE;
+            if (config.getParam('tilt') !== null) {
+                map_options.tilt = parseInt(config.getParam('tilt'), 10);
             }
-            
-            if (config.getUserParam('zoom') !== null) {
-                map_options.zoom = parseInt(config.getUserParam('zoom'), 10);
+
+            if (config.getParam('zoom.min') !== null) {
+                map_options.minZoom = parseInt(config.getParam('zoom.min'), 10);
             }
-            
-            if (config.getUserParam('map_type_id') !== null) {
-                map_options.mapTypeId = config.getUserParam('map_type_id');
-            }
-            
-            if (config.getUserParam('tilt') !== null) {
-                map_options.tilt = parseInt(config.getUserParam('tilt'), 10);
+
+            if (config.getParam('zoom.max') !== null) {
+                map_options.maxZoom = parseInt(config.getParam('zoom.max'), 10);
             }
 
             map = new google.maps.Map(document.getElementById("map_canvas"), map_options);
@@ -783,76 +845,138 @@ var simulation_manager = (function(){
             map.mapTypes.set('stamen', stamen_map);
 
             function map_layers_add(){
-                var edges_layer = new google.maps.FusionTablesLayer({
-                    query: {
+                var edges_layer;
+                var stations_layer;
+                var ft_id;
+
+                // Graph topology layers - EDGES
+                ft_id = config.getParam('ft_layer_ids.topology_edges');
+                if (ft_id !== null) {
+                    edges_layer = new google.maps.FusionTablesLayer({
+                        query: {
+                            select: 'geometry',
+                            from: ft_id
+                        },
+                        clickable: false,
+                        map: map,
+                        styles: [
+                            {
+                                polylineOptions: {
+                                    strokeColor: "#FF0000",
+                                    strokeWeight: 2
+                                }
+                            },{
+                                where: "type = 'tunnel'",
+                                polylineOptions: {
+                                    strokeColor: "#FAAFBE",
+                                    strokeWeight: 1.5
+                                }
+                            }
+                        ]
+                    });
+                }
+
+                // Graph topology layers - STATIONS
+                ft_id = config.getParam('ft_layer_ids.topology_stations');
+                if (ft_id !== null) {
+                    stations_layer = new google.maps.FusionTablesLayer({
+                        query: {
+                            select: 'geometry',
+                            from: ft_id
+                        },
+                        suppressInfoWindows: true,
+                        map: map
+                    });
+
+                    google.maps.event.addListener(stations_layer, 'click', function(ev){
+                        var station_id = ev.row.id.value;
+                        simulation_panel.displayStation(station_id);
+                    });
+                }
+
+                // GTFS layers - shapes.txt
+                ft_id = config.getParam('ft_layer_ids.gtfs_shapes');
+                if (ft_id !== null) {
+                    edges_layer = new google.maps.FusionTablesLayer({
+                        query: {
+                            select: 'geometry',
+                            from: ft_id
+                        },
+                        clickable: false,
+                        map: map
+                    });
+                }
+
+                // GTFS layers - stops.txt
+                ft_id = config.getParam('ft_layer_ids.gtfs_stops');
+                if (ft_id !== null) {
+                    stations_layer = new google.maps.FusionTablesLayer({
+                        query: {
+                            select: 'geometry',
+                            from: ft_id
+                        },
+                        suppressInfoWindows: true,
+                        map: map
+                    });
+
+                    google.maps.event.addListener(stations_layer, 'click', function(ev){
+                        var station_id = ev.row.stop_id.value;
+                        simulation_panel.displayStation(station_id);
+                    });
+                }
+
+                // Area mask
+                ft_id = config.getParam('ft_layer_ids.mask');
+                if (ft_id !== null) {
+                    var layer = new google.maps.FusionTablesLayer({
+                      query: {
                         select: 'geometry',
-                        from: config.getParam('ft_id_lines')
-                    },
-                    clickable: false,
-                    map: map,
-                    styles: [
-                        {
-                            polylineOptions: {
-                                strokeColor: "#FF0000",
-                                strokeWeight: 2
-                            }
-                        },{
-                            where: "type = 'tunnel'",
-                            polylineOptions: {
-                                strokeColor: "#FAAFBE",
-                                strokeWeight: 1.5
-                            }
-                        }
-                    ]
-                });
-
-                var stations_layer = new google.maps.FusionTablesLayer({
-                  query: {
-                    select: 'geometry',
-                    from: config.getParam('ft_id_stations')
-                  },
-                  suppressInfoWindows: true,
-                  map: map
-                });
-                google.maps.event.addListener(stations_layer, 'click', function(ev){
-                    var station_id = ev.row.id.value;
-                    simulation_panel.displayStation(station_id);
-                });
-
-                var layer = new google.maps.FusionTablesLayer({
-                  query: {
-                    select: 'geometry',
-                    from: config.getParam('ft_id_mask')
-                  },
-                  clickable: false,
-                  map: map
-                });
+                        from: ft_id
+                      },
+                      clickable: false,
+                      map: map
+                    });                    
+                }
 
                 function trigger_toggleLayerVisibility() {
-                    function toggleLayerVisibility(layer, show) {
-                        if (show) {
-                            if (layer.getMap() === null) {
-                                layer.setMap(map);
-                            }
-                        } else {
+                    function toggleLayerVisibility(layer, hide) {
+                        if (hide) {
                             if (layer.getMap() !== null) {
                                 layer.setMap(null);
                             }
+                        } else {
+                            if (layer.getMap() === null) {
+                                layer.setMap(map);
+                            }
                         }
                     }
 
-                    var zoom = map.getZoom();
                     var map_type_id = map.getMapTypeId();
-                    
-                    var show_layer = true;
-                    if ((map_type_id === google.maps.MapTypeId.SATELLITE) && (map.getTilt() === 0)) {
-                        if (zoom >= 17) {
-                            show_layer = false;
+                    var is_satellite = (map_type_id === google.maps.MapTypeId.SATELLITE) && (map.getTilt() === 0);
+                    var config_preffix = is_satellite ? 'zoom.satellite' : 'zoom.roadmap';
+
+                    var zoom = map.getZoom();
+
+                    $.each(['stops', 'shapes'], function(k, layer_type){
+                        var zoom_min = config.getParam(config_preffix + '.' + layer_type + '_min');
+                        if (zoom_min === null) {
+                            zoom_min = 0;
                         }
-                    }
-                    
-                    toggleLayerVisibility(stations_layer, show_layer);
-                    toggleLayerVisibility(edges_layer, show_layer);
+
+                        var zoom_max = config.getParam(config_preffix + '.' + layer_type + '_max');
+                        if (zoom_max === null) {
+                            zoom_max = 30;
+                        }
+
+                        var hide_layer = (zoom < zoom_min) || (zoom > zoom_max);
+                        if (layer_type === 'stops') {
+                            toggleLayerVisibility(stations_layer, hide_layer);
+                        }
+
+                        if (layer_type === 'shapes') {
+                            toggleLayerVisibility(edges_layer, hide_layer);
+                        }
+                    });
                 }
 
                 google.maps.event.addListener(map, 'idle', trigger_toggleLayerVisibility);
@@ -903,7 +1027,7 @@ var simulation_manager = (function(){
 
                         extended_bounds = new google.maps.LatLngBounds(new_bounds_sw, new_bounds_ne);
                     }
-                    google.maps.event.addListener(map, 'idle', update_extended_bounds);
+                    google.maps.event.addListener(map, 'bounds_changed', update_extended_bounds);
                     update_extended_bounds();
                 }
             });
@@ -934,13 +1058,9 @@ var simulation_manager = (function(){
     // - manages vehicle objects(class Vehicle) and animates them (see Vehicle.render method)
     var vehicle_helpers = (function(){
         var vehicle_detect = (function(){
-            var track_vehicle_name = config.getUserParam('vehicle_name');
-            if (track_vehicle_name !== null) {
-                track_vehicle_name = track_vehicle_name.replace(/[^A-Z0-9]/i, '');
-            }
-            
-            var track_vehicle_id = config.getUserParam('vehicle_id');
-            
+            var track_vehicle_name = null;
+            var track_vehicle_id = null;
+
             function match_by_name(vehicle_name) {
                 if (track_vehicle_name === null) {
                     return false;
@@ -955,6 +1075,15 @@ var simulation_manager = (function(){
             }
             
             function match(vehicle_name, vehicle_id) {
+                if (track_vehicle_id === null) {
+                    track_vehicle_name = config.getParam('vehicle_name');
+                    if (track_vehicle_name !== null) {
+                        track_vehicle_name = track_vehicle_name.replace(/[^A-Z0-9]/i, '');
+                    }
+            
+                    track_vehicle_id = config.getParam('vehicle_id');
+                }
+
                 if (track_vehicle_id === vehicle_id) {
                     return true;
                 }
@@ -963,7 +1092,7 @@ var simulation_manager = (function(){
             }
             
             listener_helpers.subscribe('vehicles_load', function(){
-                if (config.getUserParam('action') !== 'vehicle_add') {
+                if (config.getParam('action') !== 'vehicle_add') {
                     return;
                 }
                 
@@ -976,18 +1105,18 @@ var simulation_manager = (function(){
                     return sec_ar;
                 }
                 
-                var station_ids = config.getUserParam('station_ids').split('_');
+                var station_ids = config.getParam('station_ids').split('_');
                 $.each(station_ids, function(index, station_id_s){
                     station_ids[index] = station_id_s;
                 });
                 
                 var vehicle_data = {
-                    arrs: str_hhmm_2_sec_ar(config.getUserParam('arrs')),
-                    deps: str_hhmm_2_sec_ar(config.getUserParam('deps')),
+                    arrs: str_hhmm_2_sec_ar(config.getParam('arrs')),
+                    deps: str_hhmm_2_sec_ar(config.getParam('deps')),
                     id: 'custom_vehicle',
-                    name: decodeURIComponent(config.getUserParam('vehicle_name')),
+                    name: decodeURIComponent(config.getParam('vehicle_name')),
                     sts: station_ids,
-                    type: config.getUserParam('vehicle_type'),
+                    type: config.getParam('vehicle_type'),
                     edges: []
                 };
                 
@@ -1011,12 +1140,23 @@ var simulation_manager = (function(){
             var icons = {};
 
             function iconGet(type) {
-                if (typeof icons[type] !== 'undefined') {
+                if (icons[type]) {
                     return icons[type];
                 }
 
+                var routes_config = config.getParam('routes');
+                if ((typeof routes_config[type]) === 'undefined') {
+                    return null;
+                }
+
+                if (routes_config[type].icon === false) {
+                    return null;
+                }
+
+                var url = routes_config[type].icon;
+
                 var icon = {
-                    url: 'static/images/vehicle-types/' + type + '.png',
+                    url: url,
                     size: new google.maps.Size(20, 20),
                     origin: new google.maps.Point(0, 0),
                     anchor: new google.maps.Point(10, 10)
@@ -1116,13 +1256,7 @@ var simulation_manager = (function(){
                     var original_width = vehicle_detail_config[type].width;
                     var icon_width = vehicle_detail_config[type].base_zoom_width * Math.pow(2, parseInt(zoom - vehicle_detail_base_zoom, 10));
                     
-                    var base_url;
-                    if (document.location.host.match(/simcity2\.ch/)) {
-                        base_url = 'http://static.vasile2.ch';
-                    } else {
-                        base_url = 'http://static.vasile.ch';
-                    }
-                    base_url += '/simcity/service-vehicle-detail';
+                    var base_url = 'http://static.vasile.ch/simcity/service-vehicle-detail';
                     
                     var icon = {
                         url: base_url + '/' + type + '/' + heading + '.png',
@@ -1155,7 +1289,7 @@ var simulation_manager = (function(){
             vehicle_id: 0,
             closeBoxURL: ''
         });
-        
+
         var vehicleIDs = [];
 
         function Vehicle(params) {
@@ -1194,27 +1328,67 @@ var simulation_manager = (function(){
                 
                 return time_ar;
             }
-            
-            this.id                 = params.id;
-            this.name               = params.name;
-            this.stations           = params.sts;
-            this.edges              = params.edges;
-            this.depS               = parseTimes(params.deps);
-            this.arrS               = parseTimes(params.arrs);
-            this.service_type       = params.service_type;
-            
-            $.each(params.edges, function(k, edges) {
-                if (k === 0) { return; }
-                linesPool.routeAdd(edges);
-            });
 
+            if ((typeof params.trip_id) === 'undefined') {
+                this.source             = 'custom';
+
+                this.id                 = params.id;
+                this.name               = params.name;
+                this.stations           = params.sts;
+                this.edges              = params.edges;
+                this.depS               = parseTimes(params.deps);
+                this.arrS               = parseTimes(params.arrs);
+                this.route_icon         = params.type;
+                this.service_type       = params.service_type;
+                
+                $.each(params.edges, function(k, edges) {
+                    if (k === 0) { return; }
+                    linesPool.routeAdd(edges);
+                });
+            } else {
+                // GTFS approach
+                this.source             = 'gtfs';
+
+                this.id                 = params.trip_id;
+                this.name               = params.route_short_name;
+
+                this.service_type       = '';
+
+                this.edges              = [];
+                this.shape_id           = params.shape_id;
+
+                var departures = [];
+                var arrivals = [];
+                var stations = [];
+                var shape_percent = [];
+                $.each(params.stops, function(k, stop){
+                    if (k < (params.stops.length - 1)) {
+                        departures.push(stop.departure_time);
+                    }
+                    
+                    if (k > 0) {
+                        arrivals.push(stop.arrival_time);
+                    }
+                    
+                    stations.push(stop.stop_id);
+                    shape_percent.push(stop.stop_shape_percent);
+                });
+                
+                this.stations           = stations;
+                this.depS               = parseTimes(departures);
+                this.arrS               = parseTimes(arrivals);
+                this.shape_percent      = shape_percent;
+
+                this.route_icon         = params.route_short_name;
+            }
+            
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(0, 0),
                 map: null,
                 speed: 0,
                 status: 'not on map'
             });
-            var icon = imagesPool.iconGet(params.type);
+            var icon = imagesPool.iconGet(this.route_icon);
             if (icon !== null) {
                 marker.setIcon(icon);
             }
@@ -1230,17 +1404,17 @@ var simulation_manager = (function(){
             });
 
             this.mouseOverMarker = function() {
-                if (map.getZoom() < config.getParam('zoom_mouseover_min')) {
+                if (map.getZoom() < config.getParam('zoom.vehicle_mouseover_min')) {
                     return;
                 }
 
-                if (vehicle_ib.get('vehicle_id') === params.id) { return; }
-                vehicle_ib.set('vehicle_id', params.id);
+                if (vehicle_ib.get('vehicle_id') === that.id) { return; }
+                vehicle_ib.set('vehicle_id', that.id);
 
                 vehicle_ib.close();
 
                 var popup_div = $('#vehicle_popup');
-                $('span.vehicle_name', popup_div).text(params.name);
+                $('span.vehicle_name', popup_div).text(that.name);
                 $('.status', popup_div).html(marker.get('status'));
 
                 vehicle_ib.setContent($('#vehicle_popup_container').html());
@@ -1275,17 +1449,26 @@ var simulation_manager = (function(){
                         var station_a = that.stations[i];
                         var station_b = that.stations[i+1];
 
+                        var route_id = (that.source === 'gtfs') ? that.shape_id : that.edges[i+1];
                         if (ts > that.depS[i]) {
-                            var routeLength = linesPool.lengthGet(that.edges[i+1]);
+                            var routeLength = linesPool.lengthGet(route_id);
                             
                             // Vehicle is in motion between two stations
                             if (that.marker.get('speed') === 0) {
-                                var speed = routeLength * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
+                                var trackLength = routeLength;
+                                if (that.source === 'gtfs') {
+                                    trackLength = routeLength * (that.shape_percent[i+1] - that.shape_percent[i]) / 100;
+                                }
+                                
+                                var speed = trackLength * 0.001 * 3600 / (that.arrS[i] - that.depS[i]);
                                 that.marker.set('speed', parseInt(speed, 10));
                                 that.marker.set('status', 'Heading to ' + stationsPool.get(station_b) + '(' + timer.getHM(that.arrS[i]) + ')<br/>Speed: ' + that.marker.get('speed') + ' km/h');
                             }
                             
                             route_percent = (ts - that.depS[i])/(that.arrS[i] - that.depS[i]);
+                            if (that.source === 'gtfs') {
+                                route_percent = (that.shape_percent[i] + route_percent * (that.shape_percent[i+1] - that.shape_percent[i])) / 100;
+                            }
                             
                             d_AC = routeLength * route_percent;
                         } else {
@@ -1296,7 +1479,7 @@ var simulation_manager = (function(){
                             }
                         }
                         
-                        var vehicle_position_data = linesPool.positionGet(that.edges[i+1], route_percent);
+                        var vehicle_position_data = linesPool.positionGet(route_id, route_percent);
                         if (vehicle_position_data === null) {
                             break;
                         }
@@ -1307,8 +1490,8 @@ var simulation_manager = (function(){
                             that.marker.set('follow', 'yes');
                             
                             map.panTo(vehicle_position);
-                            if (map.getZoom() < config.getParam('zoom_follow')) {
-                                map.setZoom(config.getParam('zoom_follow'));
+                            if (map.getZoom() < config.getParam('zoom.vehicle_follow')) {
+                                map.setZoom(config.getParam('zoom.vehicle_follow'));
                             }
                             map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
 
@@ -1422,7 +1605,7 @@ var simulation_manager = (function(){
             load: function() {
                 var hm = timer.getHM();
                 
-                var url = config.getParam('json_paths').vehicles;
+                var url = config.getParam('api_paths.trips');
                 url = url.replace(/\[hhmm\]/, hm.replace(':', ''));
                 
                 $.ajax({
@@ -1430,14 +1613,16 @@ var simulation_manager = (function(){
                     dataType: 'json',
                     success: function(vehicles) {
                         $.each(vehicles, function(index, data) {
-                            if (typeof simulation_vehicles[data.id] !== 'undefined') {
+                            var vehicle_id = ((typeof data.trip_id) === 'undefined') ? data.id : data.trip_id;
+                            
+                            if ((typeof simulation_vehicles[vehicle_id]) !== 'undefined') {
                                 return;
                             }
                             
                             var v = new Vehicle(data);
                             v.render();
 
-                            simulation_vehicles[data.id] = v;
+                            simulation_vehicles[vehicle_id] = v;
                         });
                         
                         listener_helpers.notify('vehicles_load');
@@ -1448,44 +1633,62 @@ var simulation_manager = (function(){
     })();
     
     listener_helpers.subscribe('map_init', function(){
-        // LOAD network lines 
-        $.ajax({
-            url: config.getParam('json_paths').edges,
-            dataType: 'json',
-            success: function(geojson) {
-                linesPool.loadGeoJSONEdges(geojson.features);
-                // network lines loaded => LOAD stations
-                $.ajax({
-                    url: config.getParam('json_paths').stations,
-                    dataType: 'json',
-                    success: function(geojson) {
-                        $.each(geojson.features, function(index, feature) {
-                            stationsPool.add(
-                                feature.properties.station_id, 
-                                feature.properties.name, 
-                                parseFloat(feature.geometry.coordinates[0]), 
-                                parseFloat(feature.geometry.coordinates[1])
-                            );
-                        });
-                        
-                        vehicle_helpers.load();
-                        listener_helpers.subscribe('minute_changed', vehicle_helpers.load);
-                    }
-                });
+        function loadStations(url) {
+            if (url === null) {
+                return;
             }
-        });
+
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                success: function(geojson) {
+                    stationsPool.addFeatures(geojson.features);
+                    vehicle_helpers.load();
+                    listener_helpers.subscribe('minute_changed', vehicle_helpers.load);
+                }
+            });
+        }
+
+        // GTFS approach
+        var url = config.getParam('geojson.gtfs_shapes');
+        if (url !== null) {
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                async: false,
+                success: function(geojson) {
+                    linesPool.loadGeoJSONShapes(geojson.features);
+                }
+            });
+        }
+        loadStations(config.getParam('geojson.gtfs_stops'));
+
+        // Custom topology approach
+        var url = config.getParam('geojson.topology_edges');
+        if (url !== null) {
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                async: false,
+                success: function(geojson) {
+                    linesPool.loadGeoJSONEdges(geojson.features);
+                }
+            });
+        }
+        loadStations(config.getParam('geojson.topology_stations'));
     });
     
     function ui_init() {
-        var view_mode = config.getUserParam('view_mode');
+        var view_mode = config.getParam('view_mode');
         
         var panel_display = (ua_is_mobile === false) && (view_mode !== 'iframe');
         if (panel_display) {
             $('#panel').removeClass('hidden');
         }
         
-        if (config.getUserParam('time_multiply') !== null) {
-            $('#time_multiply').val(config.getUserParam('time_multiply'));
+        var time_multiply = config.getParam('time_multiply');
+        if (time_multiply !== null) {
+            $('#time_multiply').val(time_multiply);
         }
     }
     
@@ -1513,6 +1716,7 @@ var simulation_manager = (function(){
     
     return {
         init: function(){
+            config.init();
             ui_init();
             geolocation_init();
             // WARNING: in production, remove '09:00:00', use
