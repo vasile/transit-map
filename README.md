@@ -1,12 +1,12 @@
-## I. About
+## About
 
 This project animates vehicles (markers) on a map using the public transport timetables to interpolate their positions along the routes (polylines).
 
 **NEW: Plug and play your GTFS files !**
 
-Check the [GTFS importer](https://github.com/vasile/transit-simulator/blob/master/scripts/gtfs-importer/README.md) for more information.
+Check the [GTFS importer](https://github.com/vasile/transit-map/blob/master/scripts/gtfs-importer/README.md) for more information.
 
-![Swiss railways(SBB)](https://raw.github.com/vasile/transit-simulator/master/static/images/github_badge_800px.png "Swiss railways(SBB)")
+![Swiss railways(SBB)](https://raw.github.com/vasile/transit-map/master/static/images/github_badge_800px.png "Swiss railways(SBB)")
 SBB network - http://simcity.vasile.ch/sbb/
 
 ### Live applications using this project
@@ -20,22 +20,22 @@ SBB network - http://simcity.vasile.ch/sbb/
 
 ![Swiss railways(SBB)](http://simcity.vasile.ch/sbb/static/images/embed_social_200px.png "Swiss railways(SBB)") ![Romanian railways(CFR)](http://cfr.webgis.ro/static/images/embed_social_200px.png "Romanian railways(CFR)") ![Lausanne (TL)](http://simcity.vasile.ch/lausanne/static/images/embed_social_200px.png "Lausanne (TL)") ![Brașov (RAT)](http://brasov.webgis.ro/static/images/embed_social_200px.png "Brașov (RAT)") ![Grenoble (TAG)](http://simcity.vasile.ch/grenoble/static/images/embed_social_200px.png "Grenoble (TAG)") ![Genève (TPG)](http://simcity.vasile.ch/geneva/static/images/embed_social_200px.png "Genève (TPG)")
 
-## II. Install
+## Install
 
-All you need is a webserver(i.e. Apache) and a (modern) browser.
+You need is a webserver(i.e. Apache) and a (modern) browser.
 
 Steps:
 
 * clone / download the project in a location that can be accessible via your webserver
-* access the project in the browser (i.e. [http://localhost/transit-simulator/](http://localhost/transit-simulator/) ). 
+* access the project in the browser (i.e. [http://localhost/transit-map/](http://localhost/transit-map/) ). 
 
 You should already see some action on the map !
 
-## III. Customize
+## Customize
 
 ### Parameters in config.js
 
-File [static/js/config.js](https://github.com/vasile/transit-simulator/blob/master/static/js/config.js)
+File [static/js/config.js](https://github.com/vasile/transit-map/blob/master/static/js/config.js)
 
 | Key | Required | Sample Value | Description |
 | ------------ | ------------- | ------------ |
@@ -63,15 +63,15 @@ File [static/js/config.js](https://github.com/vasile/transit-simulator/blob/mast
 | ft_layer_ids.topology_stations |  | *string* | Fusion Table ID of the custom network stations. Example: [SBB edges](https://www.google.com/fusiontables/DataSource?docid=1YppDCNud7566oK_VwHsuUhGJqnm_CLDStMS3IuM) . **Use this for non-GTFS projects** |
 | api_paths.trips | **YES** | api/getTrips/[hhmm] | Vehicles (or GTFS trips) API with all vehicles that run at given hhmm - hour minutes. |
 | api_paths.departures |  | api/getDepartures/[stop_id]/[hhmm] | Departures API of the vehicles that stop in [stop_id] station at given [hhmm] time. |
-| geojson.gtfs_shapes | **YES** | api/geojson/gtfs_shapes.json | GeoJSON FeatureCollection with the GTFS shapes. **This key is not required if geojson.topology_* are used. |
-| geojson.gtfs_stops | **YES** | api/geojson/gtfs_shapes.json | GeoJSON FeatureCollection with the GTFS stops. **This key is not required if geojson.topology_* are used.** |
-| geojson.topology_edges |  | static/geojson/edges-sbb.json | GeoJSON FeatureCollection with the network edges. **This key is required if the project is NOT GTFS based.** |
-| geojson.topology_stations |  | static/geojson/edges-sbb.json | GeoJSON FeatureCollection with the network stations. **This key is required if the project is NOT GTFS based.** |
+| geojson.gtfs_shapes | **YES** | api/geojson/gtfs_shapes.json | GeoJSON FeatureCollection with the GTFS shapes. **This param is not required if geojson.topology_* are used. |
+| geojson.gtfs_stops | **YES** | api/geojson/gtfs_shapes.json | GeoJSON FeatureCollection with the GTFS stops. **This param is not required if geojson.topology_* are used.** |
+| geojson.topology_edges |  | static/geojson/edges-sbb.json | GeoJSON FeatureCollection with the network edges. **This param is required if the project is NOT GTFS based.** |
+| geojson.topology_stations |  | static/geojson/edges-sbb.json | GeoJSON FeatureCollection with the network stations. **This param is required if the project is NOT GTFS based.** |
 | routes |  | Hash | JS Hash containing the route defintions.** |
 
 **Notes:**
 
-- no one of the FT Layers are needed, they are just used for displaying the network stations and lines on the map; the application need _only_ the GeoJSON files move the vehicles on the map.
+- no one of the FT Layers are needed, they are just used for displaying the network stations and lines on the map.
 - ft_layer_ids.gtfs\_\* and ft_layer_ids.topology\_\* are mutually exclusive, the first one  should be used if the project is GTFS-based . Same for geojson.gtfs\_\* vs geojson.topology\_\* keys
 
 
@@ -81,7 +81,7 @@ All the config parameters above can be overriden using query string parameters, 
 
 ### Other parameters
 
-In addition to these, other optional parameters can be used and they don't have to be present in the config.js
+In addition to these, other optional parameters can be used as querystring parameters or in the config.js
 
 | Key | Sample Value | Description |
 | ------------ | ------------- | ------------ |
