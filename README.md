@@ -38,7 +38,7 @@ You should already see some action on the map !
 File [static/js/config.js](https://github.com/vasile/transit-map/blob/master/static/js/config.js)
 
 | Key | Required | Sample Value | Description |
-| ------------ | ------------- | ------------ |
+| ------------ | ------------- | ------------ | ------------ |
 | center.x | **YES** | 8.540 | Longitude of the map center. Values in decimal degrees. |
 | center.x | **YES** | 47.378 | Latitude of the map center. Values in decimal degrees. |
 | map_type_id | **YES** | roadmap | Initial map type. Values: **roadmap**, **satellite**, **terrain**, **stamen** |
