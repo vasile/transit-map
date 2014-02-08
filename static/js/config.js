@@ -1,8 +1,8 @@
 {
-  "center.x": 8.540,
-  "center.y": 47.378,
+  "center.x": 8.55,
+  "center.y": 47.26,
   "map_type_id": "roadmap",
-  "zoom.start": 13,
+  "zoom.start": 10,
   "zoom.min": 7,
   "zoom.max": 20,
   "zoom.to_stops": 17,
