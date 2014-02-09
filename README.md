@@ -2,9 +2,7 @@
 
 This project animates vehicles (markers) on a map using the public transport timetables to interpolate their positions along the routes (polylines).
 
-**NEW: Plug and play your GTFS files !**
-
-Check the [GTFS importer](https://github.com/vasile/transit-map/blob/master/scripts/gtfs-importer/README.md) for more information.
+**NEW: Plug and play your GTFS files !** Check the [GTFS-viz](https://github.com/vasile/GTFS-viz) for more information.
 
 ![Swiss railways(SBB)](https://raw.github.com/vasile/transit-map/master/static/images/github_badge_800px.png "Swiss railways(SBB)")
 SBB network - http://simcity.vasile.ch/sbb/
