@@ -2,9 +2,7 @@
 
 This project animates vehicles (markers) on a map using the public transport timetables to interpolate their positions along the routes (polylines).
 
-**NEW: Plug and play your GTFS files !**
-
-Check the [GTFS importer](https://github.com/vasile/transit-map/blob/master/scripts/gtfs-importer/README.md) for more information.
+**NEW: Plug and play your GTFS files !** Check the [GTFS-viz](https://github.com/vasile/GTFS-viz) for more information.
 
 ![Swiss railways(SBB)](https://raw.github.com/vasile/transit-map/master/static/images/github_badge_800px.png "Swiss railways(SBB)")
 SBB network - http://simcity.vasile.ch/sbb/
@@ -38,7 +36,7 @@ You should already see some action on the map !
 File [static/js/config.js](https://github.com/vasile/transit-map/blob/master/static/js/config.js)
 
 | Key | Required | Sample Value | Description |
-| ------------ | ------------- | ------------ |
+| ------------ | ------------- | ------------ | ------------ |
 | center.x | **YES** | 8.540 | Longitude of the map center. Values in decimal degrees. |
 | center.x | **YES** | 47.378 | Latitude of the map center. Values in decimal degrees. |
 | map_type_id | **YES** | roadmap | Initial map type. Values: **roadmap**, **satellite**, **terrain**, **stamen** |
@@ -73,7 +71,7 @@ File [static/js/config.js](https://github.com/vasile/transit-map/blob/master/sta
 
 - no one of the FT Layers are needed, they are just used for displaying the network stations and lines on the map.
 - ft_layer_ids.gtfs\_\* and ft_layer_ids.topology\_\* are mutually exclusive, the first one  should be used if the project is GTFS-based . Same for geojson.gtfs\_\* vs geojson.topology\_\* keys
-
+- check the [GTFS-viz](https://github.com/vasile/GTFS-viz) script if you plan to animate a GTFS dataset
 
 ### Override parameters
 
@@ -95,16 +93,16 @@ In addition to these, other optional parameters can be used as querystring param
 **Examples:**
 
 * Stamen watercolor map, centered on 8.47 longitude with 47.18 latitude, initial zoom level 11 and simulation time set for 10:20:30 with time increasing 10x
-	
-	[?center.x=8.7&center.y=47.18&zoom.start=11&map_type_id=stamen&hms=11:20:30&time_multiply=10](http://simcity.vasile.ch/sbb/?center.x=8.7&center.y=47.18&zoom.start=11&map_type_id=stamen&hms=11:20:30&time_multiply=10)
+    
+    [?center.x=8.7&center.y=47.18&zoom.start=11&map_type_id=stamen&hms=11:20:30&time_multiply=10](http://simcity.vasile.ch/sbb/?center.x=8.7&center.y=47.18&zoom.start=11&map_type_id=stamen&hms=11:20:30&time_multiply=10)
 
 * Roadmap, swiss-centered, included as an iframe
-	
-	[?center.x=8.2&center.y=46.9&zoom.start=9&map_type_id=roadmap&hms=11:20:30&time_multiply=100&view_mode=iframe](http://simcity.vasile.ch/sbb/?center.x=8.2&center.y=46.9&zoom.start=9&map_type_id=roadmap&hms=11:20:30&time_multiply=100&view_mode=iframe) 
+    
+    [?center.x=8.2&center.y=46.9&zoom.start=9&map_type_id=roadmap&hms=11:20:30&time_multiply=100&view_mode=iframe](http://simcity.vasile.ch/sbb/?center.x=8.2&center.y=46.9&zoom.start=9&map_type_id=roadmap&hms=11:20:30&time_multiply=100&view_mode=iframe) 
 
 * Track ICN10017 (Zürich HB - Lugano)
-	
-	[?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5](http://simcity.vasile.ch/sbb/?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5) 	
+    
+    [?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5](http://simcity.vasile.ch/sbb/?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5)     
 
 ## Contact ?
 Have other questions or do you want to use this application for your area and got stuck ? 

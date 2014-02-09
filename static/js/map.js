@@ -375,7 +375,7 @@ var simulation_manager = (function(){
             (function(){
                 var d = new Date();
                 
-                hms = config.getParam('hms');
+                var hms = config.getParam('hms');
                 if (hms !== null) {
                     var hms_matches = hms.match(/^([0-9]{2}):([0-9]{2}):([0-9]{2})$/);
                     if (hms_matches) {
