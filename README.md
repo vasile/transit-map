@@ -71,7 +71,7 @@ File [static/js/config.js](https://github.com/vasile/transit-map/blob/master/sta
 
 - no one of the FT Layers are needed, they are just used for displaying the network stations and lines on the map.
 - ft_layer_ids.gtfs\_\* and ft_layer_ids.topology\_\* are mutually exclusive, the first one  should be used if the project is GTFS-based . Same for geojson.gtfs\_\* vs geojson.topology\_\* keys
-
+- check the [GTFS-viz](https://github.com/vasile/GTFS-viz) script if you plan to animate a GTFS dataset
 
 ### Override parameters
 
