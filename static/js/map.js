@@ -939,6 +939,11 @@ var simulation_manager = (function(){
                 }
 
                 function trigger_toggleLayerVisibility() {
+                    if (config.getParam('debug') !== null) {
+                        console.log('Center: ' + map.getCenter().toUrlValue());
+                        console.log('Zoom: ' + map.getZoom());
+                    }
+
                     function toggleLayerVisibility(layer, hide) {
                         if (hide) {
                             if (layer.getMap() !== null) {
