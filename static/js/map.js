@@ -586,7 +586,11 @@ var simulation_manager = (function(){
             station_info_hide();
             vehicle_route.hide();
 
+            var route_config = config.getParam('routes')[vehicle.route_icon];
+
             $('.vehicle_name', $('#vehicle_info')).text(vehicle.name + ' (' + vehicle.id + ')');
+            $('.vehicle_name', $('#vehicle_info')).css('background-color', route_config.route_color);
+            $('.vehicle_name', $('#vehicle_info')).css('color', route_config.route_text_color);
             
             var ts = timer.getTS();
             
@@ -1420,6 +1424,11 @@ var simulation_manager = (function(){
 
                 var popup_div = $('#vehicle_popup');
                 $('span.vehicle_name', popup_div).text(that.name);
+
+                var route_config = config.getParam('routes')[that.route_icon];
+                $('span.vehicle_name', popup_div).css('background-color', route_config.route_color);
+                $('span.vehicle_name', popup_div).css('color', route_config.route_text_color);
+
                 $('.status', popup_div).html(marker.get('status'));
 
                 vehicle_ib.setContent($('#vehicle_popup_container').html());
