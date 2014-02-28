@@ -1514,6 +1514,7 @@ var simulation_manager = (function(){
                 } // end arrivals loop
 
                 if (vehicle_position === null) {
+                    that.marker.setMap(null);
                     delete simulation_vehicles[that.id];
                 }
             }
