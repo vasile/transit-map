@@ -1482,6 +1482,10 @@ var simulation_manager = (function(){
                                 that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + timer.getHM(that.depS[i]));
                                 that.marker.set('speed', 0);
                             }
+
+                            if (that.source === 'gtfs') {
+                                route_percent = that.shape_percent[i] / 100;
+                            }
                         }
                         
                         var vehicle_position_data = linesPool.positionGet(route_id, route_percent);
