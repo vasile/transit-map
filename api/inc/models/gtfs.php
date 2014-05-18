@@ -55,7 +55,7 @@ class GTFS {
         $time_sec -= $day_full_sec;
         $time_hh = floor($time_sec / 3600);
         $time_mm = floor(($time_sec - $time_hh * 3600) / 60);
-        $time_ss = $time_sec - ($time_mm * 60);
+        $time_ss = $time_sec - $time_hh * 3600 - $time_mm * 60;
         
         return sprintf('%02d:%02d:%02d', $time_hh, $time_mm, $time_ss);
     }
