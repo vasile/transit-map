@@ -186,6 +186,7 @@ var simulation_manager = (function(){
             
             var edges = ab_edges.split(',');
             var routePoints = [];
+            var dAB = 0;
             $.each(edges, function(k, edgeID) {
                 if (edgeID.substr(0, 1) === '-') {
                     edgeID = edgeID.substr(1);
@@ -194,10 +195,9 @@ var simulation_manager = (function(){
                     var points = network_lines[edgeID].points;
                 }
                 routePoints = routePoints.concat(points);
+                dAB += network_lines[edgeID].length;
             });
-
-            var dAB = parseFloat(google.maps.geometry.spherical.computeLength(routePoints).toFixed(3));
-
+            
             var routeDetailedParts = [];
             var routeDetailedParts_i = 0;
             var is_detailed_last = false;
@@ -224,7 +224,7 @@ var simulation_manager = (function(){
                 
                 is_detailed_last = is_detailed;
                 
-                dAC += parseFloat(google.maps.geometry.spherical.computeLength(network_lines[edgeID].points).toFixed(3));
+                dAC += network_lines[edgeID].length;
             });
             
             var route = {
@@ -293,7 +293,8 @@ var simulation_manager = (function(){
 
                 network_lines[edge_id] = {
                     points: edge_coords,
-                    is_detailed: feature.properties.detailed === 'yes'
+                    is_detailed: feature.properties.detailed === 'yes',
+                    length: parseFloat(google.maps.geometry.spherical.computeLength(edge_coords).toFixed(3))
                 };
             });
         }
