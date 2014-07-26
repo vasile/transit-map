@@ -200,7 +200,7 @@ var simulation_manager = (function(){
             
             var routeDetailedParts = [];
             var routeDetailedParts_i = 0;
-            var is_detailed_last = false;
+            var is_detailed_prev = false;
             var dAC = 0;
             $.each(edges, function(k, edgeID) {
                 if (edgeID.substr(0, 1) === '-') {
@@ -208,21 +208,21 @@ var simulation_manager = (function(){
                 }
                 
                 var is_detailed = network_lines[edgeID].is_detailed;
-                if (is_detailed === false) {
-                    if (is_detailed_last) {
-                        routeDetailedParts[routeDetailedParts_i].end = dAC / dAB;
-                        routeDetailedParts_i += 1;
-                    }
-                } else {
-                    if (is_detailed_last === false) {
+                if (is_detailed) {
+                    if (is_detailed_prev === false) {
                         routeDetailedParts[routeDetailedParts_i] = {
                             start: dAC / dAB,
                             end: 1
                         };
+                    }                    
+                } else {
+                    if (is_detailed_prev) {
+                        routeDetailedParts[routeDetailedParts_i].end = dAC / dAB;
+                        routeDetailedParts_i += 1;
                     }
                 }
                 
-                is_detailed_last = is_detailed;
+                is_detailed_prev = is_detailed;
                 
                 dAC += network_lines[edgeID].length;
             });
