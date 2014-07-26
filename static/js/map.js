@@ -1465,11 +1465,12 @@ var simulation_manager = (function(){
                         var station_b = that.stations[i+1];
 
                         var route_id = (that.source === 'gtfs') ? that.shape_id : that.edges[i+1];
+                        var speed = that.marker.get('speed');
                         if (ts > that.depS[i]) {
                             var routeLength = linesPool.lengthGet(route_id);
                             
                             // Vehicle is in motion between two stations
-                            if (that.marker.get('speed') === 0) {
+                            if ((speed === 0) || (speed === null)) {
                                 var trackLength = routeLength;
                                 if (that.source === 'gtfs') {
                                     trackLength = routeLength * (that.shape_percent[i+1] - that.shape_percent[i]) / 100;
@@ -1488,7 +1489,6 @@ var simulation_manager = (function(){
                             d_AC = routeLength * route_percent;
                         } else {
                             // Vehicle is in a station
-                            var speed = that.marker.get('speed');
                             if ((speed !== 0) || (speed === null)) {
                                 that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + timer.getHM(that.depS[i]));
                                 that.marker.set('speed', 0);
