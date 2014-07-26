@@ -25,8 +25,8 @@
   "api_paths.departures": null,
   "geojson.gtfs_shapes": null,
   "geojson.gtfs_stops": null,
-  "geojson.topology_edges": "static/geojson/edges-sbb.json",
-  "geojson.topology_stations": "static/geojson/stations-sbb.json",
+  "geojson.topology_edges": "api/geojson/edges.geojson",
+  "geojson.topology_stations": "api/geojson/stations.geojson",
   "routes": {
     "cnl": {
       "icon": "static/images/route_icons/demo/cnl.png",
