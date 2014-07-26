@@ -1395,7 +1395,7 @@ var simulation_manager = (function(){
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(0, 0),
                 map: null,
-                speed: 0,
+                speed: null,
                 status: 'not on map'
             });
             var icon = imagesPool.iconGet(this.route_icon);
@@ -1488,7 +1488,8 @@ var simulation_manager = (function(){
                             d_AC = routeLength * route_percent;
                         } else {
                             // Vehicle is in a station
-                            if (that.marker.get('speed') !== 0) {
+                            var speed = that.marker.get('speed');
+                            if ((speed !== 0) || (speed === null)) {
                                 that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + timer.getHM(that.depS[i]));
                                 that.marker.set('speed', 0);
                             }
