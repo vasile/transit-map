@@ -1713,37 +1713,10 @@ var simulation_manager = (function(){
         }
     }
     
-    function geolocation_init() {
-        function location_get(position) {
-            var x = position.coords.longitude;
-            var y = position.coords.latitude;
-            
-            if (map) {
-                map_helpers.updateGeolocation(x, y);
-            } else {
-                listener_helpers.subscribe('map_init', function(){
-                    map_helpers.updateGeolocation(x, y);
-                });                
-            }
-        }
-        function location_error(error) {
-            var errorMessage = [
-                'Geolocation: we are not quite sure what happened.',
-                'Sorry. Permission to find your location has been denied.',
-                'Sorry. Your position could not be determined.',
-                'Sorry. Geolocation requst timed out.'
-            ];
-            alert(errorMessage[ error.code ]);
-        }
-        
-        navigator.geolocation.getCurrentPosition(location_get, location_error);
-    }
-    
     return {
         init: function(){
             config.init();
             ui_init();
-            geolocation_init();
             timer.init();
             map_helpers.init();
             simulation_panel.init();
