@@ -1718,9 +1718,13 @@ var simulation_manager = (function(){
             var x = position.coords.longitude;
             var y = position.coords.latitude;
             
-            listener_helpers.subscribe('map_init', function(){
+            if (map) {
                 map_helpers.updateGeolocation(x, y);
-            });
+            } else {
+                listener_helpers.subscribe('map_init', function(){
+                    map_helpers.updateGeolocation(x, y);
+                });                
+            }
         }
         function location_error(error) {
             var errorMessage = [
