@@ -706,39 +706,67 @@ var simulation_manager = (function(){
             
             (function(){
                 var location_el = $('#user_location');
-                location_el.attr('value-default', location_el.attr('value'));
-
+                
+                var geolocation_marker = new google.maps.Marker({
+                    icon: {
+                        url: 'static/images/geolocation-bluedot.png',
+                        size: new google.maps.Size(17, 17),
+                        origin: new google.maps.Point(0, 0),
+                        anchor: new google.maps.Point(8, 8)
+                    },
+                    map: null,
+                    position: new google.maps.LatLng(0, 0)
+                });
+                
                 var geocoder = new google.maps.Geocoder();
-                function geocoding_handle(params) {
-                    geocoder.geocode(params, function(results, status) {
-                        if (status === google.maps.GeocoderStatus.OK) {
-                            location_el.val(results[0].formatted_address);
-                            map.setCenter(results[0].geometry.location);
-                            map.setZoom(15);
-                        }
-                    });
+                
+                function zoom_to_geometry(geometry) {
+                    if (geometry.viewport) {
+                        map.fitBounds(geometry.viewport);
+                    } else {
+                        map.setCenter(geometry.location);
+                        map.setZoom(15);
+                    }
                 }
 
                 $('#geolocation_click').click(function(){
                     if (navigator.geolocation) {
+                        location_el.val('...getting location');
                         navigator.geolocation.getCurrentPosition(function (position) {
-                            var x = position.coords.longitude;
-                            var y = position.coords.latitude;
-                            map_helpers.updateGeolocation(x, y);
-                            geocoding_handle({'latLng': new google.maps.LatLng(y, x)});
+                            var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                            zoom_to_geometry({location: latlng});
+                            
+                            geolocation_marker.setPosition(latlng);
+                            if (geolocation_marker.getMap() === null) {
+                                geolocation_marker.setMap(map);
+                            }
+                            
+                            geocoder.geocode({latLng: latlng}, function(results, status) {
+                                if (status === google.maps.GeocoderStatus.OK) {
+                                    location_el.val(results[0].formatted_address);
+                                }
+                            });
                         });
                     }
                 });
-                location_el.focus(function(){
-                    if ($(this).val() === $(this).attr('value-default')) {
-                        $(this).val('');
+                
+                var autocomplete = new google.maps.places.Autocomplete($('#user_location')[0], {
+                    types: ['geocode']
+                });
+                autocomplete.bindTo('bounds', map);
+                google.maps.event.addListener(autocomplete, 'place_changed', function(){
+                    var place = autocomplete.getPlace();
+                    if (place.geometry) {
+                        zoom_to_geometry(place.geometry);
+                    } else {
+                        geocoder.geocode({address: place.name}, function(results, status) {
+                            if (status === google.maps.GeocoderStatus.OK) {
+                                zoom_to_geometry(results[0].geometry);
+                                location_el.val(results[0].formatted_address);
+                            }
+                        });
                     }
                 });
-                location_el.keypress(function(e) {
-                    if(e.which === 13) {
-                        geocoding_handle({'address': $(this).val()});
-                    }
-                });                
             })();
             
             $('input.panel_collapsible').click(function() {
@@ -763,7 +791,6 @@ var simulation_manager = (function(){
     })();
     
     var map_helpers = (function(){
-        var geolocation_marker = null;
         var has_detail_view = false;
         var extended_bounds = null;
         
@@ -806,17 +833,6 @@ var simulation_manager = (function(){
               }
             ];
             
-            geolocation_marker = new google.maps.Marker({
-                icon: {
-                    url: 'static/images/geolocation-bluedot.png',
-                    size: new google.maps.Size(17, 17),
-                    origin: new google.maps.Point(0, 0),
-                    anchor: new google.maps.Point(8, 8)
-                },
-                map: null,
-                position: new google.maps.LatLng(0, 0)
-            });
-
             var map_inited = false;
             var map_options = {
                 zoom: parseInt(config.getParam('zoom.start'), 10),
@@ -1048,16 +1064,8 @@ var simulation_manager = (function(){
             });
         }
         
-        function geolocation_update(x, y) {
-            geolocation_marker.setPosition(new google.maps.LatLng(y, x));
-            if (geolocation_marker.getMap() === null) {
-                geolocation_marker.setMap(map);
-            }
-        }
-
         return {
             init: init,
-            updateGeolocation: geolocation_update,
             isDetailView: function() {
                 return has_detail_view;
             },
