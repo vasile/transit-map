@@ -640,14 +640,14 @@ var simulation_manager = (function(){
         function station_info_display(station_id) {
             var hm = timer.getHM();
             
-            var url = config.getParam('api_paths.station_vehicles');
+            var url = config.getParam('api_paths.departures');
             if (url === null) {
                 return;
             }
 
             url = url.replace(/\[station_id\]/, station_id);
             url = url.replace(/\[hhmm\]/, hm.replace(':', ''));
-            
+
             $.ajax({
                 url: url,
                 dataType: 'json',

@@ -23,7 +23,7 @@
   "ft_layer_ids.topology_edges": "1-1B2tYIO2JSnaacEHO8sfWVjm1S387lMEkHkjc4",
   "ft_layer_ids.topology_stations": "1YppDCNud7566oK_VwHsuUhGJqnm_CLDStMS3IuM",
   "api_paths.trips": "feed/vehicles/sbb/[hhmm]",
-  "api_paths.departures": null,
+  "api_paths.departures": "feed/departures/sbb/[station_id]/[hhmm]",
   "geojson.gtfs_shapes": null,
   "geojson.gtfs_stops": null,
   "geojson.topology_edges": "api/geojson/edges.geojson",
