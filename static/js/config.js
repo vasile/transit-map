@@ -6,6 +6,7 @@
   "zoom.min": 7,
   "zoom.max": 20,
   "zoom.to_stops": 17,
+  "zoom.detail_view": 17,
   "zoom.roadmap.stops_min": 15,
   "zoom.roadmap.stops_max": 20,
   "zoom.roadmap.shapes_min": 7,
