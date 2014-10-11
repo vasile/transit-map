@@ -587,11 +587,13 @@ var simulation_manager = (function(){
             station_info_hide();
             vehicle_route.hide();
 
-            var route_config = config.getParam('routes')[vehicle.route_icon];
-
             $('.vehicle_name', $('#vehicle_info')).text(vehicle.name + ' (' + vehicle.id + ')');
-            $('.vehicle_name', $('#vehicle_info')).css('background-color', route_config.route_color);
-            $('.vehicle_name', $('#vehicle_info')).css('color', route_config.route_text_color);
+            
+            var route_config = config.getParam('routes')[vehicle.route_icon];
+            if (route_config) {
+                $('.vehicle_name', $('#vehicle_info')).css('background-color', route_config.route_color);
+                $('.vehicle_name', $('#vehicle_info')).css('color', route_config.route_text_color);
+            }
             
             var ts = timer.getTS();
             
@@ -1440,8 +1442,10 @@ var simulation_manager = (function(){
                 $('span.vehicle_name', popup_div).text(that.name);
 
                 var route_config = config.getParam('routes')[that.route_icon];
-                $('span.vehicle_name', popup_div).css('background-color', route_config.route_color);
-                $('span.vehicle_name', popup_div).css('color', route_config.route_text_color);
+                if (route_config) {
+                    $('span.vehicle_name', popup_div).css('background-color', route_config.route_color);
+                    $('span.vehicle_name', popup_div).css('color', route_config.route_text_color);                    
+                }
 
                 $('.status', popup_div).html(marker.get('status'));
 
