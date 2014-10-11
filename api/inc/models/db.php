@@ -2,6 +2,7 @@
 
 class DB {
     private static $db = null;
+    private static $use_file_cache = false;
     
     private static function getDB() {
         if (is_null(self::$db)) {
@@ -14,6 +15,10 @@ class DB {
     }
     
     private static function getCachedResults($params) {
+        if (self::$use_file_cache === FALSE) {
+            return null;
+        }
+        
         $params_default = array(
             'cache_file' => null,
             'ttl' => null,
@@ -64,6 +69,10 @@ class DB {
     }
     
     private static function cacheResults($file, $content) {
+        if (self::$use_file_cache === FALSE) {
+            return null;
+        }
+        
         if (self::checkIfWritable($file)) {
             file_put_contents($file, json_encode($content));
         } else {
