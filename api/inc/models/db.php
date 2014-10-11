@@ -95,8 +95,8 @@ class DB {
         return $rows;
     }
     
-    public static function getTripsByMinute($hhmm, $service_id) {
-        $cache_file = APP_FOLDER_PATH . '/tmp/cache/db/trips_' . $service_id . '_' . $hhmm . '.json';
+    public static function getTripsByMinute($hhmm, $service_ids) {
+        $cache_file = APP_FOLDER_PATH . '/tmp/cache/db/trips_' . sha1(implode('', $service_ids)) . '_' . $hhmm . '.json';
         $cached_results = self::getCachedResults(array(
             'cache_file' => $cache_file
         ));
@@ -108,15 +108,22 @@ class DB {
         
         $hhmm_seconds = substr($hhmm, 0, 2) * 3600 + substr($hhmm, 2) * 60;
         $hhmm_seconds_midnight = $hhmm_seconds + 24 * 3600;
-
-        $stmt = $db->prepare('SELECT trip_id, route_short_name, route_long_name, route_color, route_text_color, trip_headsign, shape_id FROM trips, routes WHERE trip_ok = :trip_ok AND service_id = :service_id AND trips.route_id = routes.route_id AND ((trip_start_seconds < :hhmm_seconds AND trip_end_seconds > :hhmm_seconds) OR (trip_start_seconds < :hhmm_seconds_midnight AND trip_end_seconds > :hhmm_seconds_midnight))');
-        $stmt->bindValue(':trip_ok', 1, SQLITE3_INTEGER);
-        $stmt->bindValue(':service_id', $service_id, SQLITE3_TEXT);
-        $stmt->bindValue(':hhmm_seconds', $hhmm_seconds, SQLITE3_INTEGER);
-        $stmt->bindValue(':hhmm_seconds_midnight', $hhmm_seconds_midnight, SQLITE3_INTEGER);
+        
+        $sql = "SELECT trip_id, route_short_name, route_long_name, route_color, route_text_color, trip_headsign, shape_id, service_id FROM trips, routes WHERE trips.route_id = routes.route_id AND ((trip_start_seconds < " . $hhmm_seconds . " AND trip_end_seconds > " . $hhmm_seconds . ") OR (trip_start_seconds < " . $hhmm_seconds_midnight . " AND trip_end_seconds > " . $hhmm_seconds_midnight . "))";
+        $stmt = $db->prepare($sql);
         $result = $stmt->execute();
         
-        $rows = self::parseDBResult($result, $cache_file);
+        $rows = array();
+        while($row = $result->fetchArray(SQLITE3_ASSOC)) {
+            if (empty($service_ids) || in_array($row['service_id'], $service_ids)) {
+                array_push($rows, $row);
+            }
+        }
+        
+        if ($cache_file) {
+            self::cacheResults($cache_file, $rows);
+        }
+        
         return $rows;
     }
     
