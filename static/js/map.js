@@ -1690,9 +1690,17 @@ var simulation_manager = (function(){
                 url: url,
                 dataType: 'json',
                 success: function(geojson) {
+                    if (typeof(geojson.features) === 'undefined') {
+                        console.log('Malformed GeoJSON. URL: ' + url);
+                        return;
+                    }
+
                     stationsPool.addFeatures(geojson.features);
                     vehicle_helpers.load();
                     listener_helpers.subscribe('minute_changed', vehicle_helpers.load);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log('Error from server ' + textStatus + ' for url: ' + url);
                 }
             });
         }
@@ -1705,7 +1713,14 @@ var simulation_manager = (function(){
                 dataType: 'json',
                 async: false,
                 success: function(geojson) {
-                    linesPool.loadGeoJSONShapes(geojson.features);
+                    if (typeof(geojson.features) === 'undefined') {
+                        console.log('Malformed GeoJSON. URL: ' + url);
+                    } else {
+                        linesPool.loadGeoJSONShapes(geojson.features);    
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log('Error from server ' + textStatus + ' for url: ' + url);
                 }
             });
         }
@@ -1719,7 +1734,14 @@ var simulation_manager = (function(){
                 dataType: 'json',
                 async: false,
                 success: function(geojson) {
-                    linesPool.loadGeoJSONEdges(geojson.features);
+                    if (typeof(geojson.features) === 'undefined') {
+                        console.log('Malformed GeoJSON. URL: ' + url);
+                    } else {
+                        linesPool.loadGeoJSONEdges(geojson.features);
+                    }                   
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log('Error from server ' + textStatus + ' for url: ' + url);
                 }
             });
         }
