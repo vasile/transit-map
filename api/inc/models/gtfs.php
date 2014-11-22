@@ -1,6 +1,6 @@
 <?php
 class GTFS {
-    private static function getServiceId() {
+    private static function getDayServiceIds() {
         $day_of_week = date('l');
         $day_of_week = strtolower($day_of_week);
 
@@ -11,28 +11,26 @@ class GTFS {
         foreach ($calendar_rows as $row) {
             if (($row['start_date'] <= $ymd) && ($ymd <= $row['end_date'])) {
                 if ($row[$day_of_week] === 1) {
-                    return $row['service_id'];
+                    array_push($service_ids, $row['service_id']);
                 }
                 
                 if (($row['monday'] === 0) && ($row['tuesday'] === 0) && ($row['wednesday'] === 0) && ($row['thursday'] === 0) && ($row['friday'] === 0) && ($row['saturday'] === 0) && ($row['sunday'] === 0)) {
-                    return $row['service_id'];
+                    array_push($service_ids, $row['service_id']);
                 }
-
-                array_push($service_ids, $row['service_id']);
             }
         }
-
-        error_log('GTFS::getServiceId cannot find a service_id for ' . $ymd . ' dow: ' . $day_of_week . ' Returning first row');
-        return $calendar_rows[0]['service_id'];
+        
+        if (count($service_ids) === 0) {
+            error_log('GTFS::getDayServiceIds no service_id found for ' . $ymd . ' dow: ' . $day_of_week);
+        }
+        
+        return $service_ids;
     }
     
     public static function getTripsByMinute($hhmm) {
-        $service_id = self::getServiceId();
-        if (empty($service_id)) {
-            return array();
-        }
+        $service_ids = self::getDayServiceIds();
         
-        $trips = DB::getTripsByMinute($hhmm, $service_id);
+        $trips = DB::getTripsByMinute($hhmm, $service_ids);
         $new_trips = array();
         foreach ($trips as $k => $row) {
             $stops = DB::getStopsByTripId($row['trip_id']);

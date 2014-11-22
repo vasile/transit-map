@@ -186,6 +186,7 @@ var simulation_manager = (function(){
             
             var edges = ab_edges.split(',');
             var routePoints = [];
+            var dAB = 0;
             $.each(edges, function(k, edgeID) {
                 if (edgeID.substr(0, 1) === '-') {
                     edgeID = edgeID.substr(1);
@@ -194,13 +195,12 @@ var simulation_manager = (function(){
                     var points = network_lines[edgeID].points;
                 }
                 routePoints = routePoints.concat(points);
+                dAB += network_lines[edgeID].length;
             });
-
-            var dAB = parseFloat(google.maps.geometry.spherical.computeLength(routePoints).toFixed(3));
-
+            
             var routeDetailedParts = [];
             var routeDetailedParts_i = 0;
-            var is_detailed_last = false;
+            var is_detailed_prev = false;
             var dAC = 0;
             $.each(edges, function(k, edgeID) {
                 if (edgeID.substr(0, 1) === '-') {
@@ -208,23 +208,23 @@ var simulation_manager = (function(){
                 }
                 
                 var is_detailed = network_lines[edgeID].is_detailed;
-                if (is_detailed === false) {
-                    if (is_detailed_last) {
-                        routeDetailedParts[routeDetailedParts_i].end = dAC / dAB;
-                        routeDetailedParts_i += 1;
-                    }
-                } else {
-                    if (is_detailed_last === false) {
+                if (is_detailed) {
+                    if (is_detailed_prev === false) {
                         routeDetailedParts[routeDetailedParts_i] = {
                             start: dAC / dAB,
                             end: 1
                         };
+                    }                    
+                } else {
+                    if (is_detailed_prev) {
+                        routeDetailedParts[routeDetailedParts_i].end = dAC / dAB;
+                        routeDetailedParts_i += 1;
                     }
                 }
                 
-                is_detailed_last = is_detailed;
+                is_detailed_prev = is_detailed;
                 
-                dAC += parseFloat(google.maps.geometry.spherical.computeLength(network_lines[edgeID].points).toFixed(3));
+                dAC += network_lines[edgeID].length;
             });
             
             var route = {
@@ -293,7 +293,8 @@ var simulation_manager = (function(){
 
                 network_lines[edge_id] = {
                     points: edge_coords,
-                    is_detailed: feature.properties.detailed === 'yes'
+                    is_detailed: feature.properties.detailed === 'yes',
+                    length: parseFloat(google.maps.geometry.spherical.computeLength(edge_coords).toFixed(3))
                 };
             });
         }
@@ -594,6 +595,12 @@ var simulation_manager = (function(){
 
             $('.vehicle_name', $('#vehicle_info')).text(vehicle.name + ' (' + vehicle.id + ')');
             
+            var route_config = config.getParam('routes')[vehicle.route_icon];
+            if (route_config) {
+                $('.vehicle_name', $('#vehicle_info')).css('background-color', route_config.route_color);
+                $('.vehicle_name', $('#vehicle_info')).css('color', route_config.route_text_color);
+            }
+            
             var ts = timer.getTS();
             
             var html_rows = [];
@@ -641,14 +648,14 @@ var simulation_manager = (function(){
         function station_info_display(station_id) {
             var hm = timer.getHM();
             
-            var url = config.getParam('api_paths.station_vehicles');
+            var url = config.getParam('api_paths.departures');
             if (url === null) {
                 return;
             }
 
             url = url.replace(/\[station_id\]/, station_id);
             url = url.replace(/\[hhmm\]/, hm.replace(':', ''));
-            
+
             $.ajax({
                 url: url,
                 dataType: 'json',
@@ -705,38 +712,71 @@ var simulation_manager = (function(){
                 return false;
             });
             
-            var location_el = $('#user_location');
-            location_el.attr('value-default', location_el.attr('value'));
-
-            var geocoder = new google.maps.Geocoder();
-            function geocoding_handle(params) {
-                geocoder.geocode(params, function(results, status) {
-                    if (status === google.maps.GeocoderStatus.OK) {
-                        location_el.val(results[0].formatted_address);
-                        map.setCenter(results[0].geometry.location);
+            (function(){
+                var location_el = $('#user_location');
+                
+                var geolocation_marker = new google.maps.Marker({
+                    icon: {
+                        url: 'static/images/geolocation-bluedot.png',
+                        size: new google.maps.Size(17, 17),
+                        origin: new google.maps.Point(0, 0),
+                        anchor: new google.maps.Point(8, 8)
+                    },
+                    map: null,
+                    position: new google.maps.LatLng(0, 0)
+                });
+                
+                var geocoder = new google.maps.Geocoder();
+                
+                function zoom_to_geometry(geometry) {
+                    if (geometry.viewport) {
+                        map.fitBounds(geometry.viewport);
+                    } else {
+                        map.setCenter(geometry.location);
                         map.setZoom(15);
                     }
+                }
+
+                $('#geolocation_click').click(function(){
+                    if (navigator.geolocation) {
+                        location_el.val('...getting location');
+                        navigator.geolocation.getCurrentPosition(function (position) {
+                            var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                            zoom_to_geometry({location: latlng});
+                            
+                            geolocation_marker.setPosition(latlng);
+                            if (geolocation_marker.getMap() === null) {
+                                geolocation_marker.setMap(map);
+                            }
+                            
+                            geocoder.geocode({latLng: latlng}, function(results, status) {
+                                if (status === google.maps.GeocoderStatus.OK) {
+                                    location_el.val(results[0].formatted_address);
+                                }
+                            });
+                        });
+                    }
                 });
-            }
-
-            $('#geolocation_click').click(function(){
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(function (position) {
-                        geocoding_handle({'latLng': new google.maps.LatLng(position.coords.latitude, position.coords.longitude)});
-                    });
-                }
-            });
-            location_el.focus(function(){
-                if ($(this).val() === $(this).attr('value-default')) {
-                    $(this).val('');
-                }
-            });
-            location_el.keypress(function(e) {
-                if(e.which === 13) {
-                    geocoding_handle({'address': $(this).val()});
-                }
-            });
-
+                
+                var autocomplete = new google.maps.places.Autocomplete($('#user_location')[0], {
+                    types: ['geocode']
+                });
+                autocomplete.bindTo('bounds', map);
+                google.maps.event.addListener(autocomplete, 'place_changed', function(){
+                    var place = autocomplete.getPlace();
+                    if (place.geometry) {
+                        zoom_to_geometry(place.geometry);
+                    } else {
+                        geocoder.geocode({address: place.name}, function(results, status) {
+                            if (status === google.maps.GeocoderStatus.OK) {
+                                zoom_to_geometry(results[0].geometry);
+                                location_el.val(results[0].formatted_address);
+                            }
+                        });
+                    }
+                });
+            })();
+            
             $('input.panel_collapsible').click(function() {
                 var panel_content = $(this).closest('div[data-type="panel"]').children('div.panel_content');
 
@@ -759,7 +799,6 @@ var simulation_manager = (function(){
     })();
     
     var map_helpers = (function(){
-        var geolocation_marker = null;
         var has_detail_view = false;
         var extended_bounds = null;
         
@@ -802,17 +841,6 @@ var simulation_manager = (function(){
               }
             ];
             
-            geolocation_marker = new google.maps.Marker({
-                icon: {
-                    url: 'static/images/geolocation-bluedot.png',
-                    size: new google.maps.Size(17, 17),
-                    origin: new google.maps.Point(0, 0),
-                    anchor: new google.maps.Point(8, 8)
-                },
-                map: null,
-                position: new google.maps.LatLng(0, 0)
-            });
-
             var map_inited = false;
             var map_options = {
                 zoom: parseInt(config.getParam('zoom.start'), 10),
@@ -945,6 +973,11 @@ var simulation_manager = (function(){
                 }
 
                 function trigger_toggleLayerVisibility() {
+                    if (config.getParam('debug') !== null) {
+                        console.log('Center: ' + map.getCenter().toUrlValue());
+                        console.log('Zoom: ' + map.getZoom());
+                    }
+
                     function toggleLayerVisibility(layer, hide) {
                         if (hide) {
                             if (layer.getMap() !== null) {
@@ -1039,16 +1072,8 @@ var simulation_manager = (function(){
             });
         }
         
-        function geolocation_update(x, y) {
-            geolocation_marker.setPosition(new google.maps.LatLng(y, x));
-            if (geolocation_marker.getMap() === null) {
-                geolocation_marker.setMap(map);
-            }
-        }
-
         return {
             init: init,
-            updateGeolocation: geolocation_update,
             isDetailView: function() {
                 return has_detail_view;
             },
@@ -1391,7 +1416,7 @@ var simulation_manager = (function(){
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(0, 0),
                 map: null,
-                speed: 0,
+                speed: null,
                 status: 'not on map'
             });
             var icon = imagesPool.iconGet(this.route_icon);
@@ -1421,6 +1446,13 @@ var simulation_manager = (function(){
 
                 var popup_div = $('#vehicle_popup');
                 $('span.vehicle_name', popup_div).text(that.name);
+
+                var route_config = config.getParam('routes')[that.route_icon];
+                if (route_config) {
+                    $('span.vehicle_name', popup_div).css('background-color', route_config.route_color);
+                    $('span.vehicle_name', popup_div).css('color', route_config.route_text_color);                    
+                }
+
                 $('.status', popup_div).html(marker.get('status'));
 
                 vehicle_ib.setContent($('#vehicle_popup_container').html());
@@ -1456,11 +1488,12 @@ var simulation_manager = (function(){
                         var station_b = that.stations[i+1];
 
                         var route_id = (that.source === 'gtfs') ? that.shape_id : that.edges[i+1];
+                        var speed = that.marker.get('speed');
                         if (ts > that.depS[i]) {
                             var routeLength = linesPool.lengthGet(route_id);
                             
                             // Vehicle is in motion between two stations
-                            if (that.marker.get('speed') === 0) {
+                            if ((speed === 0) || (speed === null)) {
                                 var trackLength = routeLength;
                                 if (that.source === 'gtfs') {
                                     trackLength = routeLength * (that.shape_percent[i+1] - that.shape_percent[i]) / 100;
@@ -1479,9 +1512,13 @@ var simulation_manager = (function(){
                             d_AC = routeLength * route_percent;
                         } else {
                             // Vehicle is in a station
-                            if (that.marker.get('speed') !== 0) {
+                            if ((speed !== 0) || (speed === null)) {
                                 that.marker.set('status', 'Departing ' + stationsPool.get(station_a) + ' at ' + timer.getHM(that.depS[i]));
                                 that.marker.set('speed', 0);
+                            }
+
+                            if (that.source === 'gtfs') {
+                                route_percent = that.shape_percent[i] / 100;
                             }
                         }
                         
@@ -1515,6 +1552,7 @@ var simulation_manager = (function(){
                 } // end arrivals loop
 
                 if (vehicle_position === null) {
+                    that.marker.setMap(null);
                     delete simulation_vehicles[that.id];
                 }
             }
@@ -1698,33 +1736,10 @@ var simulation_manager = (function(){
         }
     }
     
-    function geolocation_init() {
-        function location_get(position) {
-            var x = position.coords.longitude;
-            var y = position.coords.latitude;
-            
-            listener_helpers.subscribe('map_init', function(){
-                map_helpers.updateGeolocation(x, y);
-            });
-        }
-        function location_error(error) {
-            var errorMessage = [
-                'Geolocation: we are not quite sure what happened.',
-                'Sorry. Permission to find your location has been denied.',
-                'Sorry. Your position could not be determined.',
-                'Sorry. Geolocation requst timed out.'
-            ];
-            alert(errorMessage[ error.code ]);
-        }
-        
-        navigator.geolocation.getCurrentPosition(location_get, location_error);
-    }
-    
     return {
         init: function(){
             config.init();
             ui_init();
-            geolocation_init();
             timer.init();
             map_helpers.init();
             simulation_panel.init();
