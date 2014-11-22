@@ -979,6 +979,10 @@ var simulation_manager = (function(){
                     }
 
                     function toggleLayerVisibility(layer, hide) {
+                        if ((typeof layer) === 'undefined') {
+                            return;
+                        }
+
                         if (hide) {
                             if (layer.getMap() !== null) {
                                 layer.setMap(null);
