@@ -146,7 +146,7 @@ var simulation_manager = (function(){
                 icon: {
                     path: 'M 0,-2 0,2',
                     strokeColor: 'black',
-                    strokeOpacity: 1.0,          
+                    strokeOpacity: 1.0
                 },
                 repeat: '40px'
             }],
@@ -693,7 +693,9 @@ var simulation_manager = (function(){
             $(document).on("click", '#vehicle_timetable tbody tr a', function(){
                 var station_id = $(this).attr('data-station-id');
                 var station_location = stationsPool.location_get(station_id);
-                if (station_location === null) { return; }
+                if (station_location === null) { 
+                    return false; 
+                }
                 
                 map.setCenter(station_location);
                 if (map.getZoom() < config.getParam('zoom.to_stops')) {
@@ -1059,7 +1061,7 @@ var simulation_manager = (function(){
                         var bounds_point = map_bounds.getSouthWest();
                         var new_bounds_sw = new google.maps.LatLng(bounds_point.lat() - map_bounds.toSpan().lat(), bounds_point.lng() - map_bounds.toSpan().lng());
 
-                        var bounds_point = map_bounds.getNorthEast();
+                        bounds_point = map_bounds.getNorthEast();
                         var new_bounds_ne = new google.maps.LatLng(bounds_point.lat() + map_bounds.toSpan().lat(), bounds_point.lng() + map_bounds.toSpan().lng());
 
                         extended_bounds = new google.maps.LatLngBounds(new_bounds_sw, new_bounds_ne);
@@ -1252,7 +1254,7 @@ var simulation_manager = (function(){
                 "ir-coach": {
                     base_zoom_width: 32,
                     width: 223
-                },
+                }
             };
             var vehicle_detail_icons = {};
             
@@ -1455,11 +1457,11 @@ var simulation_manager = (function(){
 
                 vehicle_ib.setContent($('#vehicle_popup_container').html());
                 vehicle_ib.open(map, this);
-            }
+            };
             this.mouseOutMarker = function() {
                 vehicle_ib.set('vehicle_id', null);
                 vehicle_ib.close();
-            }
+            };
             google.maps.event.addListener(marker, 'mouseover', this.mouseOverMarker);
             google.maps.event.addListener(marker, 'mouseout', this.mouseOutMarker);
             
