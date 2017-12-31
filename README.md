@@ -20,7 +20,7 @@ SBB network - http://simcity.vasile.ch/sbb/
 
 ## Install
 
-You need is a webserver(i.e. Apache) and a (modern) browser.
+You need a webserver (i.e. Apache) and a (modern) browser.
 
 Steps:
 
