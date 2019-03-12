@@ -1,6 +1,6 @@
 ## About
 
-This project animates vehicles (markers) on a map using the public transport timetables to interpolate their positions along the routes (polylines).
+This project animates vehicles (markers) on a map using public transport timetables to interpolate their positions along the routes (polylines).
 
 **NEW: Plug and play your GTFS files !** Check the [GTFS-viz](https://github.com/vasile/GTFS-viz) for more information.
 
@@ -20,14 +20,14 @@ SBB network - http://simcity.vasile.ch/sbb/
 
 ## Install
 
-You need is a webserver(i.e. Apache) and a (modern) browser.
+You need a webserver (e.g. Apache) and a (modern) browser.
 
 Steps:
 
-* clone / download the project in a location that can be accessible via your webserver
-* access the project in the browser (i.e. [http://localhost/transit-map/](http://localhost/transit-map/) ). 
+* clone / download the project in a location that is accessible via your webserver
+* access the project in the browser (e.g. [http://localhost/transit-map/](http://localhost/transit-map/) ). 
 
-You should already see some action on the map !
+You should already see some action on the map!
 
 ## Customize
 
@@ -69,8 +69,8 @@ File [static/js/config.js](https://github.com/vasile/transit-map/blob/master/sta
 
 **Notes:**
 
-- no one of the FT Layers are needed, they are just used for displaying the network stations and lines on the map.
-- ft_layer_ids.gtfs\_\* and ft_layer_ids.topology\_\* are mutually exclusive, the first one  should be used if the project is GTFS-based . Same for geojson.gtfs\_\* vs geojson.topology\_\* keys
+- not all of the FT Layers are needed, they are just used for displaying the network stations and lines on the map.
+- ft_layer_ids.gtfs\_\* and ft_layer_ids.topology\_\* are mutually exclusive, the first one should be used if the project is GTFS-based . Same for geojson.gtfs\_\* vs geojson.topology\_\* keys
 - check the [GTFS-viz](https://github.com/vasile/GTFS-viz) script if you plan to animate a GTFS dataset
 
 ### Override parameters
@@ -105,7 +105,7 @@ In addition to these, other optional parameters can be used as querystring param
     [?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5](http://simcity.vasile.ch/sbb/?hms=11:25:30&vehicle_name=ICN10017&time_multiply=5)     
 
 ## Contact ?
-Have other questions or do you want to use this application for your area and got stuck ? 
+Have other questions? Or you want to use this application for your area and got stuck ? 
 
 Then ping me on [Twitter](https://twitter.com/vasile23) or drop [me](http://www.vasile.ch) a line. 
  
